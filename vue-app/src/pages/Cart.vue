@@ -1,210 +1,99 @@
 <template>
-  <div class="cart-page">
-    <div class="container">
-      <h1 class="page-title">Shopping Cart</h1>
-      <div v-if="cartStore.items.length > 0" class="cart-wrapper">
-        <div class="cart-items">
-          <table class="cart-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Price</th>
-                <th>Quantity</th>
-                <th>Total</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in cartStore.items" :key="item.id">
-                <td class="product-cell">
-                  <img :src="item.image" :alt="item.name" class="product-thumb">
-                  <div>
-                    <p class="product-name">{{ item.name }}</p>
+  <main>
+      <header class="pageMainHead d-flex position-relative bgCover w-100 text-white" style="background-image: url(https://placehold.co/1920x300);">
+          <div class="align-self-center text-center w-100">
+              <div class="container">
+                  <h1 class="pageHeading mb-3">Shopping Cart</h1>
+                  <nav aria-label="breadcrumb">
+                      <ol class="breadcrumb d-flex justify-content-center mb-0">
+                          <li class="breadcrumb-item"><router-link to="/">Home</router-link></li>
+                          <li class="breadcrumb-item active" aria-current="page">Cart</li>
+                      </ol>
+                  </nav>
+              </div>
+          </div>
+      </header>
+
+      <section class="cartPageSection py-8 py-lg-12">
+          <div class="container">
+              <div class="row" v-if="cartStore.items.length > 0">
+                  <div class="col-12 col-lg-8 mb-6 mb-lg-0">
+                      <div class="table-responsive cartTableWrap">
+                          <table class="table text-nowrap">
+                              <thead>
+                                  <tr>
+                                      <th scope="col" class="fw-normal">Product</th>
+                                      <th scope="col" class="fw-normal">Price</th>
+                                      <th scope="col" class="fw-normal">Quantity</th>
+                                      <th scope="col" class="fw-normal">Total</th>
+                                      <th scope="col"></th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  <tr v-for="item in cartStore.items" :key="item.id">
+                                      <td>
+                                          <div class="d-flex align-items-center">
+                                              <img :src="item.image" class="img-fluid me-3" style="width: 80px;" alt="product">
+                                              <h5 class="mb-0 fw-normal"><router-link :to="`/products/${item.id}`" class="text-decoration-none text-dark">{{ item.name }}</router-link></h5>
+                                          </div>
+                                      </td>
+                                      <td class="align-middle">£{{ item.price.toFixed(2) }}</td>
+                                      <td class="align-middle">
+                                          <div class="quantity-control d-flex border rounded" style="width: 120px;">
+                                              <button class="btn btn-sm px-3" @click="updateQuantity(item.id, item.quantity - 1)">-</button>
+                                              <input type="text" class="form-control form-control-sm text-center border-0" :value="item.quantity" readonly>
+                                              <button class="btn btn-sm px-3" @click="updateQuantity(item.id, item.quantity + 1)">+</button>
+                                          </div>
+                                      </td>
+                                      <td class="align-middle">£{{ (item.price * item.quantity).toFixed(2) }}</td>
+                                      <td class="align-middle">
+                                          <button @click="cartStore.removeFromCart(item.id)" class="btn text-danger p-0"><i class="fa-solid fa-trash-can"></i></button>
+                                      </td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                      <div class="d-flex justify-content-between mt-4">
+                          <router-link to="/products" class="btn btn-outline-dark text-uppercase fw-medium">Continue Shopping</router-link>
+                          <button class="btn btn-outline-dark text-uppercase fw-medium" @click="cartStore.clearCart()">Clear Cart</button>
+                      </div>
                   </div>
-                </td>
-                <td>£{{ item.price }}</td>
-                <td>
-                  <input
-                    type="number"
-                    v-model.number="item.quantity"
-                    @change="cartStore.updateQuantity(item.id, item.quantity)"
-                    min="1"
-                    class="quantity-input"
-                  >
-                </td>
-                <td>£{{ item.price * item.quantity }}</td>
-                <td>
-                  <button @click="cartStore.removeItem(item.id)" class="remove-btn">×</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="cart-summary">
-          <h3>Order Summary</h3>
-          <div class="summary-row">
-            <span>Subtotal:</span>
-            <span>£{{ cartStore.cartTotal }}</span>
+                  <div class="col-12 col-lg-4">
+                      <div class="cartTotalsBlock p-4 p-md-6 border">
+                          <h3 class="mb-4 fw-normal">Cart Totals</h3>
+                          <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
+                              <span>Subtotal</span>
+                              <span>£{{ cartStore.totalPrice.toFixed(2) }}</span>
+                          </div>
+                          <div class="d-flex justify-content-between mb-4 pb-3 border-bottom">
+                              <span>Shipping</span>
+                              <span>Free Shipping</span>
+                          </div>
+                          <div class="d-flex justify-content-between mb-5 fw-medium fs-5">
+                              <span>Total</span>
+                              <span>£{{ cartStore.totalPrice.toFixed(2) }}</span>
+                          </div>
+                          <router-link to="/checkout" class="btn btn-dark w-100 py-3 text-uppercase fw-medium">Proceed to Checkout</router-link>
+                      </div>
+                  </div>
+              </div>
+              <div v-else class="text-center py-10">
+                  <h3 class="mb-4">Your cart is currently empty.</h3>
+                  <router-link to="/products" class="btn btn-dark py-3 px-6 text-uppercase fw-medium">Return to Shop</router-link>
+              </div>
           </div>
-          <div class="summary-row">
-            <span>Shipping:</span>
-            <span>Free</span>
-          </div>
-          <div class="summary-row total">
-            <span>Total:</span>
-            <span>£{{ cartStore.cartTotal }}</span>
-          </div>
-          <router-link to="/checkout" class="btn btn-primary btn-block">Proceed to Checkout</router-link>
-          <router-link to="/products" class="btn btn-secondary btn-block">Continue Shopping</router-link>
-        </div>
-      </div>
-      <div v-else class="empty-cart">
-        <p>Your cart is empty.</p>
-        <router-link to="/products" class="btn btn-primary">Start Shopping</router-link>
-      </div>
-    </div>
-  </div>
+      </section>
+  </main>
 </template>
 
 <script setup>
-import { useCartStore } from '@/stores/cartStore'
+import { useCartStore } from '../stores/cartStore'
 
 const cartStore = useCartStore()
-</script>
 
-<style scoped>
-.cart-page {
-  padding: 40px 0;
-}
-
-.page-title {
-  text-align: center;
-  font-size: 2.5rem;
-  font-weight: 300;
-  margin-bottom: 40px;
-}
-
-.cart-wrapper {
-  display: grid;
-  grid-template-columns: 1fr 350px;
-  gap: 40px;
-}
-
-.cart-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.cart-table th,
-.cart-table td {
-  padding: 15px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.cart-table th {
-  background-color: #f9f9f9;
-  font-weight: 600;
-}
-
-.product-cell {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.product-thumb {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 4px;
-}
-
-.product-name {
-  margin: 0;
-  font-weight: 500;
-}
-
-.quantity-input {
-  width: 60px;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #e74c3c;
-  cursor: pointer;
-  padding: 0;
-}
-
-.remove-btn:hover {
-  color: #c0392b;
-}
-
-.cart-summary {
-  background-color: #f9f9f9;
-  padding: 20px;
-  border-radius: 4px;
-  height: fit-content;
-}
-
-.cart-summary h3 {
-  margin-top: 0;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
-}
-
-.summary-row.total {
-  font-weight: 600;
-  font-size: 1.2rem;
-  border-bottom: 2px solid #222;
-}
-
-.btn-block {
-  width: 100%;
-  display: block;
-  text-align: center;
-  padding: 12px;
-  margin-top: 15px;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.btn-primary {
-  background-color: #222;
-  color: #fff;
-}
-
-.btn-secondary {
-  background-color: transparent;
-  color: #222;
-  border: 1px solid #222;
-}
-
-.btn-block:hover {
-  opacity: 0.8;
-}
-
-.empty-cart {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-@media (max-width: 768px) {
-  .cart-wrapper {
-    grid-template-columns: 1fr;
+const updateQuantity = (id, newQuantity) => {
+  if (newQuantity > 0) {
+      cartStore.updateQuantity(id, newQuantity)
   }
 }
-</style>
+</script>
