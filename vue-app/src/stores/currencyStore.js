@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 // European country codes (ISO 3166-1 alpha-2)
 const EUROPEAN_COUNTRIES = [
@@ -50,16 +50,15 @@ export const useCurrencyStore = defineStore('currency', {
         const token = localStorage.getItem('authToken')
         if (token) {
           try {
-            const response = await axios.get(`${API_BASE}/api/auth/me`, {
-              headers: { Authorization: `Bearer ${token}` }
-            })
-            if (response.data.success && response.data.data) {
-              const country = response.data.data.country
-              if (country) {
-                this.setCurrencyByCountry(country)
-                this.determined = true
-                this.loading = false
-                return
+            const user = JSON.parse(localStorage.getItem('user') || '{}')
+            const userId = user.id
+            if (userId) {
+              const response = await axios.get(`${API_BASE}/api/v1/users/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              })
+              if (response.data && response.data.profile) {
+                // ERP user profile available - check for country info
+                // For now, fall back to IP geolocation
               }
             }
           } catch (e) {
@@ -107,7 +106,7 @@ export const useCurrencyStore = defineStore('currency', {
 
     /**
      * Set currency based on a country code (ISO 3166-1 alpha-2)
-     * European countries → EUR, everything else → USD
+     * European countries -> EUR, everything else -> USD
      */
     setCurrencyByCountry(countryCode) {
       const code = countryCode.toUpperCase()

@@ -105,7 +105,7 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const router = useRouter()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 const firstName = ref('')
 const lastName = ref('')
@@ -151,24 +151,21 @@ const handleRegister = async () => {
   isLoading.value = true
 
   try {
-    const response = await axios.post(`${API_BASE}/api/auth/register`, {
-      firstName: firstName.value,
-      lastName: lastName.value,
+    const fullName = `${firstName.value} ${lastName.value}`.trim()
+    await axios.post(`${API_BASE}/api/v1/auth/register`, {
       email: email.value,
-      phone: phone.value,
-      password: password.value
+      password: password.value,
+      username: email.value.split('@')[0],
+      fullName: fullName,
+      roleName: 'USER'
     })
 
-    if (response.data.success) {
-      successMessage.value = 'Account created successfully! Redirecting to sign in...'
-      setTimeout(() => {
-        router.push('/signin')
-      }, 1500)
-    } else {
-      errorMessage.value = response.data.error || 'Registration failed.'
-    }
+    successMessage.value = 'Account created successfully! Redirecting to sign in...'
+    setTimeout(() => {
+      router.push('/signin')
+    }, 1500)
   } catch (error) {
-    errorMessage.value = error.response?.data?.error || 'Registration failed. Please try again.'
+    errorMessage.value = error.response?.data?.error || error.response?.data?.message || 'Registration failed. Please try again.'
   } finally {
     isLoading.value = false
   }

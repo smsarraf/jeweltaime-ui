@@ -323,7 +323,7 @@ const isProcessing = ref(false)
 const selectedPayment = ref('airwallex')
 const dropinContainer = ref(null)
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 // Login form
 const loginEmail = ref('')
@@ -396,25 +396,9 @@ const applyCouponCode = async () => {
   checkoutCouponMessage.value = ''
   checkoutCouponSuccess.value = false
 
-  try {
-    const response = await axios.post(`${API_BASE}/api/coupons/validate`, {
-      code: checkoutCouponCode.value.trim(),
-      cartTotal: cartStore.totalPrice
-    })
-
-    if (response.data.success) {
-      checkoutDiscount.value = response.data.data.discountAmount
-      checkoutCouponMessage.value = `Coupon applied! You saved ${currencyStore.formatPrice(checkoutDiscount.value)}.`
-      checkoutCouponSuccess.value = true
-    } else {
-      checkoutCouponMessage.value = response.data.error || 'Invalid coupon code.'
-      checkoutCouponSuccess.value = false
-    }
-  } catch (error) {
-    const message = error.response?.data?.error || error.message || 'Failed to validate coupon.'
-    checkoutCouponMessage.value = message
-    checkoutCouponSuccess.value = false
-  }
+  // Coupon validation not available in ERP backend - show demo message
+  checkoutCouponMessage.value = 'Coupon validation is not available yet.'
+  checkoutCouponSuccess.value = false
 }
 
 const increaseItemQty = (item) => {
@@ -468,21 +452,18 @@ async function initAirwallexDropin() {
 
     const totalAmount = totalWithShipping.value
 
-    const response = await axios.post(`${API_BASE}/api/airwallex/create-payment-session`, {
+    const response = await axios.post(`${API_BASE}/api/v1/payments`, {
       amount: totalAmount,
       currency: currencyStore.currency,
-      metadata: {
-        customer_name: `${billing.firstName} ${billing.lastName}`,
-        customer_email: billing.email,
-        customer_phone: billing.phone
-      }
+      order_id: null,
+      user_id: null
     })
 
-    if (!response.data.success) {
-      throw new Error(response.data.error || 'Failed to create payment session')
+    if (!response.data) {
+      throw new Error('Failed to create payment session')
     }
 
-    paymentSession = response.data.data
+    paymentSession = response.data
 
     if (dropinElement) {
       try { dropinElement.unmount() } catch (e) { /* ignore */ }
@@ -584,26 +565,24 @@ async function processAirwallexPayment() {
 
 
 async function finalizeOrder(orderId, paymentMethod, transactionId) {
+  const token = localStorage.getItem('authToken')
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+
   const orderData = {
-    orderId,
-    paymentMethod,
-    transactionId,
-    currency: currencyStore.currency,
-    billing: { ...billing },
+    userId: user.id,
+    shippingAddress: `${billing.addressLine1}, ${billing.city}, ${billing.state} ${billing.postcode}`,
+    countryId: 1,
+    currencyId: 1,
     items: cartStore.items.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
+      productId: item.id,
       quantity: item.quantity
-    })),
-    subtotal: subtotalAfterDiscount.value,
-    shipping: checkoutShippingCost.value,
-    total: totalWithShipping.value,
-    status: paymentMethod === 'airwallex' ? 'paid' : 'pending'
+    }))
   }
 
   try {
-    await axios.post(`${API_BASE}/api/orders`, orderData)
+    await axios.post(`${API_BASE}/api/v1/orders`, orderData, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
   } catch (e) {
     console.warn('Order submission warning:', e.message)
   }

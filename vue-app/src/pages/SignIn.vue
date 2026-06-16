@@ -80,7 +80,7 @@ import axios from 'axios'
 const router = useRouter()
 const route = useRoute()
 const currencyStore = useCurrencyStore()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 const email = ref('')
 const password = ref('')
@@ -112,19 +112,29 @@ const handleSignIn = async () => {
   isLoading.value = true
 
   try {
-    const response = await axios.post(`${API_BASE}/api/auth/login`, {
+    const response = await axios.post(`${API_BASE}/api/v1/auth/login`, {
       email: email.value,
       password: password.value
     })
 
-    if (response.data.success) {
+    if (response.data && response.data.access_token) {
       successMessage.value = 'Login successful! Redirecting...'
-      // Store token/user data
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token)
+      // Store JWT tokens
+      localStorage.setItem('authToken', response.data.access_token)
+      if (response.data.refresh_token) {
+        localStorage.setItem('refreshToken', response.data.refresh_token)
       }
-      if (response.data.user) {
-        localStorage.setItem('user', JSON.stringify(response.data.user))
+      // Fetch user profile using the token
+      try {
+        const userRes = await axios.get(`${API_BASE}/api/v1/users/email/${email.value}`, {
+          headers: { Authorization: `Bearer ${response.data.access_token}` }
+        })
+        if (userRes.data) {
+          localStorage.setItem('user', JSON.stringify(userRes.data))
+        }
+      } catch (e) {
+        // If user fetch fails, store basic info
+        localStorage.setItem('user', JSON.stringify({ email: email.value }))
       }
       // Determine currency based on user's country after login
       currencyStore.reset()
@@ -134,11 +144,11 @@ const handleSignIn = async () => {
       }, 1000)
     } else {
       failedAttempts.value++
-      errorMessage.value = response.data.error || 'Invalid credentials.'
+      errorMessage.value = 'Invalid credentials. Please try again.'
     }
   } catch (error) {
     failedAttempts.value++
-    errorMessage.value = error.response?.data?.error || 'Login failed. Please try again.'
+    errorMessage.value = error.response?.data?.error || error.response?.data?.message || 'Invalid email or password.'
   } finally {
     isLoading.value = false
   }

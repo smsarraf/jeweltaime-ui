@@ -274,7 +274,7 @@ const wishlistStore = useWishlistStore()
 const currencyStore = useCurrencyStore()
 const parentCategories = ref([])
 const allCategories = ref([])
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
 
@@ -303,11 +303,15 @@ const handleLogout = () => {
 }
 
 onMounted(async () => {
-  // Fetch parent categories (for sidebar/quick links)
+  // Fetch root categories (for sidebar/quick links)
   try {
-    const res = await axios.get(`${API_BASE}/api/categories`)
-    if (res.data.success) {
-      parentCategories.value = res.data.data
+    const res = await axios.get(`${API_BASE}/api/v1/categories/root`)
+    if (res.data) {
+      parentCategories.value = res.data.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')
+      }))
     }
   } catch (e) {
     parentCategories.value = [
@@ -320,11 +324,35 @@ onMounted(async () => {
     ]
   }
 
-  // Fetch full category hierarchy for mega-menu (with children)
+  // Fetch full category hierarchy for mega-menu (with subcategories)
   try {
-    const res = await axios.get(`${API_BASE}/api/categories/all`)
-    if (res.data.success) {
-      allCategories.value = res.data.data
+    const rootRes = await axios.get(`${API_BASE}/api/v1/categories/root`)
+    if (rootRes.data) {
+      const categoriesWithChildren = await Promise.all(
+        rootRes.data.map(async (cat) => {
+          try {
+            const subRes = await axios.get(`${API_BASE}/api/v1/categories/${cat.id}/all-subcategories`)
+            return {
+              id: cat.id,
+              name: cat.name,
+              slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
+              children: (subRes.data?.childCats || []).map(child => ({
+                id: child.id,
+                name: child.name,
+                slug: child.slug || child.name.toLowerCase().replace(/\s+/g, '-')
+              }))
+            }
+          } catch {
+            return {
+              id: cat.id,
+              name: cat.name,
+              slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
+              children: []
+            }
+          }
+        })
+      )
+      allCategories.value = categoriesWithChildren
     }
   } catch (e) {
     // Fallback with children

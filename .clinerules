@@ -23,18 +23,21 @@ JewelTime UI is an e-commerce jewelry store website. It consists of:
 - `fonts/` - Custom fonts (Jost family, icomoon icons)
 - `images/` - Image assets
 
-### `server/` - Express.js Backend
-- `index.js` - Server entry point
-- `routes/` - API route handlers
-  - `auth.js` - Authentication routes
-  - `orders.js` - Order management
-  - `wishlist.js` - Wishlist management
-  - `coupons.js` - Coupon/discount codes
-  - `locations.js` - Location/shipping zones
-  - `policies.js` - Store policies
-  - `shipping-addresses.js` - Shipping address management
-- `services/` - Business logic services
-- `.env` - Environment variables (API keys, DB connections)
+### `server/` - Express.js Backend (Legacy)
+- `index.js` - Server entry point (legacy, used for local dev)
+- `routes/` - API route handlers (legacy)
+- `.env` - Environment variables
+
+### ERP Backend (Primary) - `http://localhost:8081`
+- **Auth**: POST `/api/v1/auth/login`, `/api/v1/auth/register`, `/api/v1/auth/refresh-token`
+- **Products**: GET/POST `/api/v1/products`, `/api/v1/products/{id}`, `/api/v1/products/search`, `/api/v1/products/category/{categoryId}`
+- **Categories**: GET/POST `/api/v1/categories`, `/api/v1/categories/root`, `/api/v1/categories/{id}/subcategories`, `/api/v1/categories/{id}/all-subcategories`
+- **Orders**: GET/POST `/api/v1/orders`, `/api/v1/orders/{id}`, `/api/v1/orders/user/{userId}`, `/api/v1/orders/{id}/status`
+- **Users**: GET `/api/v1/users`, `/api/v1/users/{id}`, `/api/v1/users/email/{email}`
+- **Partners/Suppliers**: GET/POST `/api/v1/partners`, `/api/v1/partners/{id}`, `/api/v1/partners/type/{type}`
+- **Inventory**: POST `/api/v1/inventory/create`, `/api/v1/inventory/add-stock`, `/api/v1/inventory/reduce-stock`, `/api/v1/inventory/adjust-stock`, `/api/v1/inventory/transfer-stock`
+- **Payments**: GET/POST `/api/v1/payments`, `/api/v1/payments/{id}`
+- **Notifications**: GET/POST `/api/v1/notifications`
 
 ### `vue-app/` - Vue 3 Frontend Application
 - **Tech Stack**: Vue 3 (Composition API) + Vite + Pinia + Vue Router + Bootstrap 5 + Axios

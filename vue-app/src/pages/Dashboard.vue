@@ -183,7 +183,7 @@ import axios from 'axios'
 
 const router = useRouter()
 const currencyStore = useCurrencyStore()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
 const userData = computed(() => {
@@ -239,11 +239,17 @@ async function fetchOrders() {
   isLoadingOrders.value = true
   try {
     const token = localStorage.getItem('authToken')
-    const response = await axios.get(`${API_BASE}/api/orders/my-orders`, {
-      headers: { Authorization: `Bearer ${token}` }
+    const userId = userData.value?.id
+    if (!userId) {
+      orders.value = []
+      return
+    }
+    const response = await axios.get(`${API_BASE}/api/v1/orders/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { page: 0, size: 20, sort: ['createdAt,desc'] }
     })
-    if (response.data.success) {
-      orders.value = response.data.data || []
+    if (response.data && response.data.content) {
+      orders.value = response.data.content
     }
   } catch (error) {
     console.warn('Failed to fetch orders:', error.message)
@@ -257,20 +263,18 @@ async function cancelOrder(orderId) {
   cancellingId.value = orderId
   try {
     const token = localStorage.getItem('authToken')
-    const response = await axios.put(`${API_BASE}/api/orders/${orderId}/cancel`, {}, {
+    const response = await axios.put(`${API_BASE}/api/v1/orders/${orderId}/status?status=CANCELLED`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    if (response.data.success) {
+    if (response.data) {
       // Update the order in local state
       const idx = orders.value.findIndex(o => o.id === orderId)
       if (idx !== -1) {
-        orders.value[idx] = response.data.data
+        orders.value[idx] = response.data
       }
-    } else {
-      alert(response.data.error || 'Failed to cancel order.')
     }
   } catch (error) {
-    alert(error.response?.data?.error || 'Failed to cancel order.')
+    alert(error.response?.data?.error || error.response?.data?.message || 'Failed to cancel order.')
   } finally {
     cancellingId.value = null
   }
