@@ -266,6 +266,7 @@ import { useRouter } from 'vue-router'
 import { useCartStore } from '../stores/cartStore'
 import { useWishlistStore } from '../stores/wishlistStore'
 import { useCurrencyStore } from '../stores/currencyStore'
+import { clearAuth } from '../utils/auth'
 import axios from 'axios'
 
 const router = useRouter()
@@ -295,8 +296,7 @@ const userName = computed(() => {
 })
 
 const handleLogout = () => {
-  localStorage.removeItem('authToken')
-  localStorage.removeItem('user')
+  clearAuth()
   wishlistStore.clearWishlist()
   currencyStore.reset()
   router.push('/')
