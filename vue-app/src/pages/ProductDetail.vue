@@ -63,7 +63,7 @@
                                       </ul>
                                       <span class="reviewHD fw-normal">(25 Customer reviews)</span>
                                   </div>
-                                  <h3 class="HPrice fw-normal mb-4">£{{ product.price.toFixed(2) }}</h3>
+                                  <h3 class="HPrice fw-normal mb-4">{{ currencyStore.formatPrice(product.price) }}</h3>
                                   <p class="fw-light mb-1">
                                       This regulator has a rolled diaphragm and high flow rate with reduced pressure drop. It has an excellent degree of condensation.
                                   </p>
@@ -79,11 +79,11 @@
                                           </div>
                                           <a href="javascript:void(0);" class="btn btnTheme submitButton fw-medium text-uppercase" @click="addToCart">Add To Cart</a>
                                       </div>
-                                      <a href="javascript:void(0);" class="btn btn-light submitButton btnII fw-medium text-uppercase">BUY IT NOW</a>
+                                      <a href="javascript:void(0);" class="btn btn-light submitButton btnII fw-medium text-uppercase" @click="buyItNow">BUY IT NOW</a>
                                   </div>
                                   <div class="d-flex btnsWrapper mb-11">
-                                      <a href="javascript:void(0);" class="guide-chart-btn wishListBtn text-decoration-none mb-2 mb-sm-0 me-3 me-sm-7 fw-normal">
-                                          <i class="icomoon-heart-o"></i> Add to Wishlist
+                                      <a href="javascript:void(0);" class="guide-chart-btn wishListBtn text-decoration-none mb-2 mb-sm-0 me-3 me-sm-7 fw-normal" @click="toggleWishlist">
+                                          <i :class="isWishlisted ? 'icomoon-heart' : 'icomoon-heart-o'"></i> {{ isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist' }}
                                       </a>
                                       <a href="javascript:void(0);" class="guide-chart-btn sizeBtn fw-normal text-decoration-none">
                                           <i class="icomoon-th-grid"></i> Size Guide
@@ -158,24 +158,41 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '../stores/cartStore'
+import { useWishlistStore } from '../stores/wishlistStore'
+import { useCurrencyStore } from '../stores/currencyStore'
 
 const route = useRoute()
+const router = useRouter()
 const cartStore = useCartStore()
+const wishlistStore = useWishlistStore()
+const currencyStore = useCurrencyStore()
 
 const quantity = ref(1)
 
+// Generate a consistent product ID based on the slug
+const productSlug = route.params.slug || route.params.id || 'default-product'
+const productId = computed(() => {
+  // Try to find a matching wishlist item by slug
+  const match = wishlistStore.items.find(item => item.slug === productSlug)
+  return match ? match.id : productSlug
+})
+
 const product = ref({
-  id: route.params.id,
+  id: productId.value,
+  slug: productSlug,
   name: 'Blue Stripes & Stone Bracelet',
   category: 'BRACELETS',
   price: 199.00,
   image: 'https://placehold.co/685x685'
 })
 
+const isWishlisted = computed(() => wishlistStore.isInWishlist(product.value.id))
+
 onMounted(() => {
   // In a real app, fetch product by ID here
+  // After fetching, update product.id with the real item ID and re-check wishlist
 })
 
 const addToCart = () => {
@@ -197,5 +214,32 @@ const addToCart = () => {
       const bsOffcanvas = new window.bootstrap.Offcanvas(cartOffcanvas)
       bsOffcanvas.show()
   }
+}
+
+const toggleWishlist = async () => {
+  if (!wishlistStore.isLoggedIn()) {
+    const currentPath = route.fullPath
+    window.location.href = `/signin?redirect=${encodeURIComponent(currentPath)}`
+    return
+  }
+  await wishlistStore.toggleWishlist(product.value)
+}
+
+const buyItNow = () => {
+  const itemToAdd = {
+    ...product.value,
+    quantity: quantity.value
+  }
+
+  // Add to cart
+  const existingItem = cartStore.items.find(item => item.id === itemToAdd.id)
+  if (existingItem) {
+    cartStore.updateQuantity(itemToAdd.id, existingItem.quantity + itemToAdd.quantity)
+  } else {
+    cartStore.items.push(itemToAdd)
+  }
+
+  // Navigate to checkout page
+  router.push('/checkout')
 }
 </script>

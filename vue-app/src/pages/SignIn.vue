@@ -73,10 +73,13 @@
 <script setup>
 import { ref, computed } from 'vue'
 import Captcha from '../components/Captcha.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import { useCurrencyStore } from '../stores/currencyStore'
 import axios from 'axios'
 
 const router = useRouter()
+const route = useRoute()
+const currencyStore = useCurrencyStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 const email = ref('')
@@ -88,6 +91,9 @@ const successMessage = ref('')
 const failedAttempts = ref(0)
 const captchaVerified = ref(false)
 const showCaptcha = computed(() => failedAttempts.value >= 1)
+
+// Get redirect destination from query param, default to dashboard
+const redirectTo = route.query.redirect || '/dashboard'
 
 const handleSignIn = async () => {
   errorMessage.value = ''
@@ -120,8 +126,11 @@ const handleSignIn = async () => {
       if (response.data.user) {
         localStorage.setItem('user', JSON.stringify(response.data.user))
       }
+      // Determine currency based on user's country after login
+      currencyStore.reset()
+      currencyStore.determineCurrency()
       setTimeout(() => {
-        router.push('/')
+        router.push(redirectTo)
       }, 1000)
     } else {
       failedAttempts.value++

@@ -24,13 +24,13 @@
               <tr v-for="item in order.items" :key="item.id">
                 <td>{{ item.name }}</td>
                 <td>{{ item.quantity }}</td>
-                <td>£{{ item.price }}</td>
-                <td>£{{ item.price * item.quantity }}</td>
+                <td>{{ currencyStore.formatPrice(item.price) }}</td>
+                <td>{{ currencyStore.formatPrice(item.price * item.quantity) }}</td>
               </tr>
             </tbody>
           </table>
           <div class="order-total">
-            <strong>Total: £{{ order.total }}</strong>
+            <strong>Total: {{ currencyStore.formatPrice(order.total) }}</strong>
           </div>
         </div>
       </div>
@@ -42,9 +42,11 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
+import { useCurrencyStore } from '../stores/currencyStore'
 
 const route = useRoute()
 const userStore = useUserStore()
+const currencyStore = useCurrencyStore()
 
 const order = computed(() => {
   return userStore.getOrderById(route.params.id)

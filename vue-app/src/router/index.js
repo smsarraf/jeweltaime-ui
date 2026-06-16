@@ -1,11 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../pages/Home.vue'
+import PolicyPage from '../pages/PolicyPage.vue'
 import ProductList from '../pages/ProductList.vue'
 import ProductDetail from '../pages/ProductDetail.vue'
 import Cart from '../pages/Cart.vue'
 import Checkout from '../pages/Checkout.vue'
 import Blog from '../pages/Blog.vue'
 import About from '../pages/About.vue'
+import Contact from '../pages/Contact.vue'
+import SignIn from '../pages/SignIn.vue'
+import Register from '../pages/Register.vue'
+import Wishlist from '../pages/Wishlist.vue'
+import Dashboard from '../pages/Dashboard.vue'
+import Profile from '../pages/Profile.vue'
 
 const routes = [
   {
@@ -19,12 +26,12 @@ const routes = [
     component: ProductList
   },
   {
-    path: '/products/:id',
+    path: '/products/:slug',
     name: 'ProductDetail',
     component: ProductDetail
   },
   {
-    path: '/category/:categoryId',
+    path: '/category/:slug',
     name: 'Category',
     component: ProductList
   },
@@ -47,6 +54,41 @@ const routes = [
     path: '/about',
     name: 'About',
     component: About
+  },
+  {
+    path: '/contact',
+    name: 'Contact',
+    component: Contact
+  },
+  {
+    path: '/signin',
+    name: 'SignIn',
+    component: SignIn
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register
+  },
+  {
+    path: '/wishlist',
+    name: 'Wishlist',
+    component: Wishlist
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Dashboard
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: Profile
+  },
+  {
+    path: '/policies/:slug',
+    name: 'Policy',
+    component: PolicyPage
   }
 ]
 

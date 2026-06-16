@@ -11,13 +11,13 @@
           <div class="order-details">
             <p><strong>Date:</strong> {{ formatDate(order.date) }}</p>
             <p><strong>Items:</strong> {{ order.items.length }}</p>
-            <p><strong>Total:</strong> £{{ order.total }}</p>
+            <p><strong>Total:</strong> {{ currencyStore.formatPrice(order.total) }}</p>
           </div>
           <div class="order-items">
             <h5>Items:</h5>
             <ul>
               <li v-for="item in order.items" :key="item.id">
-                {{ item.name }} (x{{ item.quantity }}) - £{{ item.price }}
+                {{ item.name }} (x{{ item.quantity }}) - {{ currencyStore.formatPrice(item.price) }}
               </li>
             </ul>
           </div>
@@ -34,8 +34,10 @@
 
 <script setup>
 import { useUserStore } from '@/stores/userStore'
+import { useCurrencyStore } from '../stores/currencyStore'
 
 const userStore = useUserStore()
+const currencyStore = useCurrencyStore()
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)

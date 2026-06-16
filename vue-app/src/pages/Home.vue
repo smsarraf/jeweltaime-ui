@@ -30,45 +30,13 @@
                   <h2 class="hhHeading fw-normal">Popular Categories</h2>
               </header>
               <div class="colsHolder d-flex flex-wrap justify-content-center">
-                  <div class="chCol d-flex">
-                      <router-link to="/category/necklaces" class="catColumn d-block w-100 text-center">
-                          <div class="imgHolder mx-auto mb-5">
-                              <img src="https://placehold.co/185x185" class="w-100 h-100 object-fit-cover" alt="image description">
-                          </div>
-                          <h3 class="ctHeading d-inline-block text-uppercase align-top">NECKLaCES</h3>
-                      </router-link>
-                  </div>
-                  <div class="chCol d-flex">
-                      <router-link to="/category/rings" class="catColumn d-block w-100 text-center">
-                          <div class="imgHolder mx-auto mb-5">
-                              <img src="https://placehold.co/185x185" class="w-100 h-100 object-fit-cover" alt="image description">
-                          </div>
-                          <h3 class="ctHeading d-inline-block text-uppercase align-top">RINGS</h3>
-                      </router-link>
-                  </div>
-                  <div class="chCol d-flex">
-                      <router-link to="/category/bracelets" class="catColumn d-block w-100 text-center">
-                          <div class="imgHolder mx-auto mb-5">
-                              <img src="https://placehold.co/185x185" class="w-100 h-100 object-fit-cover" alt="image description">
-                          </div>
-                          <h3 class="ctHeading d-inline-block text-uppercase align-top">BRACELETS</h3>
-                      </router-link>
-                  </div>
-                  <div class="chCol d-flex">
-                      <router-link to="/category/earrings" class="catColumn d-block w-100 text-center">
-                          <div class="imgHolder mx-auto mb-5">
-                              <img src="https://placehold.co/185x185" class="w-100 h-100 object-fit-cover" alt="image description">
-                          </div>
-                          <h3 class="ctHeading d-inline-block text-uppercase align-top">EARRINGS</h3>
-                      </router-link>
-                  </div>
-                  <div class="chCol d-flex">
-                      <router-link to="/category/charms" class="catColumn d-block w-100 text-center">
-                          <div class="imgHolder mx-auto mb-5">
-                              <img src="https://placehold.co/185x185" class="w-100 h-100 object-fit-cover" alt="image description">
-                          </div>
-                          <h3 class="ctHeading d-inline-block text-uppercase align-top">CHARMS & DANGLES</h3>
-                      </router-link>
+                  <div v-for="cat in popularCategories" :key="cat.id" class="chCol d-flex">
+                    <router-link :to="`/category/${cat.slug}`" class="catColumn d-block w-100 text-center">
+                      <div class="imgHolder mx-auto mb-5">
+                        <img :src="cat.image || 'https://placehold.co/185x185'" class="w-100 h-100 object-fit-cover" :alt="cat.name">
+                      </div>
+                      <h3 class="ctHeading d-inline-block text-uppercase align-top">{{ cat.name.toUpperCase() }}</h3>
+                    </router-link>
                   </div>
               </div>
           </div>
@@ -151,8 +119,30 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import ProductCard from '../components/ProductCard.vue'
+import axios from 'axios'
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
+const popularCategories = ref([
+  { id: 1, name: 'Necklaces', slug: 'necklaces', image: 'https://placehold.co/185x185' },
+  { id: 2, name: 'Rings', slug: 'rings', image: 'https://placehold.co/185x185' },
+  { id: 3, name: 'Bracelets', slug: 'bracelets', image: 'https://placehold.co/185x185' },
+  { id: 4, name: 'Earrings', slug: 'earrings', image: 'https://placehold.co/185x185' },
+  { id: 5, name: 'Charms & Dangles', slug: 'charms-dangles', image: 'https://placehold.co/185x185' }
+])
+
+onMounted(async () => {
+  try {
+    const res = await axios.get(`${API_BASE}/api/categories`)
+    if (res.data.success && res.data.data.length) {
+      popularCategories.value = res.data.data.slice(0, 5)
+    }
+  } catch (e) {
+    // Use defaults
+  }
+})
 
 const featuredProducts = ref([
   {
