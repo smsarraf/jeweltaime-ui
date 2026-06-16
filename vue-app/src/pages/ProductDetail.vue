@@ -21,7 +21,17 @@
       </header>
       <section class="position-relative w-100 overflow-hidden py-2 mb-8 mb-md-10 mb-lg-15 mb-xlwd-19 productDetailsArea border-0">
           <div class="container">
-              <div class="productsDetailsWrapper WrapII row">
+              <div v-if="isLoading" class="text-center py-10">
+                  <div class="spinner-border text-dark" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="mt-2 text-muted">Loading product...</p>
+              </div>
+              <div v-else-if="error" class="text-center py-10">
+                  <p class="text-danger">{{ error }}</p>
+                  <router-link to="/products" class="btn btn-dark">Back to Shop</router-link>
+              </div>
+              <div v-else class="productsDetailsWrapper WrapII row">
                   <div class="col-12 col-md-6 col-xlwd-6">
                       <div class="images">
                           <div class="preview-image mb-4">
@@ -65,9 +75,12 @@
                                   </div>
                                   <h3 class="HPrice fw-normal mb-4">{{ currencyStore.formatPrice(product.price) }}</h3>
                                   <p class="fw-light mb-1">
-                                      This regulator has a rolled diaphragm and high flow rate with reduced pressure drop. It has an excellent degree of condensation.
+                                      {{ product.description || 'This regulator has a rolled diaphragm and high flow rate with reduced pressure drop. It has an excellent degree of condensation.' }}
                                   </p>
                                   <strong class="TxtPro">Availability: <span class="productStock fw-normal">In Stock</span></strong>
+                                  <div v-if="product.sku" class="mt-2">
+                                      <small class="text-muted">SKU: {{ product.sku }}</small>
+                                  </div>
                               </div>
                               <div class="mb-6">
                                   <div class="butttonsWraper mb-8">
@@ -93,7 +106,7 @@
                               <ul class="list-unstyled sku-list mb-8 fw-light">
                                   <li class="mb-2">
                                       <span class="productInformation">SKU:</span> 
-                                      <span class="productInformationDetails">017</span>
+                                      <span class="productInformationDetails">{{ product.sku || 'N/A' }}</span>
                                   </li>
                                   <li class="mb-2">
                                       <span class="productInformation">Category:</span>
@@ -127,8 +140,7 @@
                   </h2>
                   <div id="collapseDesc" class="accordion-collapse collapse show" aria-labelledby="headingDesc" data-bs-parent="#productAccordion">
                       <div class="accordion-body">
-                          <p>Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake. Tart oat cake lollipop lollipop halvah chupa chups bonbon sugar plum dessert.</p>
-                          <p>Macaroon topping chocolate. Cake jelly beans icing tiramisu. Ice cream bonbon tart sesame snaps. Bear claw chocolate bar candy pudding cake caramels.</p>
+                          <p>{{ product.description || 'Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake. Tart oat cake lollipop lollipop halvah chupa chups bonbon sugar plum dessert.' }}</p>
                       </div>
                   </div>
               </div>
@@ -142,10 +154,9 @@
                       <div class="accordion-body mb-6">
                           <table class="table DetalsTable table-bordered mb-0">
                               <tbody>
-                                  <tr><th class="text-uppercase fw-medium py-3 px-6">Weight</th><td class="py-3 px-6">1.5 kg</td></tr>
-                                  <tr><th class="text-uppercase fw-medium py-3 px-6">Dimensions</th><td class="py-3 px-6">90 x 60 x 90 cm</td></tr>
-                                  <tr><th class="text-uppercase fw-medium py-3 px-6">Composition</th><td class="py-3 px-6">100% Cotton</td></tr>
-                                  <tr><th class="text-uppercase fw-medium py-3 px-6">Colour</th><td class="py-3 px-6">Blue, Gray, Red</td></tr>
+                                  <tr><th class="text-uppercase fw-medium py-3 px-6">SKU</th><td class="py-3 px-6">{{ product.sku || 'N/A' }}</td></tr>
+                                  <tr><th class="text-uppercase fw-medium py-3 px-6">Category</th><td class="py-3 px-6">{{ product.category }}</td></tr>
+                                  <tr><th class="text-uppercase fw-medium py-3 px-6">Supplier</th><td class="py-3 px-6">{{ product.supplierName || 'N/A' }}</td></tr>
                               </tbody>
                           </table>
                       </div>
@@ -157,62 +168,106 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '../stores/cartStore'
 import { useWishlistStore } from '../stores/wishlistStore'
 import { useCurrencyStore } from '../stores/currencyStore'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
 const currencyStore = useCurrencyStore()
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 const quantity = ref(1)
-
-// Generate a consistent product ID based on the slug
-const productSlug = route.params.slug || route.params.id || 'default-product'
-const productId = computed(() => {
-  // Try to find a matching wishlist item by slug
-  const match = wishlistStore.items.find(item => item.slug === productSlug)
-  return match ? match.id : productSlug
-})
+const isLoading = ref(false)
+const error = ref('')
 
 const product = ref({
-  id: productId.value,
-  slug: productSlug,
-  name: 'Blue Stripes & Stone Bracelet',
-  category: 'BRACELETS',
-  price: 199.00,
-  image: 'https://placehold.co/685x685'
+  id: '',
+  name: '',
+  category: '',
+  price: 0,
+  image: 'https://placehold.co/685x685',
+  sku: '',
+  description: '',
+  supplierName: ''
+})
+
+const productSlug = computed(() => route.params.slug || route.params.id)
+const productId = computed(() => {
+  const match = wishlistStore.items.find(item => item.slug === productSlug.value)
+  return match ? match.id : productSlug.value
 })
 
 const isWishlisted = computed(() => wishlistStore.isInWishlist(product.value.id))
 
+async function fetchProduct() {
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    // Try to get product by ID (numeric)
+    const response = await axios.get(`${API_BASE}/api/v1/products/${productSlug.value}`)
+    if (response.data) {
+      const p = response.data
+      product.value = {
+        id: p.id,
+        name: p.name,
+        category: p.categoryName || 'Jewelry',
+        price: p.basePriceUsd || 0,
+        image: 'https://placehold.co/685x685',
+        sku: p.sku || '',
+        description: p.description || '',
+        supplierName: p.supplierName || ''
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to fetch product:', e.message)
+    // Fallback to demo product
+    product.value = {
+      id: productSlug.value,
+      name: 'Blue Stripes & Stone Bracelet',
+      category: 'BRACELETS',
+      price: 199.00,
+      image: 'https://placehold.co/685x685',
+      sku: 'DEMO-001',
+      description: 'Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake.',
+      supplierName: 'Demo Supplier'
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
 onMounted(() => {
-  // In a real app, fetch product by ID here
-  // After fetching, update product.id with the real item ID and re-check wishlist
+  fetchProduct()
+})
+
+watch(() => route.params.slug, () => {
+  fetchProduct()
 })
 
 const addToCart = () => {
   const itemToAdd = {
-      ...product.value,
-      quantity: quantity.value
+    ...product.value,
+    quantity: quantity.value
   }
   
-  // Custom logic to handle adding to cart with quantity
   const existingItem = cartStore.items.find(item => item.id === itemToAdd.id)
   if (existingItem) {
-      cartStore.updateQuantity(itemToAdd.id, existingItem.quantity + itemToAdd.quantity)
+    cartStore.updateQuantity(itemToAdd.id, existingItem.quantity + itemToAdd.quantity)
   } else {
-      cartStore.items.push(itemToAdd)
+    cartStore.items.push(itemToAdd)
   }
   
   const cartOffcanvas = document.getElementById('filtersProduct')
   if (cartOffcanvas && typeof window.bootstrap !== 'undefined') {
-      const bsOffcanvas = new window.bootstrap.Offcanvas(cartOffcanvas)
-      bsOffcanvas.show()
+    const bsOffcanvas = new window.bootstrap.Offcanvas(cartOffcanvas)
+    bsOffcanvas.show()
   }
 }
 
@@ -231,7 +286,6 @@ const buyItNow = () => {
     quantity: quantity.value
   }
 
-  // Add to cart
   const existingItem = cartStore.items.find(item => item.id === itemToAdd.id)
   if (existingItem) {
     cartStore.updateQuantity(itemToAdd.id, existingItem.quantity + itemToAdd.quantity)
@@ -239,7 +293,6 @@ const buyItNow = () => {
     cartStore.items.push(itemToAdd)
   }
 
-  // Navigate to checkout page
   router.push('/checkout')
 }
 </script>
