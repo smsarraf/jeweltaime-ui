@@ -75,11 +75,15 @@ import { ref, computed } from 'vue'
 import Captcha from '../components/Captcha.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCurrencyStore } from '../stores/currencyStore'
+import { useWishlistStore } from '../stores/wishlistStore'
+import { useLocationStore } from '../stores/locationStore'
 import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
 const currencyStore = useCurrencyStore()
+const wishlistStore = useWishlistStore()
+const locationStore = useLocationStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 const email = ref('')
@@ -139,6 +143,8 @@ const handleSignIn = async () => {
       // Determine currency based on user's country after login
       currencyStore.reset()
       currencyStore.determineCurrency()
+      // Fetch wishlist from server after login
+      wishlistStore.fetchWishlist()
       setTimeout(() => {
         router.push(redirectTo)
       }, 1000)

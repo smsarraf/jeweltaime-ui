@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const LOCATION_CACHE_KEY = 'jeweltaime_locations'
 
 export const useLocationStore = defineStore('location', {
   state: () => ({
@@ -22,28 +23,57 @@ export const useLocationStore = defineStore('location', {
 
       this.isLoading = true
       try {
-        // Try to load from cache first
-        const cached = localStorage.getItem('locationCache')
+        // Try localStorage cache first (silent load)
+        const cached = localStorage.getItem(LOCATION_CACHE_KEY)
         if (cached) {
-          const parsed = JSON.parse(cached)
-          if (parsed && parsed.countries) {
-            this._setData(parsed)
-            this.isLoading = false
-            return
-          }
+          try {
+            const parsed = JSON.parse(cached)
+            if (parsed && Array.isArray(parsed.countries)) {
+              this._setData(parsed.countries)
+              this.isLoading = false
+              this.loaded = true
+              // Still try to refresh in background
+              this._refreshInBackground()
+              return
+            }
+          } catch (e) { /* ignore bad cache */ }
         }
 
-        const response = await axios.get(`${API_BASE}/api/locations/all`)
-        if (response.data.success) {
-          this._setData(response.data.data)
-          // Cache in localStorage
-          localStorage.setItem('locationCache', JSON.stringify({ countries: response.data.data, timestamp: Date.now() }))
+        // Fetch from legacy API (no ERP equivalent yet)
+        const response = await axios.get(`${API_BASE}/api/locations/all`, { timeout: 8000 })
+        if (response.data && response.data.success) {
+          const data = response.data.data
+          this._setData(data)
+          this.loaded = true
+          localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(data))
         }
       } catch (error) {
         console.warn('Failed to load locations:', error.message)
+        // Try to use stale cache as last resort
+        const cached = localStorage.getItem(LOCATION_CACHE_KEY)
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached)
+            if (parsed && Array.isArray(parsed.countries)) {
+              this._setData(parsed.countries)
+              this.loaded = true
+            }
+          } catch (e) { /* ignore */ }
+        }
       } finally {
         this.isLoading = false
       }
+    },
+
+    async _refreshInBackground() {
+      try {
+        const response = await axios.get(`${API_BASE}/api/locations/all`, { timeout: 5000 })
+        if (response.data && response.data.success) {
+          const data = response.data.data
+          this._setData(data)
+          localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(data))
+        }
+      } catch (e) { /* silent */ }
     },
 
     _setData(countries) {

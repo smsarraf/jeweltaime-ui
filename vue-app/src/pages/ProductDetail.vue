@@ -73,7 +73,7 @@
                                       </ul>
                                       <span class="reviewHD fw-normal">(25 Customer reviews)</span>
                                   </div>
-                                  <h3 class="HPrice fw-normal mb-4">{{ currencyStore.formatPrice(product.price) }}</h3>
+                                  <h3 class="HPrice fw-normal mPrb-4">{{ currencyStore.formatPrice(product.price) }}</h3>
                                   <p class="fw-light mb-1">
                                       {{ product.description || 'This regulator has a rolled diaphragm and high flow rate with reduced pressure drop. It has an excellent degree of condensation.' }}
                                   </p>
@@ -173,6 +173,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '../stores/cartStore'
 import { useWishlistStore } from '../stores/wishlistStore'
 import { useCurrencyStore } from '../stores/currencyStore'
+import { toSlug } from '../utils/slug'
 import axios from 'axios'
 
 const route = useRoute()
@@ -198,20 +199,39 @@ const product = ref({
 })
 
 const productSlug = computed(() => route.params.slug || route.params.id)
+
+/**
+ * Extracts the numeric product ID from a slug in the format "product-name-123".
+ */
 const productId = computed(() => {
-  const match = wishlistStore.items.find(item => item.slug === productSlug.value)
-  return match ? match.id : productSlug.value
+  const slug = productSlug.value
+  if (!slug) return ''
+  // Try to extract trailing numeric ID from slug (e.g., "blue-bracelet-42" → "42")
+  const match = slug.match(/-(\d+)$/)
+  if (match) return match[1]
+  return slug
 })
 
 const isWishlisted = computed(() => wishlistStore.isInWishlist(product.value.id))
+
+const productSlugDisplay = computed(() => {
+  if (product.value.name) {
+    return toSlug(product.value.name)
+  }
+  return ''
+})
 
 async function fetchProduct() {
   isLoading.value = true
   error.value = ''
 
   try {
-    // Try to get product by ID (numeric)
-    const response = await axios.get(`${API_BASE}/api/v1/products/${productSlug.value}`)
+    // Extract numeric ID from slug (e.g., "product-name-42" → "42")
+    const slug = productSlug.value
+    const idMatch = slug.match(/-(\d+)$/)
+    const fetchId = idMatch ? idMatch[1] : slug
+
+    const response = await axios.get(`${API_BASE}/api/v1/products/${fetchId}`)
     if (response.data) {
       const p = response.data
       product.value = {
@@ -229,7 +249,7 @@ async function fetchProduct() {
     console.warn('Failed to fetch product:', e.message)
     // Fallback to demo product
     product.value = {
-      id: productSlug.value,
+      id: productId.value,
       name: 'Blue Stripes & Stone Bracelet',
       category: 'BRACELETS',
       price: 199.00,

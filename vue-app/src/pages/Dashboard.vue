@@ -218,20 +218,26 @@ function formatDate(dateStr) {
 }
 
 function statusBadgeClass(status) {
+  if (!status) return 'badge bg-light text-dark rounded-0'
+  const s = status.toLowerCase()
   const map = {
-    pending: 'badge bg-warning text-dark rounded-0',
-    confirmed: 'badge bg-info text-dark rounded-0',
-    processing: 'badge bg-primary rounded-0',
-    shipped: 'badge bg-dark rounded-0',
+    ordered: 'badge bg-warning text-dark rounded-0',
+    preparing: 'badge bg-info text-dark rounded-0',
+    ready_for_shipping: 'badge bg-primary rounded-0',
+    shipped: 'badge bg-dark text-white rounded-0',
     delivered: 'badge bg-success rounded-0',
     cancelled: 'badge bg-danger rounded-0',
-    refunded: 'badge bg-secondary rounded-0'
+    qc_pending: 'badge bg-info rounded-0',
+    qc_rejected: 'badge bg-danger rounded-0',
+    order_to_manufacture: 'badge bg-secondary rounded-0'
   }
-  return map[status] || 'badge bg-light text-dark rounded-0'
+  return map[s] || 'badge bg-light text-dark rounded-0'
 }
 
 function canCancel(status) {
-  return ['pending', 'confirmed'].includes(status)
+  if (!status) return false
+  const s = status.toLowerCase()
+  return ['ordered', 'preparing'].includes(s)
 }
 
 async function fetchOrders() {
@@ -282,6 +288,7 @@ async function cancelOrder(orderId) {
 
 const handleLogout = () => {
   localStorage.removeItem('authToken')
+  localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')
   router.push('/')
 }

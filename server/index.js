@@ -33,7 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/shipping-addresses', shippingAddressRoutes);
-app.use('/api/policies', policiesRoutes);
+app.use('/api/legal-policies', policiesRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

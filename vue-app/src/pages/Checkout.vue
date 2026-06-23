@@ -148,10 +148,7 @@
                         <div class="coolSelectWrapper">
                           <select class="coolSelect form-control" v-model="billing.country">
                             <option value="" disabled>Select Country</option>
-                            <option value="US">United States</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="AU">Australia</option>
-                            <option value="CA">Canada</option>
+                            <option v-for="c in locationStore.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
                           </select>
                         </div>
                       </div>
@@ -312,10 +309,12 @@
 import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useCartStore } from '../stores/cartStore'
 import { useCurrencyStore } from '../stores/currencyStore'
+import { useLocationStore } from '../stores/locationStore'
 import axios from 'axios'
 
 const cartStore = useCartStore()
 const currencyStore = useCurrencyStore()
+const locationStore = useLocationStore()
 const orderPlaced = ref(false)
 const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
 const orderNumber = ref('')
@@ -369,6 +368,21 @@ let paymentSession = null
 const paymentLoading = ref(false)
 const paymentError = ref('')
 
+// Order reference (stored after creation, before payment)
+let createdOrderId = null
+
+// Map of country codes to ERP country IDs
+function getCountryId(code) {
+  const map = { 'US': 1, 'GB': 2, 'AU': 3, 'CA': 4, 'AE': 5, 'SG': 6, 'HK': 7, 'DE': 8, 'FR': 9, 'IT': 10 }
+  return map[code?.toUpperCase()] || 1
+}
+
+// Get current user ID from localStorage
+function getUserId() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  return user.id || null
+}
+
 const subtotalAfterDiscount = computed(() => {
   return Math.max(0, cartStore.totalPrice - checkoutDiscount.value)
 })
@@ -378,7 +392,6 @@ const totalWithShipping = computed(() => {
 })
 
 const handleLogin = () => {
-  // Placeholder login
   if (loginEmail.value && loginPassword.value) {
     alert('Login feature coming soon!')
   } else {
@@ -396,7 +409,6 @@ const applyCouponCode = async () => {
   checkoutCouponMessage.value = ''
   checkoutCouponSuccess.value = false
 
-  // Coupon validation not available in ERP backend - show demo message
   checkoutCouponMessage.value = 'Coupon validation is not available yet.'
   checkoutCouponSuccess.value = false
 }
@@ -433,6 +445,47 @@ function validateBilling() {
   )
 }
 
+/**
+ * Step 1: Create the order in the ERP backend via POST /api/v1/orders
+ */
+async function createOrder() {
+  const token = localStorage.getItem('authToken')
+  const userId = getUserId()
+
+  const orderData = {
+    userId: userId || 1,
+    shippingAddress: `${billing.addressLine1}, ${billing.city}, ${billing.state} ${billing.postcode}`,
+    countryId: getCountryId(billing.country),
+    currencyId: 1,
+    items: cartStore.items.map(item => ({
+      productId: Number(item.id),
+      quantity: item.quantity
+    }))
+  }
+
+  const response = await axios.post(`${API_BASE}/api/v1/orders`, orderData, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  })
+
+  return response.data
+}
+
+/**
+ * Step 2: Create payment intent via POST /api/v1/payments/create-intent
+ */
+async function createPaymentIntent(orderId, totalAmount) {
+  const response = await axios.post(`${API_BASE}/api/v1/payments/create-intent`, {
+    amount: totalAmount,
+    currency: currencyStore.currency,
+    orderId: String(orderId)
+  })
+
+  return response.data
+}
+
+/**
+ * Initialize the Airwallex drop-in element with the payment intent
+ */
 async function initAirwallexDropin() {
   paymentLoading.value = true
   paymentError.value = ''
@@ -450,20 +503,24 @@ async function initAirwallexDropin() {
       return
     }
 
-    const totalAmount = totalWithShipping.value
+    // Step 1: Create the order first
+    const orderResponse = await createOrder()
+    createdOrderId = orderResponse.id || orderResponse.orderId
 
-    const response = await axios.post(`${API_BASE}/api/v1/payments`, {
-      amount: totalAmount,
-      currency: currencyStore.currency,
-      order_id: null,
-      user_id: null
-    })
-
-    if (!response.data) {
-      throw new Error('Failed to create payment session')
+    if (!createdOrderId) {
+      throw new Error('Order creation failed - no order ID returned.')
     }
 
-    paymentSession = response.data
+    // Step 2: Create payment intent with the order ID
+    const totalAmount = totalWithShipping.value
+    paymentSession = await createPaymentIntent(createdOrderId, totalAmount)
+
+    if (!paymentSession || (!paymentSession.client_secret && !paymentSession.clientSecret)) {
+      throw new Error('Failed to create payment intent.')
+    }
+
+    const intentId = paymentSession.id || paymentSession.paymentIntentId
+    const clientSecret = paymentSession.client_secret || paymentSession.clientSecret
 
     if (dropinElement) {
       try { dropinElement.unmount() } catch (e) { /* ignore */ }
@@ -472,10 +529,11 @@ async function initAirwallexDropin() {
 
     await nextTick()
 
+    // Step 3: Mount Airwallex drop-in with the payment intent
     dropinElement = airwallex.createElement('dropin', {
       intent: {
-        id: paymentSession.paymentIntentId,
-        client_secret: paymentSession.clientSecret
+        id: intentId,
+        client_secret: clientSecret
       },
       layout: 'tabs',
       showSavePaymentMethod: false,
@@ -553,8 +611,7 @@ async function processAirwallexPayment() {
     const result = await dropinElement.confirm()
 
     if (result.status === 'success' || result.status === 'succeeded' || result.status === 'requires_capture') {
-      const orderId = `JT-${Date.now().toString(36).toUpperCase()}`
-      await finalizeOrder(orderId, 'airwallex', result.id)
+      finalizeOrder(createdOrderId, 'airwallex', result.id || result.paymentIntentId)
     } else {
       throw new Error(result.error?.message || 'Payment was not successful.')
     }
@@ -564,30 +621,8 @@ async function processAirwallexPayment() {
 }
 
 
-async function finalizeOrder(orderId, paymentMethod, transactionId) {
-  const token = localStorage.getItem('authToken')
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-
-  const orderData = {
-    userId: user.id,
-    shippingAddress: `${billing.addressLine1}, ${billing.city}, ${billing.state} ${billing.postcode}`,
-    countryId: 1,
-    currencyId: 1,
-    items: cartStore.items.map(item => ({
-      productId: item.id,
-      quantity: item.quantity
-    }))
-  }
-
-  try {
-    await axios.post(`${API_BASE}/api/v1/orders`, orderData, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-  } catch (e) {
-    console.warn('Order submission warning:', e.message)
-  }
-
-  orderNumber.value = orderId
+function finalizeOrder(orderId, paymentMethod, transactionId) {
+  orderNumber.value = orderId || `JT-${Date.now().toString(36).toUpperCase()}`
   orderPlaced.value = true
   cartStore.clearCart()
   window.scrollTo(0, 0)
@@ -596,6 +631,13 @@ async function finalizeOrder(orderId, paymentMethod, transactionId) {
 onBeforeUnmount(() => {
   if (dropinElement) {
     try { dropinElement.unmount() } catch (e) { /* ignore */ }
+  }
+})
+
+// Ensure locations are loaded when checkout is opened
+onMounted(() => {
+  if (!locationStore.loaded) {
+    locationStore.loadAllLocations()
   }
 })
 </script>

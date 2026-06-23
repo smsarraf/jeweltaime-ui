@@ -49,7 +49,8 @@ const content = ref('')
 const loading = ref(true)
 const error = ref(false)
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const ERP_API = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const LEGACY_API = 'http://localhost:3001'
 
 onMounted(async () => {
   const slug = route.params.slug
@@ -59,8 +60,20 @@ onMounted(async () => {
     return
   }
 
+  // Try ERP backend first, then fallback to legacy server
   try {
-    const res = await axios.get(`${API_BASE}/api/policies/${slug}`)
+    const res = await axios.get(`${ERP_API}/api/v1/legal-policies/${slug}`)
+    if (res.data && res.data.title) {
+      title.value = res.data.title
+      content.value = res.data.content || res.data.body || ''
+      return
+    }
+  } catch (e) {
+    // ERP doesn't have policies — try legacy
+  }
+
+  try {
+    const res = await axios.get(`${LEGACY_API}/api/policies/${slug}`)
     if (res.data.success) {
       title.value = res.data.data.title
       content.value = res.data.data.content

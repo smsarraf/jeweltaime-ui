@@ -1,7 +1,7 @@
 <template>
   <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
     <div class="imgHolder mb-2">
-      <router-link :to="`/products/${product.slug || product.id}`">
+      <router-link :to="`/products/${urlSlug}`">
         <img :src="product.image || 'https://placehold.co/305x305'" class="w-100 img-fluid" :alt="product.name">
       </router-link>
       <strong v-if="product.sale" class="position-absolute text-uppercase bg-danger fw-semibold text-white pcTag">-30%</strong>
@@ -20,7 +20,7 @@
     </div>
     <strong class="d-block mb-1 fw-normal pcTitle">{{ product.category }}</strong>
     <h3 class="fw-light pcHeading mb-1">
-      <router-link :to="`/products/${product.slug || product.id}`" class="text-decoration-none">{{ product.name }}</router-link>
+      <router-link :to="`/products/${urlSlug}`" class="text-decoration-none">{{ product.name }}</router-link>
     </h3>
     <h4 class="fw-normal pcPrice mb-0">
       <span v-if="product.sale" class="salePrice">{{ currencyStore.formatPrice(product.price) }}</span>
@@ -37,6 +37,7 @@ import { computed } from 'vue'
 import { useCartStore } from '../stores/cartStore'
 import { useWishlistStore } from '../stores/wishlistStore'
 import { useCurrencyStore } from '../stores/currencyStore'
+import { toSlug } from '../utils/slug'
 
 const props = defineProps({
   product: {
@@ -51,6 +52,12 @@ const currencyStore = useCurrencyStore()
 
 const productId = computed(() => props.product.id || props.product._id)
 const isWishlisted = computed(() => wishlistStore.isInWishlist(productId.value))
+
+const urlSlug = computed(() => {
+  const slug = toSlug(props.product.name)
+  const id = props.product.id || props.product._id
+  return id ? `${slug}-${id}` : slug
+})
 
 const addToCart = () => {
   cartStore.addToCart(props.product)

@@ -586,6 +586,7 @@ async function setDefaultAddress(addrId) {
 
 const handleLogout = () => {
   localStorage.removeItem('authToken')
+  localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')
   router.push('/')
 }

@@ -52,7 +52,7 @@
           <div v-for="item in wishlistStore.items" :key="item.id" class="col-12 col-sm-6 col-md-4 col-lg-3 mb-6">
             <div class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden border pb-4">
               <div class="imgHolder mb-2">
-                <router-link :to="`/products/${item.slug || item.id}`">
+                <router-link :to="itemLink(item)">
                   <img :src="item.image || 'https://placehold.co/305x305'" class="w-100 img-fluid" :alt="item.name">
                 </router-link>
                 <button class="btn btn-sm position-absolute top-0 end-0 m-2 border-0 bg-white rounded-circle" @click="removeItem(item.id)" title="Remove from wishlist">
@@ -61,7 +61,7 @@
               </div>
               <strong class="d-block mb-1 fw-normal pcTitle">{{ item.category }}</strong>
               <h3 class="fw-light pcHeading mb-1 px-2">
-                <router-link :to="`/products/${item.slug || item.id}`" class="text-decoration-none">{{ item.name }}</router-link>
+                <router-link :to="itemLink(item)" class="text-decoration-none">{{ item.name }}</router-link>
               </h3>
               <h4 class="fw-normal pcPrice mb-3">{{ currencyStore.formatPrice(item.price || 0) }}</h4>
               <button class="btn btn-dark btn-sm fw-medium text-uppercase px-4 py-2" @click="moveToCart(item)">
@@ -80,12 +80,19 @@ import { computed } from 'vue'
 import { useWishlistStore } from '../stores/wishlistStore'
 import { useCartStore } from '../stores/cartStore'
 import { useCurrencyStore } from '../stores/currencyStore'
+import { toSlug } from '../utils/slug'
 
 const wishlistStore = useWishlistStore()
 const cartStore = useCartStore()
 const currencyStore = useCurrencyStore()
 
 const isLoggedIn = computed(() => wishlistStore.isLoggedIn())
+
+const itemLink = (item) => {
+  const slug = toSlug(item.name || '')
+  const id = item.id || item._id
+  return id ? `/products/${slug}-${id}` : `/products/${slug || id}`
+}
 
 const removeItem = async (productId) => {
   await wishlistStore.toggleWishlist({ id: productId })

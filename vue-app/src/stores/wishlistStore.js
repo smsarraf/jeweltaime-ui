@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const WISHLIST_KEY = 'jeweltaime_wishlist'
 
 export const useWishlistStore = defineStore('wishlist', {
   state: () => ({
@@ -25,11 +26,30 @@ export const useWishlistStore = defineStore('wishlist', {
       return !!localStorage.getItem('authToken')
     },
 
-    // Fetch all wishlist items from server
-    async fetchWishlist() {
-      if (!this.isLoggedIn()) {
+    // Load wishlist from localStorage (for guest users)
+    loadLocalWishlist() {
+      try {
+        const cached = localStorage.getItem(WISHLIST_KEY)
+        if (cached) {
+          const items = JSON.parse(cached)
+          this.items = Array.isArray(items) ? items : []
+          this.wishlistIds = new Set(this.items.map(item => item.id))
+        }
+      } catch (e) {
         this.items = []
         this.wishlistIds = new Set()
+      }
+    },
+
+    // Save wishlist to localStorage
+    saveLocalWishlist() {
+      localStorage.setItem(WISHLIST_KEY, JSON.stringify(this.items))
+    },
+
+    // Fetch all wishlist items from server (logged-in users)
+    async fetchWishlist() {
+      if (!this.isLoggedIn()) {
+        this.loadLocalWishlist()
         return
       }
 
@@ -41,14 +61,14 @@ export const useWishlistStore = defineStore('wishlist', {
         if (response.data.success) {
           this.items = response.data.data || []
           this.wishlistIds = new Set(this.items.map(item => item.id))
+          this.saveLocalWishlist()
         }
       } catch (error) {
         if (error.response?.status === 401) {
-          // Token expired or invalid — clear auth
+          // Token expired or invalid — fallback to local
           localStorage.removeItem('authToken')
           localStorage.removeItem('user')
-          this.items = []
-          this.wishlistIds = new Set()
+          this.loadLocalWishlist()
         }
         console.warn('Fetch wishlist error:', error.message)
       } finally {
