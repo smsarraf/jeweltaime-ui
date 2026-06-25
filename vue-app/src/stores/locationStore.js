@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 const LOCATION_CACHE_KEY = 'jeweltaime_locations'
 
 export const useLocationStore = defineStore('location', {
@@ -39,16 +39,16 @@ export const useLocationStore = defineStore('location', {
           } catch (e) { /* ignore bad cache */ }
         }
 
-        // Fetch from legacy API (no ERP equivalent yet)
-        const response = await axios.get(`${API_BASE}/api/locations/all`, { timeout: 8000 })
-        if (response.data && response.data.success) {
-          const data = response.data.data
-          this._setData(data)
+        // Fetch from ERP API
+        const response = await axios.get(`${API_BASE}/api/v1/locations/countries`, { timeout: 8000 })
+        if (response.data) {
+          const countries = Array.isArray(response.data) ? response.data : []
+          this._setData(countries)
           this.loaded = true
-          localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(data))
+          localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify({ countries }))
         }
       } catch (error) {
-        console.warn('Failed to load locations:', error.message)
+        console.warn('Failed to load countries:', error.message)
         // Try to use stale cache as last resort
         const cached = localStorage.getItem(LOCATION_CACHE_KEY)
         if (cached) {
@@ -65,26 +65,91 @@ export const useLocationStore = defineStore('location', {
       }
     },
 
+    async loadStates(countryId) {
+      if (!countryId) return
+      // Only fetch if not already loaded
+      if (this.statesByCountry[countryId] && this.statesByCountry[countryId].length > 0) return
+
+      try {
+        const response = await axios.get(`${API_BASE}/api/v1/locations/countries/${countryId}/states`, { timeout: 5000 })
+        if (response.data) {
+          const states = (Array.isArray(response.data) ? response.data : []).map(s => ({ id: s.id, name: s.name, stateCode: s.stateCode }))
+          this.statesByCountry[countryId] = states
+          // Update cache
+          this._updateCache()
+        }
+      } catch (error) {
+        console.warn('Failed to load states:', error.message)
+      }
+    },
+
+    async loadCities(stateId) {
+      if (!stateId) return
+      if (this.citiesByState[stateId] && this.citiesByState[stateId].length > 0) return
+
+      try {
+        const response = await axios.get(`${API_BASE}/api/v1/locations/states/${stateId}/cities`, { timeout: 5000 })
+        if (response.data) {
+          const cities = (Array.isArray(response.data) ? response.data : []).map(c => ({ id: c.id, name: c.name, postalCodeRegex: c.postalCodeRegex }))
+          this.citiesByState[stateId] = cities
+          this._updateCache()
+        }
+      } catch (error) {
+        console.warn('Failed to load cities:', error.message)
+      }
+    },
+
+    _updateCache() {
+      try {
+        const data = { countries: [] }
+        this.countries.forEach(c => {
+          const country = { id: c.id, name: c.name }
+          const states = this.statesByCountry[c.id]
+          if (states && states.length > 0) {
+            country.states = states.map(s => {
+              const state = { id: s.id, name: s.name }
+              const cities = this.citiesByState[s.id]
+              if (cities && cities.length > 0) {
+                state.cities = cities.map(ct => ({ id: ct.id, name: ct.name }))
+              }
+              return state
+            })
+          }
+          data.countries.push(country)
+        })
+        localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(data))
+      } catch (e) { /* ignore */ }
+    },
+
     async _refreshInBackground() {
       try {
-        const response = await axios.get(`${API_BASE}/api/locations/all`, { timeout: 5000 })
-        if (response.data && response.data.success) {
-          const data = response.data.data
-          this._setData(data)
-          localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(data))
+        const response = await axios.get(`${API_BASE}/api/v1/locations/countries`, { timeout: 5000 })
+        if (response.data) {
+          const countries = Array.isArray(response.data) ? response.data : []
+          this._clearStatesAndCities()
+          this._setData(countries)
+          localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify({ countries }))
         }
       } catch (e) { /* silent */ }
     },
 
-    _setData(countries) {
-      this.countries = countries.map(c => ({ id: c.id, name: c.name }))
+    _clearStatesAndCities() {
       this.statesByCountry = {}
       this.citiesByState = {}
+    },
+
+    _setData(countries) {
+      this.countries = countries.map(c => ({ id: c.id, name: c.name }))
+      // If API returned full tree data, use it; otherwise lazy load will fill in
       countries.forEach(country => {
-        this.statesByCountry[country.id] = (country.states || []).map(s => ({ id: s.id, name: s.name }))
-        ;(country.states || []).forEach(state => {
-          this.citiesByState[state.id] = (state.cities || []).map(c => ({ id: c, name: c }))
-        })
+        if (country.states && Array.isArray(country.states) && country.states.length > 0) {
+          this.statesByCountry[country.id] = country.states.map(s => ({ id: s.id, name: s.name, stateCode: s.stateCode }))
+          country.states.forEach(state => {
+            if (state.cities && Array.isArray(state.cities) && state.cities.length > 0) {
+              this.citiesByState[state.id] = state.cities.map(c => ({ id: c.id, name: c.name }))
+            }
+          })
+        }
       })
       this.loaded = true
     },
@@ -94,7 +159,7 @@ export const useLocationStore = defineStore('location', {
       this.statesByCountry = {}
       this.citiesByState = {}
       this.loaded = false
-      localStorage.removeItem('locationCache')
+      localStorage.removeItem(LOCATION_CACHE_KEY)
     }
   }
 })

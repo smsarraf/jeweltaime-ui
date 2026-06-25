@@ -15,10 +15,12 @@ import CookieConsent from './components/CookieConsent.vue'
 import { useCurrencyStore } from './stores/currencyStore'
 import { useLocationStore } from './stores/locationStore'
 import { useWishlistStore } from './stores/wishlistStore'
+import { useSiteSettingsStore } from './stores/siteSettingsStore'
 
 const currencyStore = useCurrencyStore()
 const locationStore = useLocationStore()
 const wishlistStore = useWishlistStore()
+const siteSettings = useSiteSettingsStore()
 
 onMounted(() => {
   // Silent init: locations (cached, non-blocking)
@@ -27,6 +29,8 @@ onMounted(() => {
   currencyStore.determineCurrency()
   // Load wishlist (from server if logged in, else local cache)
   wishlistStore.fetchWishlist()
+  // Load site settings (cached, refreshed in background)
+  siteSettings.loadSettings()
 })
 </script>
 

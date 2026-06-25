@@ -144,13 +144,36 @@
                     </div>
                     <div class="formCol mb-3">
                       <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Country</span>
+                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Country <em class="req">*</em></span>
                         <div class="coolSelectWrapper">
-                          <select class="coolSelect form-control" v-model="billing.country">
+                          <select class="coolSelect form-control" v-model="billing.country" @change="onCountryChange">
                             <option value="" disabled>Select Country</option>
                             <option v-for="c in locationStore.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
                           </select>
                         </div>
+                      </div>
+                    </div>
+                    <div class="formCol formCol50 mb-3">
+                      <div class="form-group d-block">
+                        <span class="fLabel fw-normal text-capitalize d-block mb-1">State / County <em class="req">*</em></span>
+                        <div class="coolSelectWrapper">
+                          <select class="coolSelect form-control" v-model="billing.state" @change="onStateChange">
+                            <option value="" disabled>Select State</option>
+                            <option v-for="s in locationStore.getStates(billing.country)" :key="s.id" :value="s.id">{{ s.name }}</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="formCol formCol50 mb-3">
+                      <div class="form-group d-block">
+                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Town / City <em class="req">*</em></span>
+                        <div class="coolSelectWrapper" v-if="billing.state && locationStore.getCities(billing.state).length > 0">
+                          <select class="coolSelect form-control" v-model="billing.city">
+                            <option value="" disabled>Select City</option>
+                            <option v-for="ct in locationStore.getCities(billing.state)" :key="ct.id" :value="ct.id">{{ ct.name }}</option>
+                          </select>
+                        </div>
+                        <input type="text" class="form-control d-block w-100" v-else v-model="billing.city" placeholder="Enter your city" required>
                       </div>
                     </div>
                     <div class="formCol mb-3">
@@ -158,18 +181,6 @@
                         <span class="fLabel fw-normal text-capitalize d-block mb-1">Address <em class="req">*</em></span>
                         <input type="text" class="form-control d-block w-100 mb-2" v-model="billing.addressLine1" placeholder="Street Address">
                         <input type="text" class="form-control d-block w-100" v-model="billing.addressLine2" placeholder="Apartment, suite, unit etc. (optional)">
-                      </div>
-                    </div>
-                    <div class="formCol mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Town / City <em class="req">*</em></span>
-                        <input type="text" class="form-control d-block w-100" v-model="billing.city" required>
-                      </div>
-                    </div>
-                    <div class="formCol formCol50 mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">State / County <em class="req">*</em></span>
-                        <input type="text" class="form-control d-block w-100" v-model="billing.state" required>
                       </div>
                     </div>
                     <div class="formCol formCol50 mb-3">
@@ -286,15 +297,15 @@
                 <div class="form-check clor mb-5">
                   <input class="form-check-input" type="checkbox" id="terms" v-model="acceptTerms">
                   <label class="form-check-label small ps-1" for="terms">
-                    I have read and agree to the website <a href="javascript:void(0);">terms and conditions</a> *
+                    I have read and agree to the website <router-link to="/policy/TERMS_AND_CONDITIONS" class="text-decoration-underline">terms and conditions</router-link> *
                   </label>
                 </div>
 
-                <button class="btn btnP btn-dark fw-medium w-100 mb-1" @click="processPayment" :disabled="paymentLoading || isProcessing || !acceptTerms">
+                <button class="btn btnP btn-dark fw-medium w-100 mb-1" @click="initAirwallexDropin" :disabled="paymentLoading || isProcessing || !acceptTerms">
                   <span v-if="isProcessing">
                     <span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...
                   </span>
-                  <span v-else>Pay with Card</span>
+                  <span v-else>Pay Now</span>
                 </button>
               </div>
             </div>
@@ -399,6 +410,22 @@ const handleLogin = () => {
   }
 }
 
+// Cascading location dropdown handlers
+function onCountryChange() {
+  billing.state = ''
+  billing.city = ''
+  if (billing.country) {
+    locationStore.loadStates(billing.country)
+  }
+}
+
+function onStateChange() {
+  billing.city = ''
+  if (billing.state) {
+    locationStore.loadCities(billing.state)
+  }
+}
+
 const applyCouponCode = async () => {
   if (!checkoutCouponCode.value.trim()) {
     checkoutCouponMessage.value = 'Please enter a coupon code.'
@@ -409,8 +436,30 @@ const applyCouponCode = async () => {
   checkoutCouponMessage.value = ''
   checkoutCouponSuccess.value = false
 
-  checkoutCouponMessage.value = 'Coupon validation is not available yet.'
-  checkoutCouponSuccess.value = false
+  try {
+    const response = await axios.post(`${API_BASE}/api/v1/vouchers/validate`, null, {
+      params: {
+        code: checkoutCouponCode.value.trim(),
+        orderTotal: cartStore.totalPrice
+      }
+    })
+    const data = response.data
+    // Successful validation — apply discount
+    if (data.discountType === 'PERCENTAGE') {
+      checkoutDiscount.value = (cartStore.totalPrice * data.discountValue) / 100
+    } else if (data.discountType === 'FIXED_AMOUNT') {
+      checkoutDiscount.value = data.discountValue
+    } else {
+      checkoutDiscount.value = data.discountValue || 0
+    }
+    checkoutCouponMessage.value = `Coupon applied! You saved ${currencyStore.formatPrice(checkoutDiscount.value)}`
+    checkoutCouponSuccess.value = true
+  } catch (error) {
+    const msg = error.response?.data?.message || error.response?.data?.error || 'Invalid or expired coupon code.'
+    checkoutCouponMessage.value = msg
+    checkoutCouponSuccess.value = false
+    checkoutDiscount.value = 0
+  }
 }
 
 const increaseItemQty = (item) => {
@@ -446,7 +495,22 @@ function validateBilling() {
 }
 
 /**
- * Step 1: Create the order in the ERP backend via POST /api/v1/orders
+ * Step 1: Create payment intent via POST /api/v1/payments/create-intent
+ * Returns payment link/client_secret for Airwallex
+ */
+async function createPaymentIntent(totalAmount) {
+  const response = await axios.post(`${API_BASE}/api/v1/payments/create-intent`, {
+    amount: totalAmount,
+    currency: currencyStore.currency,
+    orderId: 'pending'
+  })
+
+  return response.data
+}
+
+/**
+ * Step 2: Create the order in the ERP backend via POST /api/v1/orders
+ * Called after successful payment
  */
 async function createOrder() {
   const token = localStorage.getItem('authToken')
@@ -471,20 +535,8 @@ async function createOrder() {
 }
 
 /**
- * Step 2: Create payment intent via POST /api/v1/payments/create-intent
- */
-async function createPaymentIntent(orderId, totalAmount) {
-  const response = await axios.post(`${API_BASE}/api/v1/payments/create-intent`, {
-    amount: totalAmount,
-    currency: currencyStore.currency,
-    orderId: String(orderId)
-  })
-
-  return response.data
-}
-
-/**
  * Initialize the Airwallex drop-in element with the payment intent
+ * Flow: createPaymentIntent → Airwallex drop-in → on confirm → createOrder
  */
 async function initAirwallexDropin() {
   paymentLoading.value = true
@@ -503,17 +555,9 @@ async function initAirwallexDropin() {
       return
     }
 
-    // Step 1: Create the order first
-    const orderResponse = await createOrder()
-    createdOrderId = orderResponse.id || orderResponse.orderId
-
-    if (!createdOrderId) {
-      throw new Error('Order creation failed - no order ID returned.')
-    }
-
-    // Step 2: Create payment intent with the order ID
+    // Step 1: Create payment intent first (before Airwallex UI)
     const totalAmount = totalWithShipping.value
-    paymentSession = await createPaymentIntent(createdOrderId, totalAmount)
+    paymentSession = await createPaymentIntent(totalAmount)
 
     if (!paymentSession || (!paymentSession.client_secret && !paymentSession.clientSecret)) {
       throw new Error('Failed to create payment intent.')
@@ -529,7 +573,7 @@ async function initAirwallexDropin() {
 
     await nextTick()
 
-    // Step 3: Mount Airwallex drop-in with the payment intent
+    // Step 2: Mount Airwallex drop-in with the payment intent
     dropinElement = airwallex.createElement('dropin', {
       intent: {
         id: intentId,
@@ -611,6 +655,9 @@ async function processAirwallexPayment() {
     const result = await dropinElement.confirm()
 
     if (result.status === 'success' || result.status === 'succeeded' || result.status === 'requires_capture') {
+      // Create order in ERP after successful payment
+      const orderResponse = await createOrder()
+      createdOrderId = orderResponse.id || orderResponse.orderId
       finalizeOrder(createdOrderId, 'airwallex', result.id || result.paymentIntentId)
     } else {
       throw new Error(result.error?.message || 'Payment was not successful.')

@@ -1,11 +1,13 @@
 <template>
   <main>
-      <header class="d-flex text-center breadCrumbHeader">
+      <!-- Banner Header matching shop-right-sidebar.html -->
+      <header class="bannerHead bannerheader w-100 overflow-hidden position-relative d-flex text-center">
           <div class="alignHolder w-100 d-flex">
-              <div class="align py-2 w-100">
-                  <div class="container">
+              <div class="align my-auto py-2 w-100">
+                  <div class="container headingHead">
+                      <h1 class="hhHeading HDii">{{ product.name || 'Product Details' }}</h1>
                       <nav aria-label="breadcrumb">
-                          <ol class="breadcrumb">
+                          <ol class="breadcrumb justify-content-center">
                               <li class="breadcrumb-item">
                                   <router-link to="/" class="text-decoration-none">Home</router-link>
                               </li>
@@ -18,8 +20,11 @@
                   </div>
               </div>
           </div>
+          <span class="bgCover w-100 h-100 position-absolute bhBgImage" style="background-image: url('https://placehold.co/1920x300');"></span>
       </header>
-      <section class="position-relative w-100 overflow-hidden py-2 mb-8 mb-md-10 mb-lg-15 mb-xlwd-19 productDetailsArea border-0">
+
+      <!-- Product Details Area -->
+      <div class="twoColumns w-100 position-relative overflow-hidden py-6 py-md-8 py-xl-10">
           <div class="container">
               <div v-if="isLoading" class="text-center py-10">
                   <div class="spinner-border text-dark" role="status">
@@ -34,27 +39,36 @@
               <div v-else class="productsDetailsWrapper WrapII row">
                   <div class="col-12 col-md-6 col-xlwd-6">
                       <div class="images">
-                          <div class="preview-image mb-4">
-                              <div class="position-relative">
-                                  <a :href="product.image" class="sliderImgBtn overflow-hidden lightbox" data-fancybox="true">
-                                      <i class="icn icomoon-expand"></i>
-                                  </a>
-                                  <img class="img w-100 img-fluid sliderImg" :src="product.image" :alt="product.name">
+                          <!-- Bootstrap Carousel with auto-scroll -->
+                          <div id="productCarousel" class="carousel slide mb-4" data-bs-ride="carousel" data-bs-interval="3000">
+                              <!-- Indicators -->
+                              <div class="carousel-indicators">
+                                  <button v-for="(img, index) in productImages" :key="'ind-' + index"
+                                      type="button"
+                                      data-bs-target="#productCarousel"
+                                      :data-bs-slide-to="index"
+                                      :class="{ active: index === activeSlide }"
+                                      :aria-current="index === activeSlide ? 'true' : undefined"
+                                      :aria-label="'Slide ' + (index + 1)"
+                                      @click="activeSlide = index">
+                                  </button>
                               </div>
-                          </div>
-                          <div class="imagesBlock d-flex flex-wrap">
-                              <div class="imagsItems me-4 mb-4">
-                                  <img class="w-100 img-fluid" :src="product.image" alt="image description">
+                              <!-- Slides -->
+                              <div class="carousel-inner">
+                                  <div v-for="(img, index) in productImages" :key="'slide-' + index"
+                                      class="carousel-item" :class="{ active: index === activeSlide }">
+                                      <img :src="img" class="d-block w-100 img-fluid" :alt="product.name + ' - Image ' + (index + 1)">
+                                  </div>
                               </div>
-                              <div class="imagsItems mb-4">
-                                  <img class="w-100 img-fluid" :src="product.image" alt="image description">
-                              </div>
-                              <div class="imagsItems me-4 mb-4">
-                                  <img class="w-100 img-fluid" :src="product.image" alt="image description">
-                              </div>
-                              <div class="imagsItems mb-4">
-                                  <img class="w-100 img-fluid" :src="product.image" alt="image description">
-                              </div>
+                              <!-- Controls -->
+                              <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                  <span class="visually-hidden">Previous</span>
+                              </button>
+                              <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                  <span class="visually-hidden">Next</span>
+                              </button>
                           </div>
                       </div>
                   </div>
@@ -73,14 +87,33 @@
                                       </ul>
                                       <span class="reviewHD fw-normal">(25 Customer reviews)</span>
                                   </div>
-                                  <h3 class="HPrice fw-normal mPrb-4">{{ currencyStore.formatPrice(product.price) }}</h3>
+                                  <h3 class="HPrice fw-normal mb-4">{{ currencyStore.formatPrice(displayPrice) }}</h3>
+                                  <!-- Variant Selector (only shown when multiple variants exist) -->
+                                  <div v-if="product.variants && product.variants.length > 1" class="mb-4">
+                                      <strong class="d-block mb-2 fw-normal">Variants:</strong>
+                                      <div class="d-flex flex-wrap gap-2">
+                                          <button v-for="variant in product.variants" :key="variant.id"
+                                              type="button"
+                                              class="btn position-relative px-3 py-2"
+                                              :class="selectedVariantId === variant.id ? 'btn-dark' : 'btn-outline-dark'"
+                                              @click="selectVariant(variant.id)">
+                                              {{ variant.variantName }}
+                                              <span v-if="variant.additionalPrice > 0"
+                                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                                  style="font-size: 0.65rem;">
+                                                  +{{ currencyStore.formatPrice(variant.additionalPrice) }}
+                                              </span>
+                                          </button>
+                                      </div>
+                                      <small v-if="selectedVariant" class="d-block mt-2 text-muted">
+                                          Selected: <strong>{{ selectedVariant.variantName }}</strong>
+                                          <span v-if="selectedVariant.additionalPrice > 0"> (+{{ currencyStore.formatPrice(selectedVariant.additionalPrice) }})</span>
+                                      </small>
+                                  </div>
                                   <p class="fw-light mb-1">
                                       {{ product.description || 'This regulator has a rolled diaphragm and high flow rate with reduced pressure drop. It has an excellent degree of condensation.' }}
                                   </p>
                                   <strong class="TxtPro">Availability: <span class="productStock fw-normal">In Stock</span></strong>
-                                  <div v-if="product.sku" class="mt-2">
-                                      <small class="text-muted">SKU: {{ product.sku }}</small>
-                                  </div>
                               </div>
                               <div class="mb-6">
                                   <div class="butttonsWraper mb-8">
@@ -116,63 +149,126 @@
                               <div class="d-flex socialNetworksIcons">
                                   <span class="socialHD fw-normal me-3">Share:</span>
                                   <ul class="list-unstyled socialNetworks d-flex flex-wrap gap-4 gap-sm-2 gap-md-4 mb-0">
-                                      <li><a href="javascript:void(0);" class="text-decoration-none"><i class="icomoon-facebook facebookIcn"></i></a></li>
-                                      <li><a href="javascript:void(0);" class="text-decoration-none"><i class="icomoon-twitter twitterIcn"></i></a></li>
-                                      <li><a href="javascript:void(0);" class="text-decoration-none"><i class="icomoon-instagram instagramIcn"></i></a></li>
-                                      <li><a href="javascript:void(0);" class="text-decoration-none"><i class="icomoon-pinterest pinterestIcn"></i></a></li>
+                                      <li v-if="socialLinks.facebook">
+                                        <a :href="facebookShareUrl" target="_blank" rel="noopener" class="text-decoration-none"><i class="icomoon-facebook facebookIcn"></i></a>
+                                      </li>
+                                      <li v-if="socialLinks.twitter">
+                                        <a :href="twitterShareUrl" target="_blank" rel="noopener" class="text-decoration-none"><i class="icomoon-twitter twitterIcn"></i></a>
+                                      </li>
+                                      <li v-if="socialLinks.instagram">
+                                        <a :href="socialLinks.instagram" target="_blank" rel="noopener" class="text-decoration-none"><i class="icomoon-instagram instagramIcn"></i></a>
+                                      </li>
+                                      <li v-if="socialLinks.pinterest">
+                                        <a :href="pinterestShareUrl" target="_blank" rel="noopener" class="text-decoration-none"><i class="icomoon-pinterest pinterestIcn"></i></a>
+                                      </li>
                                   </ul>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- Accordion Section (inside product info column like shop-accordion.html) -->
+                      <div class="accordion product-accordion" id="productAccordion">
+                          <div class="accordion-item">
+                              <h2 class="accordion-header" id="headingDesc">
+                                  <button class="accordion-button fw-normal rounded-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDesc" aria-expanded="true" aria-controls="collapseDesc">
+                                      Description
+                                  </button>
+                              </h2>
+                              <div id="collapseDesc" class="accordion-collapse collapse show" aria-labelledby="headingDesc" data-bs-parent="#productAccordion">
+                                  <div class="accordion-body">
+                                      <p>{{ product.description || 'Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake. Tart oat cake lollipop lollipop halvah chupa chups bonbon sugar plum dessert.' }}</p>
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="accordion-item">
+                              <h2 class="accordion-header" id="headingInfo">
+                                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfo" aria-expanded="false" aria-controls="collapseInfo">
+                                      Additional Information
+                                  </button>
+                              </h2>
+                              <div id="collapseInfo" class="accordion-collapse collapse" aria-labelledby="headingInfo" data-bs-parent="#productAccordion">
+                                  <div class="accordion-body mb-6">
+                                      <table class="table DetalsTable table-bordered mb-0">
+                                          <tbody>
+                                              <tr><th class="text-uppercase fw-medium py-3 px-6">SKU</th><td class="py-3 px-6">{{ product.sku || 'N/A' }}</td></tr>
+                                              <tr><th class="text-uppercase fw-medium py-3 px-6">Category</th><td class="py-3 px-6">{{ product.category }}</td></tr>
+                                              <tr><th class="text-uppercase fw-medium py-3 px-6">Supplier</th><td class="py-3 px-6">{{ product.supplierName || 'N/A' }}</td></tr>
+                                          </tbody>
+                                      </table>
+                                  </div>
                               </div>
                           </div>
                       </div>
                   </div>
               </div>
           </div>
-      </section>
+      </div>
 
-      <!-- Accordion Section -->
-      <section class="container pb-6 pb-md-8">
-          <div class="accordion product-accordion" id="productAccordion">
-              <div class="accordion-item">
-                  <h2 class="accordion-header" id="headingDesc">
-                      <button class="accordion-button fw-normal rounded-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDesc" aria-expanded="true" aria-controls="collapseDesc">
-                          Description
-                      </button>
-                  </h2>
-                  <div id="collapseDesc" class="accordion-collapse collapse show" aria-labelledby="headingDesc" data-bs-parent="#productAccordion">
-                      <div class="accordion-body">
-                          <p>{{ product.description || 'Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake. Tart oat cake lollipop lollipop halvah chupa chups bonbon sugar plum dessert.' }}</p>
-                      </div>
-                  </div>
-              </div>
-              <div class="accordion-item">
-                  <h2 class="accordion-header" id="headingInfo">
-                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfo" aria-expanded="false" aria-controls="collapseInfo">
-                          Additional Information
-                      </button>
-                  </h2>
-                  <div id="collapseInfo" class="accordion-collapse collapse" aria-labelledby="headingInfo" data-bs-parent="#productAccordion">
-                      <div class="accordion-body mb-6">
-                          <table class="table DetalsTable table-bordered mb-0">
-                              <tbody>
-                                  <tr><th class="text-uppercase fw-medium py-3 px-6">SKU</th><td class="py-3 px-6">{{ product.sku || 'N/A' }}</td></tr>
-                                  <tr><th class="text-uppercase fw-medium py-3 px-6">Category</th><td class="py-3 px-6">{{ product.category }}</td></tr>
-                                  <tr><th class="text-uppercase fw-medium py-3 px-6">Supplier</th><td class="py-3 px-6">{{ product.supplierName || 'N/A' }}</td></tr>
-                              </tbody>
-                          </table>
+      <!-- Newsletter / Discount Section matching shop-right-sidebar.html -->
+      <aside class="discountAsideBlock text-center w-100 position-relative py-6 py-lg-9 py-xl-15">
+          <div class="container">
+              <div class="row">
+                  <div class="col-12 col-md-10 offset-md-1 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3">
+                      <div class="px-xl-6 px-xxl-16">
+                          <h3 class="sabHeading fw-light mb-4">End of Summer!<br> <span class="fw-medium">Up to 20% off</span> on all items.</h3>
+                          <form action="#" class="subscribeForm" @submit.prevent>
+                              <div class="d-flex flex-column flex-sm-row mb-4">
+                                  <input type="email" class="form-control border-0" placeholder="Email address">
+                                  <button type="submit" class="btn btnTheme border-0 text-uppercase">Signup</button>
+                              </div>
+                              <label class="d-block fw-normal">Sign up to our Newsletter and get the discount code.</label>
+                          </form>
                       </div>
                   </div>
               </div>
           </div>
-      </section>
+      </aside>
+
+      <!-- Features Block matching shop-right-sidebar.html -->
+      <aside class="featuresBlock text-center w-100 position-relative py-9">
+          <div class="container">
+              <ul class="list-unstyled d-flex flex-wrap justify-content-around gap-1 mb-0">
+                  <li>
+                      <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
+                          <img src="/images/ico-01.svg" width="37" height="30" alt="icon">
+                      </i>
+                      <h3 class="fbbHeading fw-normal mb-0">Free Shipping</h3>
+                      <h4 class="fbbSubheading fw-light mb-0">For all orders over $100</h4>
+                  </li>
+                  <li>
+                      <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
+                          <img src="/images/ico-02.svg" width="37" height="33" alt="icon">
+                      </i>
+                      <h3 class="fbbHeading fw-normal mb-0">30 Days Return</h3>
+                      <h4 class="fbbSubheading fw-light mb-0">For an Exchange Product</h4>
+                  </li>
+                  <li>
+                      <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
+                          <img src="/images/ico-03.svg" width="37" height="29" alt="icon">
+                      </i>
+                      <h3 class="fbbHeading fw-normal mb-0">Secured Payment</h3>
+                      <h4 class="fbbSubheading fw-light mb-0">Payment Cards Accepted</h4>
+                  </li>
+                  <li>
+                      <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
+                          <img src="/images/ico-04.svg" width="37" height="37" alt="icon">
+                      </i>
+                      <h3 class="fbbHeading fw-normal mb-0">Support 24/7</h3>
+                      <h4 class="fbbSubheading fw-light mb-0">Contact us Anytime.</h4>
+                  </li>
+              </ul>
+          </div>
+      </aside>
   </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '../stores/cartStore'
 import { useWishlistStore } from '../stores/wishlistStore'
 import { useCurrencyStore } from '../stores/currencyStore'
+import { useSiteSettingsStore } from '../stores/siteSettingsStore'
 import { toSlug } from '../utils/slug'
 import axios from 'axios'
 
@@ -181,9 +277,19 @@ const router = useRouter()
 const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
 const currencyStore = useCurrencyStore()
+const siteSettings = useSiteSettingsStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
+const socialLinks = computed(() => ({
+  facebook: siteSettings.facebookLink,
+  twitter: siteSettings.twitterLink,
+  instagram: siteSettings.instagramLink,
+  pinterest: siteSettings.pinterestLink
+}))
+
 const quantity = ref(1)
+const activeSlide = ref(0)
+const selectedVariantId = ref(null)
 const isLoading = ref(false)
 const error = ref('')
 
@@ -195,24 +301,67 @@ const product = ref({
   image: 'https://placehold.co/685x685',
   sku: '',
   description: '',
-  supplierName: ''
+  supplierName: '',
+  variants: [],
+  media: []
 })
 
-const productSlug = computed(() => route.params.slug || route.params.id)
-
-/**
- * Extracts the numeric product ID from a slug in the format "product-name-123".
- */
-const productId = computed(() => {
-  const slug = productSlug.value
-  if (!slug) return ''
-  // Try to extract trailing numeric ID from slug (e.g., "blue-bracelet-42" → "42")
-  const match = slug.match(/-(\d+)$/)
-  if (match) return match[1]
-  return slug
-})
+// Route is /products/:id/:slug — id is always available as a numeric param
+const productId = computed(() => route.params.id)
+const productSlug = computed(() => route.params.slug || '')
 
 const isWishlisted = computed(() => wishlistStore.isInWishlist(product.value.id))
+
+const shareUrl = computed(() => encodeURIComponent(window.location.href))
+const shareTitle = computed(() => encodeURIComponent(product.value.name))
+
+const facebookShareUrl = computed(() => `https://www.facebook.com/sharer/sharer.php?u=${shareUrl.value}`)
+const twitterShareUrl = computed(() => `https://twitter.com/intent/tweet?url=${shareUrl.value}&text=${shareTitle.value}`)
+const pinterestShareUrl = computed(() => `https://pinterest.com/pin/create/button/?url=${shareUrl.value}&description=${shareTitle.value}`)
+
+// Selected variant object
+const selectedVariant = computed(() => {
+  if (!selectedVariantId.value) return null
+  return product.value.variants.find(v => v.id === selectedVariantId.value) || null
+})
+
+// Display price: base + variant additional
+const displayPrice = computed(() => {
+  const base = product.value.price || 0
+  const additional = selectedVariant.value?.additionalPrice || 0
+  return base + additional
+})
+
+// Product images for carousel — uses variant media if selected, else base media
+const productImages = computed(() => {
+  const fallback = 'https://placehold.co/685x685'
+  if (selectedVariant.value?.media?.length) {
+    return selectedVariant.value.media
+      .filter(m => m.type === 'IMAGE')
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map(m => m.url || fallback)
+  }
+  if (product.value.media?.length) {
+    return product.value.media
+      .filter(m => m.type === 'IMAGE')
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map(m => m.url || fallback)
+  }
+  const img = product.value.image || fallback
+  return [img, img, img, img]
+})
+
+function selectVariant(variantId) {
+  selectedVariantId.value = selectedVariantId.value === variantId ? null : variantId
+  activeSlide.value = 0
+  nextTick(() => {
+    const carouselEl = document.getElementById('productCarousel')
+    if (carouselEl && window.bootstrap) {
+      const carousel = window.bootstrap.Carousel.getOrCreateInstance(carouselEl)
+      carousel.to(0)
+    }
+  })
+}
 
 const productSlugDisplay = computed(() => {
   if (product.value.name) {
@@ -221,17 +370,51 @@ const productSlugDisplay = computed(() => {
   return ''
 })
 
+// Navigate carousel to specific slide
+function goToSlide(index) {
+  activeSlide.value = index
+  const carouselEl = document.getElementById('productCarousel')
+  if (carouselEl && window.bootstrap) {
+    const carousel = window.bootstrap.Carousel.getOrCreateInstance(carouselEl)
+    carousel.to(index)
+  }
+}
+
+// Sync activeSlide when Bootstrap carousel auto-scrolls
+function onCarouselSlide(event) {
+  activeSlide.value = event.to
+}
+
+function initCarouselListener() {
+  nextTick(() => {
+    const carouselEl = document.getElementById('productCarousel')
+    if (carouselEl) {
+      carouselEl.addEventListener('slid.bs.carousel', onCarouselSlide)
+    }
+  })
+}
+
+function removeCarouselListener() {
+  const carouselEl = document.getElementById('productCarousel')
+  if (carouselEl) {
+    carouselEl.removeEventListener('slid.bs.carousel', onCarouselSlide)
+  }
+}
+
 async function fetchProduct() {
   isLoading.value = true
   error.value = ''
 
-  try {
-    // Extract numeric ID from slug (e.g., "product-name-42" → "42")
-    const slug = productSlug.value
-    const idMatch = slug.match(/-(\d+)$/)
-    const fetchId = idMatch ? idMatch[1] : slug
+  const id = productId.value
+  if (!id) {
+    isLoading.value = false
+    error.value = 'Product not found.'
+    return
+  }
 
-    const response = await axios.get(`${API_BASE}/api/v1/products/${fetchId}`)
+  try {
+    // Call API directly with the numeric id from route param
+    const response = await axios.get(`${API_BASE}/api/v1/products/${id}`)
     if (response.data) {
       const p = response.data
       product.value = {
@@ -242,8 +425,21 @@ async function fetchProduct() {
         image: 'https://placehold.co/685x685',
         sku: p.sku || '',
         description: p.description || '',
-        supplierName: p.supplierName || ''
+        supplierName: p.supplierName || '',
+        variants: (p.variants || []).map(v => ({
+          id: v.id,
+          variantName: v.variantName,
+          additionalPrice: v.additionalPrice || 0,
+          media: (v.media || []).map(m => ({
+            id: m.id, type: m.type, url: m.url, isPrimary: m.isPrimary, sortOrder: m.sortOrder
+          }))
+        })),
+        media: (p.media || []).map(m => ({
+          id: m.id, type: m.type, url: m.url, isPrimary: m.isPrimary, sortOrder: m.sortOrder
+        }))
       }
+      // Auto-select single variant, reset for multiple
+      selectedVariantId.value = (p.variants || []).length === 1 ? p.variants[0].id : null
     }
   } catch (e) {
     console.warn('Failed to fetch product:', e.message)
@@ -265,21 +461,48 @@ async function fetchProduct() {
 
 onMounted(() => {
   fetchProduct()
+  initCarouselListener()
 })
 
-watch(() => route.params.slug, () => {
+onBeforeUnmount(() => {
+  removeCarouselListener()
+})
+
+// Re-init carousel listener after product loads (DOM updates)
+watch(() => isLoading.value, (newVal) => {
+  if (!newVal) {
+    activeSlide.value = 0
+    initCarouselListener()
+  }
+})
+
+watch(() => route.params.id, () => {
+  removeCarouselListener()
   fetchProduct()
 })
 
 const addToCart = () => {
+  const variant = selectedVariant.value
   const itemToAdd = {
-    ...product.value,
+    id: product.value.id,
+    name: product.value.name + (variant ? ` - ${variant.variantName}` : ''),
+    category: product.value.category,
+    price: displayPrice.value,
+    image: productImages.value[0] || product.value.image,
+    sku: product.value.sku,
+    variantId: variant?.id || null,
+    variantName: variant?.variantName || null,
     quantity: quantity.value
   }
   
-  const existingItem = cartStore.items.find(item => item.id === itemToAdd.id)
+  // Use composite key for variant items
+  const cartKey = variant ? `${itemToAdd.id}-v${variant.id}` : String(itemToAdd.id)
+  const existingItem = cartStore.items.find(item => {
+    const ik = item.variantId ? `${item.id}-v${item.variantId}` : String(item.id)
+    return ik === cartKey
+  })
   if (existingItem) {
-    cartStore.updateQuantity(itemToAdd.id, existingItem.quantity + itemToAdd.quantity)
+    cartStore.updateQuantity(existingItem.id, existingItem.quantity + itemToAdd.quantity)
   } else {
     cartStore.items.push(itemToAdd)
   }
@@ -301,14 +524,26 @@ const toggleWishlist = async () => {
 }
 
 const buyItNow = () => {
+  const variant = selectedVariant.value
   const itemToAdd = {
-    ...product.value,
+    id: product.value.id,
+    name: product.value.name + (variant ? ` - ${variant.variantName}` : ''),
+    category: product.value.category,
+    price: displayPrice.value,
+    image: productImages.value[0] || product.value.image,
+    sku: product.value.sku,
+    variantId: variant?.id || null,
+    variantName: variant?.variantName || null,
     quantity: quantity.value
   }
 
-  const existingItem = cartStore.items.find(item => item.id === itemToAdd.id)
+  const cartKey = variant ? `${itemToAdd.id}-v${variant.id}` : String(itemToAdd.id)
+  const existingItem = cartStore.items.find(item => {
+    const ik = item.variantId ? `${item.id}-v${item.variantId}` : String(item.id)
+    return ik === cartKey
+  })
   if (existingItem) {
-    cartStore.updateQuantity(itemToAdd.id, existingItem.quantity + itemToAdd.quantity)
+    cartStore.updateQuantity(existingItem.id, existingItem.quantity + itemToAdd.quantity)
   } else {
     cartStore.items.push(itemToAdd)
   }

@@ -1,7 +1,7 @@
 <template>
   <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
     <div class="imgHolder mb-2">
-      <router-link :to="`/products/${urlSlug}`">
+      <router-link :to="`/products/${productId || product._id}/${toSlug(product.name)}`">
         <img :src="product.image || 'https://placehold.co/305x305'" class="w-100 img-fluid" :alt="product.name">
       </router-link>
       <strong v-if="product.sale" class="position-absolute text-uppercase bg-danger fw-semibold text-white pcTag">-30%</strong>
@@ -20,7 +20,7 @@
     </div>
     <strong class="d-block mb-1 fw-normal pcTitle">{{ product.category }}</strong>
     <h3 class="fw-light pcHeading mb-1">
-      <router-link :to="`/products/${urlSlug}`" class="text-decoration-none">{{ product.name }}</router-link>
+      <router-link :to="`/products/${productId || product._id}/${toSlug(product.name)}`" class="text-decoration-none">{{ product.name }}</router-link>
     </h3>
     <h4 class="fw-normal pcPrice mb-0">
       <span v-if="product.sale" class="salePrice">{{ currencyStore.formatPrice(product.price) }}</span>

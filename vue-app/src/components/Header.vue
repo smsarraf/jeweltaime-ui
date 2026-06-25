@@ -1,459 +1,459 @@
 <template>
-  <header id="pageHeader">
-    <div class="phTopBar py-2 bg-dark">
-      <div class="container">
-        <div class="row">
-          <div class="col-12 col-lg-6">
-            <ul class="list-unstyled d-flex flex-wrap gap-3 gap-xlwd-5 justify-content-center justify-content-lg-start mb-0 phtbListInline">
-              <li class="fw-normal text-white">
-                Need help? Call us: <a href="javascript:void(0);">(+800) 1234 5678</a>
-              </li>
-            </ul>
-          </div>
-          <div class="col-6 d-none d-lg-block">
-            <ul class="list-unstyled d-flex flex-wrap gap-4 gap-xlwd-6 gap-xxl-8 mb-0 phtbListInline justify-content-end fw-normal">
-              <li>
-                <a href="javascript:void(0);">Special Offer</a>
-              </li>
-              <li>
-                <a href="javascript:void(0);">Services</a>
-              </li>
-              <li>
-                <a href="javascript:void(0);">Subscribe</a>
-              </li>
-              <li>
-                <a href="javascript:void(0);">Gift Cards</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="phWrapper pt-2 pt-md-5 pt-xlwd-7 pb-2 pb-md-6">
-      <div class="container">
-        <div class="row">
-          <div class="col-3 col-md-4 col-lg-4 col-xl-3 col-xlwd-3 position-relative">
-            <ul class="list-unstyled d-flex flex-wrap justify-content-start mb-0 phActionsList gap-sm-4 gap-lg-6 pt-sm-1">
-              <li class="navbar navbar-expand-md p-0 position-static d-md-none">
-                <button class="navbar-toggler border-0 p-0 mainNavigationToggle position-absolute" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
-                  <span class="navbar-toggler-icon"></span>
-                </button>
-              </li>
-              <li class="d-none d-md-block">
-                <a href="javascript:void(0);" class="d-flex align-items-center">
-                  <i class="fa-solid fa-location-dot mbr"></i>
-                  <span class="txt">Store Locator</span>
-                </a>
-              </li>
-              <li class="d-none d-md-block" data-bs-toggle="offcanvas" data-bs-target="#searchCol" aria-controls="searchCol">
-                <a href="javascript:void(0);" class="d-flex align-items-center">
-                  <i class="icomoon-search mbr"></i>
-                  <span class="txt">Search</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div class="col-6 col-md-5 col-lg-3 col-xl-5 col-xlwd-6">
-            <div class="logo text-center mx-auto">
-              <router-link to="/">
-                <img src="/images/logo.png" class="img-fluid" alt="JewelT'Aime">
-              </router-link>
-            </div>
-          </div>
-          <div class="col-3 col-md-3 col-lg-5 col-xl-4 col-xlwd-3">
-            <ul class="list-unstyled d-flex flex-wrap justify-content-end mb-0 phActionsList gap-2 gap-md-4 gap-lg-6 pt-1">
-              <li class="d-none d-sm-block">
-                <router-link to="/wishlist" class="d-flex align-items-center position-relative">
-                  <i class="icomoon-heart-o mbr"></i>
-                  <span class="txt d-none d-lg-block">wishlist</span>
-                  <strong class="phCartBubble phCBII fw-light d-none d-lg-inline-block text-center rounded-circle" v-if="wishlistStore.totalItems > 0">{{ wishlistStore.totalItems }}</strong>
-                </router-link>
-              </li>
-              <li v-if="!isLoggedIn">
-                <router-link to="/signin" class="d-flex align-items-center">
-                  <i class="icomoon-user mbr"></i>
-                  <span class="txt d-none d-lg-block">Sign in</span>
-                </router-link>
-              </li>
-              <li v-else class="dropdown">
-                <a href="javascript:void(0);" class="d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="icomoon-user mbr"></i>
-                  <span class="txt d-none d-lg-block">{{ userName }}</span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end rounded-0 mt-3 p-0 border">
-                  <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/dashboard"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</router-link></li>
-                  <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/profile"><i class="fa-solid fa-user me-2"></i>My Profile</router-link></li>
-                  <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/wishlist"><i class="fa-regular fa-heart me-2"></i>Wishlist</router-link></li>
-                  <li><hr class="dropdown-divider my-0"></li>
-                  <li><a href="javascript:void(0);" class="dropdown-item py-3 px-4 fw-light" @click="handleLogout"><i class="fa-solid fa-sign-out-alt me-2"></i>Sign Out</a></li>
-                </ul>
-              </li>
-              <li data-bs-toggle="offcanvas" data-bs-target="#filtersProduct" aria-controls="filtersProduct">
-                <a href="javascript:void(0);" class="d-flex align-items-center">
-                  <i class="icomoon-cart mbr"></i>
-                  <span class="txt mbr d-none d-lg-block">cart</span>
-                  <strong class="phCartBubble phCBII fw-light d-none d-lg-inline-block text-center rounded-circle">{{ cartStore.totalItems }}</strong>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="phNavWrapper position-relative">
-      <div class="container">
-        <nav class="navbar navbar-expand-md d-block position-static" id="mainNavigation">
-          <div class="row align-items-center">
-            <div class="col-3 d-none d-xl-block">
-              <div class="dropdown phBtnDropdown">
-                <button class="btnReset text-uppercase fw-medium p-0 border-0 rounded-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Browse Categories</button>
-                <ul class="dropdown-menu catemenu mt-4 p-0 pt-1 rounded-0 border-0">
-                  <li v-for="cat in parentCategories" :key="cat.id">
-                    <router-link class="text-decoration-none fw-light" :to="`/category/${cat.slug}`">{{ cat.name }}</router-link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div class="col-12 col-lg-8 col-xl-6 mnCol d-none d-md-block">
-              <div class="collapse navbar-collapse mainNavigationCollapse" id="mainNavigationCollapse">
-                <ul class="navbar-nav mx-auto gap-md-4 gap-xxl-7">
-                  <li class="nav-item staf dropdown">
-                    <router-link class="nav-link text-uppercase fw-medium" active-class="active" to="/">Home</router-link>
-                  </li>
-                    <li class="nav-item staf dropdown">
-                    <router-link class="nav-link text-uppercase fw-medium" to="/products">Shop</router-link>
-                    <div class="dropdown-menu show mega-menu rounded-0 pt-7 pb-7 px-6 ms-n6 mt-4 border-0">
-                      <div class="row g-0">
-                        <div v-for="cat in allCategories" :key="cat.id" class="col-12 col-md-4 col-lg-3 mb-4 mb-lg-0">
-                          <div class="px-2">
-                            <h6 class="text-uppercase fw-bold mb-3">
-                              <router-link :to="`/category/${cat.slug}`" class="text-decoration-none text-dark">{{ cat.name }}</router-link>
-                            </h6>
-                            <ul class="list-unstyled mb-0">
-                              <li v-for="child in (cat.children || [])" :key="child.id" class="mb-2">
-                                <router-link :to="`/category/${child.slug}`" class="text-decoration-none fw-normal text-muted small">{{ child.name }}</router-link>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
+    <header id="pageHeader">
+        <div class="phTopBar py-2 bg-dark">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-lg-6">
+                        <ul class="list-unstyled d-flex flex-wrap gap-3 gap-xlwd-5 justify-content-center justify-content-lg-start mb-0 phtbListInline">
+                            <li class="fw-normal text-white">
+                                Need help? Call us: <a href="javascript:void(0);">(+800) 1234 5678</a>
+                            </li>
+                        </ul>
                     </div>
-                  </li>
-                    <li class="nav-item staf dropdown">
-                        <router-link class="nav-link text-uppercase fw-medium" to="/about">About</router-link>
-                    </li>
-                    <!--                  <li class="nav-item staf dropdown">-->
-<!--                    <a class="nav-link text-uppercase fw-medium" href="javascript:void(0);">Pages</a>-->
-<!--                    <ul class="dropdown-menu show rounded-0 pt-7 pb-5 px-5 ms-n6 mt-4">-->
-<!--                      <li class="mb-3"><router-link class="dropdown-item p-0" to="/cart">Cart Page</router-link></li>-->
-<!--                      <li class="mb-3"><router-link class="dropdown-item p-0" to="/checkout">Checkout Page</router-link></li>-->
-<!--                    </ul>-->
-<!--                  </li>-->
-                  <li class="nav-item staf dropdown">
-                    <router-link class="nav-link text-uppercase fw-medium" to="/blog">Blog</router-link>
-                  </li>
-                  <li class="nav-item">
-                    <router-link class="nav-link text-uppercase fw-medium" to="/contact">Contact Us</router-link>
-                  </li>
-                </ul>
-              </div>
+                    <div class="col-6 d-none d-lg-block">
+                        <ul class="list-unstyled d-flex flex-wrap gap-4 gap-xlwd-6 gap-xxl-8 mb-0 phtbListInline justify-content-end fw-normal">
+                            <li>
+                                <a href="javascript:void(0);">Special Offer</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);">Services</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);">Subscribe</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);">Gift Cards</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-          </div>
-        </nav>
-      </div>
-    </div>
-  </header>
+        </div>
+        <div class="phWrapper pt-2 pt-md-5 pt-xlwd-7 pb-2 pb-md-6">
+            <div class="container">
+                <div class="row">
+                    <div class="col-3 col-md-4 col-lg-4 col-xl-3 col-xlwd-3 position-relative">
+                        <ul class="list-unstyled d-flex flex-wrap justify-content-start mb-0 phActionsList gap-sm-4 gap-lg-6 pt-sm-1">
+                            <li class="navbar navbar-expand-md p-0 position-static d-md-none">
+                                <button class="navbar-toggler border-0 p-0 mainNavigationToggle position-absolute" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                                    <span class="navbar-toggler-icon"></span>
+                                </button>
+                            </li>
+                            <li class="d-none d-md-block">
+                                <a href="javascript:void(0);" class="d-flex align-items-center">
+                                    <i class="fa-solid fa-location-dot mbr"></i>
+                                    <span class="txt">Store Locator</span>
+                                </a>
+                            </li>
+                            <li class="d-none d-md-block" data-bs-toggle="offcanvas" data-bs-target="#searchCol" aria-controls="searchCol">
+                                <a href="javascript:void(0);" class="d-flex align-items-center">
+                                    <i class="icomoon-search mbr"></i>
+                                    <span class="txt">Search</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-6 col-md-5 col-lg-3 col-xl-5 col-xlwd-6">
+                        <div class="logo text-center mx-auto">
+                            <router-link to="/">
+                                <img src="/images/logo.png" class="img-fluid" alt="JewelT'Aime">
+                            </router-link>
+                        </div>
+                    </div>
+                    <div class="col-3 col-md-3 col-lg-5 col-xl-4 col-xlwd-3">
+                        <ul class="list-unstyled d-flex flex-wrap justify-content-end mb-0 phActionsList gap-2 gap-md-4 gap-lg-6 pt-1">
+                            <li class="d-none d-sm-block">
+                                <router-link to="/wishlist" class="d-flex align-items-center position-relative">
+                                    <i class="icomoon-heart-o mbr"></i>
+                                    <span class="txt d-none d-lg-block">wishlist</span>
+                                    <strong class="phCartBubble phCBII fw-light d-none d-lg-inline-block text-center rounded-circle" v-if="wishlistStore.totalItems > 0">{{ wishlistStore.totalItems }}</strong>
+                                </router-link>
+                            </li>
+                            <li v-if="!isLoggedIn">
+                                <router-link to="/signin" class="d-flex align-items-center">
+                                    <i class="icomoon-user mbr"></i>
+                                    <span class="txt d-none d-lg-block">Sign in</span>
+                                </router-link>
+                            </li>
+                            <li v-else class="dropdown">
+                                <a href="javascript:void(0);" class="d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="icomoon-user mbr"></i>
+                                    <span class="txt d-none d-lg-block">{{ userName }}</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end rounded-0 mt-3 p-0 border">
+                                    <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/dashboard"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</router-link></li>
+                                    <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/profile"><i class="fa-solid fa-user me-2"></i>My Profile</router-link></li>
+                                    <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/wishlist"><i class="fa-regular fa-heart me-2"></i>Wishlist</router-link></li>
+                                    <li><hr class="dropdown-divider my-0"></li>
+                                    <li><a href="javascript:void(0);" class="dropdown-item py-3 px-4 fw-light" @click="handleLogout"><i class="fa-solid fa-sign-out-alt me-2"></i>Sign Out</a></li>
+                                </ul>
+                            </li>
+                            <li data-bs-toggle="offcanvas" data-bs-target="#filtersProduct" aria-controls="filtersProduct">
+                                <a href="javascript:void(0);" class="d-flex align-items-center">
+                                    <i class="icomoon-cart mbr"></i>
+                                    <span class="txt mbr d-none d-lg-block">cart</span>
+                                    <strong class="phCartBubble phCBII fw-light d-none d-lg-inline-block text-center rounded-circle">{{ cartStore.totalItems }}</strong>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="phNavWrapper position-relative">
+            <div class="container">
+                <nav class="navbar navbar-expand-md d-block position-static" id="mainNavigation">
+                    <div class="row align-items-center">
+                        <div class="col-3 d-none d-xl-block">
+                            <div class="dropdown phBtnDropdown">
+                                <button class="btnReset text-uppercase fw-medium p-0 border-0 rounded-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Browse Categories</button>
+                                <ul class="dropdown-menu catemenu mt-4 p-0 pt-1 rounded-0 border-0">
+                                    <li v-for="cat in parentCategories" :key="cat.id">
+                                        <router-link class="text-decoration-none fw-light" :to="`/category/${cat.slug}`">{{ cat.name }}</router-link>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-8 col-xl-6 mnCol d-none d-md-block">
+                            <div class="collapse navbar-collapse mainNavigationCollapse" id="mainNavigationCollapse">
+                                <ul class="navbar-nav mx-auto gap-md-4 gap-xxl-7">
+                                    <li class="nav-item staf dropdown">
+                                        <router-link class="nav-link text-uppercase fw-medium" active-class="active" to="/">Home</router-link>
+                                    </li>
+                                    <li class="nav-item staf dropdown">
+                                        <router-link class="nav-link text-uppercase fw-medium" to="/products">Shop</router-link>
+                                        <div class="dropdown-menu show mega-menu rounded-0 pt-7 pb-7 px-6 ms-n6 mt-4 border-0">
+                                            <div class="row g-0">
+                                                <div v-for="cat in allCategories" :key="cat.id" class="col-12 col-md-4 col-lg-3 mb-4 mb-lg-0">
+                                                    <div class="px-2">
+                                                        <h6 class="text-uppercase fw-bold mb-3">
+                                                            <router-link :to="`/category/${cat.slug}`" class="text-decoration-none text-dark">{{ cat.name }}</router-link>
+                                                        </h6>
+                                                        <ul class="list-unstyled mb-0">
+                                                            <li v-for="child in (cat.children || [])" :key="child.id" class="mb-2">
+                                                                <router-link :to="`/category/${child.slug}`" class="text-decoration-none fw-normal text-muted small">{{ child.name }}</router-link>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li class="nav-item staf dropdown">
+                                        <router-link class="nav-link text-uppercase fw-medium" to="/about">About</router-link>
+                                    </li>
+                                    <!--                  <li class="nav-item staf dropdown">-->
+                                    <!--                    <a class="nav-link text-uppercase fw-medium" href="javascript:void(0);">Pages</a>-->
+                                    <!--                    <ul class="dropdown-menu show rounded-0 pt-7 pb-5 px-5 ms-n6 mt-4">-->
+                                    <!--                      <li class="mb-3"><router-link class="dropdown-item p-0" to="/cart">Cart Page</router-link></li>-->
+                                    <!--                      <li class="mb-3"><router-link class="dropdown-item p-0" to="/checkout">Checkout Page</router-link></li>-->
+                                    <!--                    </ul>-->
+                                    <!--                  </li>-->
+                                    <li class="nav-item staf dropdown">
+                                        <router-link class="nav-link text-uppercase fw-medium" to="/blog">Blog</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link text-uppercase fw-medium" to="/contact">Contact Us</router-link>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
 
-  <!-- Search Menu Wrapper -->
-  <div class="searchrow offcanvas offcanvas-top" tabindex="-1" id="searchCol" aria-labelledby="searchcol" style="height: 100vh;">
-    <div class="offcanvas-header justify-content-end">
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body d-flex flex-column align-items-start justify-content-md-start px-4 pt-2">
-      <h5 class="srchHD fw-light mb-3">What are you looking for?</h5>
-      <form class="w-100" role="search">
-        <div class="input-group">
-          <input type="search" class="form-control border-0" placeholder="Search for products" aria-label="Search">
-          <button class="btn" type="submit">
-            <i class="fa-solid fa-magnifying-glass"></i>
-          </button>
+    <!-- Search Menu Wrapper -->
+    <div class="searchrow offcanvas offcanvas-top" tabindex="-1" id="searchCol" aria-labelledby="searchcol" style="height: 100vh;">
+        <div class="offcanvas-header justify-content-end">
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
-      </form>
+        <div class="offcanvas-body d-flex flex-column align-items-start justify-content-md-start px-4 pt-2">
+            <h5 class="srchHD fw-light mb-3">What are you looking for?</h5>
+            <form class="w-100" role="search">
+                <div class="input-group">
+                    <input type="search" class="form-control border-0" placeholder="Search for products" aria-label="Search">
+                    <button class="btn" type="submit">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <!-- Cart Sidebar Offcanvas -->
-  <div class="cartsection offcanvas offcanvas-end d-flex flex-column border-0" tabindex="-1" id="filtersProduct" aria-labelledby="filtersProductLabel">
-    <div class="offcanvas-header px-3 py-3 px-sm-8 py-sm-3">
-      <h6 class="cartHD mb-1 fw-normal">Your Cart ({{ cartStore.totalItems }})</h6>
-      <a class="btn-close fw-light text-decoration-none" data-bs-dismiss="offcanvas" aria-label="Close">Close</a>
+    <!-- Cart Sidebar Offcanvas -->
+    <div class="cartsection offcanvas offcanvas-end d-flex flex-column border-0" tabindex="-1" id="filtersProduct" aria-labelledby="filtersProductLabel">
+        <div class="offcanvas-header px-3 py-3 px-sm-8 py-sm-3">
+            <h6 class="cartHD mb-1 fw-normal">Your Cart ({{ cartStore.totalItems }})</h6>
+            <a class="btn-close fw-light text-decoration-none" data-bs-dismiss="offcanvas" aria-label="Close">Close</a>
+        </div>
+        <div class="offcanvas-body flex-grow-1 d-flex flex-column justify-content-between px-3 py-5 px-sm-8 py-sm-8">
+            <div>
+                <div v-for="item in cartStore.items" :key="item.id" class="d-flex align-items-start justify-content-between mb-4">
+                    <div class="imgholder me-2">
+                        <img :src="item.image" :alt="item.name" class="w-100 img-fluid">
+                    </div>
+                    <div class="flex-grow-1">
+                        <h4 class="cartHding fw-light mb-1">{{ item.name }}</h4>
+                        <small class="subheading fw-normal">{{ item.quantity }} × <strong class="fw-normal">{{ currencyStore.formatPrice(item.price) }}</strong></small>
+                    </div>
+                    <button @click="cartStore.removeFromCart(item.id)" class="btn btn-sm p-0 ms-2 btnclose border-0 bg-transparent">&times;</button>
+                </div>
+                <p v-if="!cartStore.items.length" class="text-center text-muted">Your cart is empty.</p>
+            </div>
+            <div v-if="cartStore.items.length">
+                <div class="d-flex justify-content-between fw-semibold mb-3">
+                    <span class="HDtotal fw-normal">Total</span>
+                    <span class="HDprice fw-medium">{{ currencyStore.formatPrice(cartStore.totalPrice) }}</span>
+                </div>
+                <div class="d-grid gap-2 mb-4">
+                    <router-link to="/cart" class="btn btns btn-outline-dark fw-medium" @click="closeCartOffcanvas">View Cart</router-link>
+                    <router-link to="/checkout" class="btn btns btn-dark fw-medium" @click="closeCartOffcanvas">Checkout</router-link>
+                </div>
+                <p class="spTxt fw-light text-center mb-0">Free Shipping on All <a href="javascript:void(0);" class="fw-normal">Orders Over $75</a></p>
+            </div>
+        </div>
     </div>
-    <div class="offcanvas-body flex-grow-1 d-flex flex-column justify-content-between px-3 py-5 px-sm-8 py-sm-8">
-      <div>
-        <div v-for="item in cartStore.items" :key="item.id" class="d-flex align-items-start justify-content-between mb-4">
-          <div class="imgholder me-2">
-            <img :src="item.image" :alt="item.name" class="w-100 img-fluid">
-          </div>
-          <div class="flex-grow-1">
-            <h4 class="cartHding fw-light mb-1">{{ item.name }}</h4>
-            <small class="subheading fw-normal">{{ item.quantity }} × <strong class="fw-normal">{{ currencyStore.formatPrice(item.price) }}</strong></small>
-          </div>
-          <button @click="cartStore.removeFromCart(item.id)" class="btn btn-sm p-0 ms-2 btnclose border-0 bg-transparent">&times;</button>
-        </div>
-        <p v-if="!cartStore.items.length" class="text-center text-muted">Your cart is empty.</p>
-      </div>
-      <div v-if="cartStore.items.length">
-        <div class="d-flex justify-content-between fw-semibold mb-3">
-          <span class="HDtotal fw-normal">Total</span>
-          <span class="HDprice fw-medium">{{ currencyStore.formatPrice(cartStore.totalPrice) }}</span>
-        </div>
-        <div class="d-grid gap-2 mb-4">
-          <router-link to="/cart" class="btn btns btn-outline-dark fw-medium" @click="closeCartOffcanvas">View Cart</router-link>
-          <router-link to="/checkout" class="btn btns btn-dark fw-medium" @click="closeCartOffcanvas">Checkout</router-link>
-        </div>
-        <p class="spTxt fw-light text-center mb-0">Free Shipping on All <a href="javascript:void(0);" class="fw-normal">Orders Over $75</a></p>
-      </div>
-    </div>
-  </div>
 
-  <!-- Sidebar Menu Wrapper -->
-  <div class="sidebarMenu offcanvas offcanvas-start d-md-none" tabindex="-1" id="sidebarMenu">
-    <div class="offcanvas-header justify-content-between py-3 px-4">
-      <h5 class="offcanvas-title mb-0">JewelT'Aime</h5>
-      <a class="btn-close fw-light text-decoration-none" data-bs-dismiss="offcanvas" aria-label="Close"></a>
-    </div>
-    <div class="offcanvas-body p-0">
-      <ul class="nav nav-tabs mb-3 pt-4 px-4 text-uppercase" id="menuTab" role="tablist">
-        <li class="nav-item me-6 mb-3">
-          <a class="text-decoration-none active" href="javascript:void(0);" id="menu-tab" data-bs-toggle="tab" data-bs-target="#menu" role="tab" aria-controls="menu" aria-selected="true">Menu</a>
-        </li>
-        <li class="nav-item">
-          <a class="text-decoration-none" href="javascript:void(0);" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categories" role="tab" aria-controls="categories" aria-selected="false">Categories</a>
-        </li>
-      </ul>
-      <div class="tab-content" id="menuTabContent">
-        <div class="tab-pane fade show active" id="menu" role="tabpanel" aria-labelledby="menu-tab">
-          <ul class="list-unstyled mainmenu">
-            <li class="py-2 px-4">
-              <router-link to="/" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">Home</router-link>
-            </li>
-            <li class="py-2 px-4">
-              <router-link to="/about" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">About</router-link>
-            </li>
-            <li class="py-2 px-4">
-              <router-link to="/products" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">Shop</router-link>
-            </li>
-            <li class="py-2 px-4">
-              <router-link to="/blog" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">Blog</router-link>
-            </li>
-          </ul>
+    <!-- Sidebar Menu Wrapper -->
+    <div class="sidebarMenu offcanvas offcanvas-start d-md-none" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header justify-content-between py-3 px-4">
+            <h5 class="offcanvas-title mb-0">JewelT'Aime</h5>
+            <a class="btn-close fw-light text-decoration-none" data-bs-dismiss="offcanvas" aria-label="Close"></a>
         </div>
-        <div class="tab-pane fade" id="categories" role="tabpanel" aria-labelledby="categories-tab">
-          <ul class="list-unstyled catemenu fw-normal">
-            <li v-for="cat in parentCategories" :key="cat.id" class="py-2 px-4">
-              <router-link :to="`/category/${cat.slug}`" class="text-decoration-none d-block" @click="closeSidebarMenu">{{ cat.name }}</router-link>
-            </li>
-          </ul>
+        <div class="offcanvas-body p-0">
+            <ul class="nav nav-tabs mb-3 pt-4 px-4 text-uppercase" id="menuTab" role="tablist">
+                <li class="nav-item me-6 mb-3">
+                    <a class="text-decoration-none active" href="javascript:void(0);" id="menu-tab" data-bs-toggle="tab" data-bs-target="#menu" role="tab" aria-controls="menu" aria-selected="true">Menu</a>
+                </li>
+                <li class="nav-item">
+                    <a class="text-decoration-none" href="javascript:void(0);" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categories" role="tab" aria-controls="categories" aria-selected="false">Categories</a>
+                </li>
+            </ul>
+            <div class="tab-content" id="menuTabContent">
+                <div class="tab-pane fade show active" id="menu" role="tabpanel" aria-labelledby="menu-tab">
+                    <ul class="list-unstyled mainmenu">
+                        <li class="py-2 px-4">
+                            <router-link to="/" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">Home</router-link>
+                        </li>
+                        <li class="py-2 px-4">
+                            <router-link to="/about" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">About</router-link>
+                        </li>
+                        <li class="py-2 px-4">
+                            <router-link to="/products" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">Shop</router-link>
+                        </li>
+                        <li class="py-2 px-4">
+                            <router-link to="/blog" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">Blog</router-link>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tab-pane fade" id="categories" role="tabpanel" aria-labelledby="categories-tab">
+                    <ul class="list-unstyled catemenu fw-normal">
+                        <li v-for="cat in parentCategories" :key="cat.id" class="py-2 px-4">
+                            <router-link :to="`/category/${cat.slug}`" class="text-decoration-none d-block" @click="closeSidebarMenu">{{ cat.name }}</router-link>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useCartStore } from '../stores/cartStore'
-import { useWishlistStore } from '../stores/wishlistStore'
-import { useCurrencyStore } from '../stores/currencyStore'
-import { clearAuth } from '../utils/auth'
-import axios from 'axios'
+    import { ref, computed, onMounted } from 'vue'
+    import { useRouter } from 'vue-router'
+    import { useCartStore } from '../stores/cartStore'
+    import { useWishlistStore } from '../stores/wishlistStore'
+    import { useCurrencyStore } from '../stores/currencyStore'
+    import { clearAuth } from '../utils/auth'
+    import axios from 'axios'
 
-const router = useRouter()
-const cartStore = useCartStore()
-const wishlistStore = useWishlistStore()
-const currencyStore = useCurrencyStore()
-const parentCategories = ref([])
-const allCategories = ref([])
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+    const router = useRouter()
+    const cartStore = useCartStore()
+    const wishlistStore = useWishlistStore()
+    const currencyStore = useCurrencyStore()
+    const parentCategories = ref([])
+    const allCategories = ref([])
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
-const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
+    const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
 
-const userData = computed(() => {
-  try {
-    const stored = localStorage.getItem('user')
-    return stored ? JSON.parse(stored) : null
-  } catch {
-    return null
-  }
-})
+    const userData = computed(() => {
+      try {
+        const stored = localStorage.getItem('user')
+        return stored ? JSON.parse(stored) : null
+      } catch {
+        return null
+      }
+    })
 
-const userName = computed(() => {
-  if (userData.value) {
-    return `${userData.value.firstName || ''} ${userData.value.lastName || ''}`.trim() || userData.value.email
-  }
-  return 'Account'
-})
+    const userName = computed(() => {
+      if (userData.value) {
+        return `${userData.value.firstName || ''} ${userData.value.lastName || ''}`.trim() || userData.value.email
+      }
+      return 'Account'
+    })
 
-const handleLogout = () => {
-  clearAuth()
-  wishlistStore.clearWishlist()
-  currencyStore.reset()
-  router.push('/')
-}
-
-onMounted(async () => {
-  // Fetch root categories (for sidebar/quick links)
-  try {
-    const res = await axios.get(`${API_BASE}/api/v1/categories/root`)
-    if (res.data) {
-      parentCategories.value = res.data.map(cat => ({
-        id: cat.id,
-        name: cat.name,
-        slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')
-      }))
+    const handleLogout = () => {
+      clearAuth()
+      wishlistStore.clearWishlist()
+      currencyStore.reset()
+      router.push('/')
     }
-  } catch (e) {
-    parentCategories.value = [
-      { id: 1, name: 'Necklaces', slug: 'necklaces' },
-      { id: 2, name: 'Rings', slug: 'rings' },
-      { id: 3, name: 'Bracelets', slug: 'bracelets' },
-      { id: 4, name: 'Earrings', slug: 'earrings' },
-      { id: 5, name: 'Charms & Dangles', slug: 'charms-dangles' },
-      { id: 6, name: 'Watches', slug: 'watches' }
-    ]
-  }
 
-  // Fetch full category hierarchy for mega-menu (with subcategories)
-  try {
-    const rootRes = await axios.get(`${API_BASE}/api/v1/categories/root`)
-    if (rootRes.data) {
-      const categoriesWithChildren = await Promise.all(
-        rootRes.data.map(async (cat) => {
-          try {
-            const subRes = await axios.get(`${API_BASE}/api/v1/categories/${cat.id}/all-subcategories`)
-            return {
-              id: cat.id,
-              name: cat.name,
-              slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
-              children: (subRes.data?.childCats || []).map(child => ({
-                id: child.id,
-                name: child.name,
-                slug: child.slug || child.name.toLowerCase().replace(/\s+/g, '-')
-              }))
-            }
-          } catch {
-            return {
-              id: cat.id,
-              name: cat.name,
-              slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
-              children: []
-            }
-          }
-        })
-      )
-      allCategories.value = categoriesWithChildren
+    onMounted(async () => {
+      // Fetch root categories (for sidebar/quick links)
+      try {
+        const res = await axios.get(`${API_BASE}/api/v1/categories/root`)
+        if (res.data) {
+          parentCategories.value = res.data.map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')
+          }))
+        }
+      } catch (e) {
+        parentCategories.value = [
+          { id: 1, name: 'Necklaces', slug: 'necklaces' },
+          { id: 2, name: 'Rings', slug: 'rings' },
+          { id: 3, name: 'Bracelets', slug: 'bracelets' },
+          { id: 4, name: 'Earrings', slug: 'earrings' },
+          { id: 5, name: 'Charms & Dangles', slug: 'charms-dangles' },
+          { id: 6, name: 'Watches', slug: 'watches' }
+        ]
+      }
+
+      // Fetch full category hierarchy for mega-menu (with subcategories)
+      try {
+        const rootRes = await axios.get(`${API_BASE}/api/v1/categories/root`)
+        if (rootRes.data) {
+          const categoriesWithChildren = await Promise.all(
+            rootRes.data.map(async (cat) => {
+              try {
+                const subRes = await axios.get(`${API_BASE}/api/v1/categories/${cat.id}/all-subcategories`)
+                return {
+                  id: cat.id,
+                  name: cat.name,
+                  slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
+                  children: (subRes.data?.childCats || []).map(child => ({
+                    id: child.id,
+                    name: child.name,
+                    slug: child.slug || child.name.toLowerCase().replace(/\s+/g, '-')
+                  }))
+                }
+              } catch {
+                return {
+                  id: cat.id,
+                  name: cat.name,
+                  slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
+                  children: []
+                }
+              }
+            })
+          )
+          allCategories.value = categoriesWithChildren
+        }
+      } catch (e) {
+        // Fallback with children
+        allCategories.value = [
+          { id: 1, name: 'Necklaces', slug: 'necklaces', children: [
+            { id: 11, name: 'Gold Necklaces', slug: 'gold-necklaces' },
+            { id: 12, name: 'Silver Necklaces', slug: 'silver-necklaces' },
+            { id: 13, name: 'Pendants', slug: 'pendants' },
+            { id: 14, name: 'Pearl Necklaces', slug: 'pearl-necklaces' }
+          ]},
+          { id: 2, name: 'Rings', slug: 'rings', children: [
+            { id: 21, name: 'Engagement Rings', slug: 'engagement-rings' },
+            { id: 22, name: 'Wedding Bands', slug: 'wedding-bands' },
+            { id: 23, name: 'Fashion Rings', slug: 'fashion-rings' }
+          ]},
+          { id: 3, name: 'Bracelets', slug: 'bracelets', children: [
+            { id: 31, name: 'Gold Bracelets', slug: 'gold-bracelets' },
+            { id: 32, name: 'Silver Bracelets', slug: 'silver-bracelets' },
+            { id: 33, name: 'Charm Bracelets', slug: 'charm-bracelets' }
+          ]},
+          { id: 4, name: 'Earrings', slug: 'earrings', children: [
+            { id: 41, name: 'Stud Earrings', slug: 'stud-earrings' },
+            { id: 42, name: 'Hoop Earrings', slug: 'hoop-earrings' },
+            { id: 43, name: 'Drop Earrings', slug: 'drop-earrings' }
+          ]},
+          { id: 5, name: 'Charms & Dangles', slug: 'charms-dangles', children: [
+            { id: 51, name: 'Gold Charms', slug: 'gold-charms' },
+            { id: 52, name: 'Silver Charms', slug: 'silver-charms' }
+          ]},
+          { id: 6, name: 'Watches', slug: 'watches', children: [
+            { id: 61, name: "Men's Watches", slug: 'mens-watches' },
+            { id: 62, name: "Women's Watches", slug: 'womens-watches' }
+          ]}
+        ]
+      }
+
+      // Fetch wishlist if user is logged in
+      wishlistStore.fetchWishlist()
+    })
+
+    const closeCartOffcanvas = () => {
+      const el = document.getElementById('filtersProduct')
+      if (el && typeof window.bootstrap !== 'undefined') {
+        const offcanvas = window.bootstrap.Offcanvas.getInstance(el)
+        if (offcanvas) offcanvas.hide()
+      }
     }
-  } catch (e) {
-    // Fallback with children
-    allCategories.value = [
-      { id: 1, name: 'Necklaces', slug: 'necklaces', children: [
-        { id: 11, name: 'Gold Necklaces', slug: 'gold-necklaces' },
-        { id: 12, name: 'Silver Necklaces', slug: 'silver-necklaces' },
-        { id: 13, name: 'Pendants', slug: 'pendants' },
-        { id: 14, name: 'Pearl Necklaces', slug: 'pearl-necklaces' }
-      ]},
-      { id: 2, name: 'Rings', slug: 'rings', children: [
-        { id: 21, name: 'Engagement Rings', slug: 'engagement-rings' },
-        { id: 22, name: 'Wedding Bands', slug: 'wedding-bands' },
-        { id: 23, name: 'Fashion Rings', slug: 'fashion-rings' }
-      ]},
-      { id: 3, name: 'Bracelets', slug: 'bracelets', children: [
-        { id: 31, name: 'Gold Bracelets', slug: 'gold-bracelets' },
-        { id: 32, name: 'Silver Bracelets', slug: 'silver-bracelets' },
-        { id: 33, name: 'Charm Bracelets', slug: 'charm-bracelets' }
-      ]},
-      { id: 4, name: 'Earrings', slug: 'earrings', children: [
-        { id: 41, name: 'Stud Earrings', slug: 'stud-earrings' },
-        { id: 42, name: 'Hoop Earrings', slug: 'hoop-earrings' },
-        { id: 43, name: 'Drop Earrings', slug: 'drop-earrings' }
-      ]},
-      { id: 5, name: 'Charms & Dangles', slug: 'charms-dangles', children: [
-        { id: 51, name: 'Gold Charms', slug: 'gold-charms' },
-        { id: 52, name: 'Silver Charms', slug: 'silver-charms' }
-      ]},
-      { id: 6, name: 'Watches', slug: 'watches', children: [
-        { id: 61, name: "Men's Watches", slug: 'mens-watches' },
-        { id: 62, name: "Women's Watches", slug: 'womens-watches' }
-      ]}
-    ]
-  }
 
-  // Fetch wishlist if user is logged in
-  wishlistStore.fetchWishlist()
-})
-
-const closeCartOffcanvas = () => {
-  const el = document.getElementById('filtersProduct')
-  if (el && typeof window.bootstrap !== 'undefined') {
-    const offcanvas = window.bootstrap.Offcanvas.getInstance(el)
-    if (offcanvas) offcanvas.hide()
-  }
-}
-
-const closeSidebarMenu = () => {
-  const el = document.getElementById('sidebarMenu')
-  if (el && typeof window.bootstrap !== 'undefined') {
-    const offcanvas = window.bootstrap.Offcanvas.getInstance(el)
-    if (offcanvas) offcanvas.hide()
-  }
-}
+    const closeSidebarMenu = () => {
+      const el = document.getElementById('sidebarMenu')
+      if (el && typeof window.bootstrap !== 'undefined') {
+        const offcanvas = window.bootstrap.Offcanvas.getInstance(el)
+        if (offcanvas) offcanvas.hide()
+      }
+    }
 </script>
 
 <style>
-#mainNavigation .mainNavigationCollapse .mega-menu {
-  min-width: 700px !important;
-  background: #fff;
-  border: 1px solid #eee;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 30px 30px 30px 30px !important;
-  left: 50%;
-  transform: translateX(-50%) translateY(5px);
-  transition: transform 0.35s ease, opacity 0.35s ease, visibility 0.35s ease;
-}
-#mainNavigation .mainNavigationCollapse .dropdown:hover .mega-menu.show {
-  visibility: visible;
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-#mainNavigation .mainNavigationCollapse .mega-menu h6 {
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px !important;
-}
-#mainNavigation .mainNavigationCollapse .mega-menu h6 a {
-  color: #000 !important;
-  text-decoration: none !important;
-  display: inline;
-  padding: 0;
-  background: none !important;
-}
-#mainNavigation .mainNavigationCollapse .mega-menu h6 a:hover {
-  color: #333 !important;
-  background: none !important;
-  text-decoration: underline !important;
-}
-#mainNavigation .mainNavigationCollapse .mega-menu ul li a {
-  display: block;
-  padding: 4px 0;
-  color: #666;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  text-decoration: none !important;
-  transition: color 0.2s ease;
-}
-#mainNavigation .mainNavigationCollapse .mega-menu ul li a:hover {
-  color: #000 !important;
-  background: none !important;
-}
+    #mainNavigation .mainNavigationCollapse .mega-menu {
+      min-width: 700px !important;
+      background: #fff;
+      border: 1px solid #eee;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px 30px 30px 30px !important;
+      left: 50%;
+      transform: translateX(-50%) translateY(5px);
+      transition: transform 0.35s ease, opacity 0.35s ease, visibility 0.35s ease;
+    }
+    #mainNavigation .mainNavigationCollapse .dropdown:hover .mega-menu.show {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #mainNavigation .mainNavigationCollapse .mega-menu h6 {
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px !important;
+    }
+    #mainNavigation .mainNavigationCollapse .mega-menu h6 a {
+      color: #000 !important;
+      text-decoration: none !important;
+      display: inline;
+      padding: 0;
+      background: none !important;
+    }
+    #mainNavigation .mainNavigationCollapse .mega-menu h6 a:hover {
+      color: #333 !important;
+      background: none !important;
+      text-decoration: underline !important;
+    }
+    #mainNavigation .mainNavigationCollapse .mega-menu ul li a {
+      display: block;
+      padding: 4px 0;
+      color: #666;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      text-decoration: none !important;
+      transition: color 0.2s ease;
+    }
+    #mainNavigation .mainNavigationCollapse .mega-menu ul li a:hover {
+      color: #000 !important;
+      background: none !important;
+    }
 </style>

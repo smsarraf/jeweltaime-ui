@@ -55,7 +55,7 @@ export const useWishlistStore = defineStore('wishlist', {
 
       this.isLoading = true
       try {
-        const response = await axios.get(`${API_BASE}/api/wishlist`, {
+        const response = await axios.get(`${API_BASE}/api/v1/wishlist`, {
           headers: this.getAuthHeaders()
         })
         if (response.data.success) {
@@ -90,7 +90,7 @@ export const useWishlistStore = defineStore('wishlist', {
       if (inWishlist) {
         // Remove from wishlist
         try {
-          const response = await axios.delete(`${API_BASE}/api/wishlist/remove/${productId}`, {
+          const response = await axios.delete(`${API_BASE}/api/v1/wishlist/remove/${productId}`, {
             headers: this.getAuthHeaders()
           })
           if (response.data.success) {
@@ -105,7 +105,7 @@ export const useWishlistStore = defineStore('wishlist', {
       } else {
         // Add to wishlist
         try {
-          const response = await axios.post(`${API_BASE}/api/wishlist/add`, {
+          const response = await axios.post(`${API_BASE}/api/v1/wishlist/add`, {
             product: {
               id: productId,
               name: product.name,

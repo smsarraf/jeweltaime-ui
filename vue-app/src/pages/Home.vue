@@ -3,22 +3,40 @@
       <section class="introBlock position-relative overflow-hidden w-100">
           <div class="container-fluid px-lgwd-18">
               <div class="ibSliderII">
-                  <div>
-                      <article class="ibsColumn ibsColII d-md-flex justify-content-md-center bgclr">
-                          <div class="col-12 col-md-5 py-5 my-md-auto pddngS">
-                              <div class="ahAlign">
-                                  <h1 class="hhHeadingI fw-normal mb-1">Limited Edition <br>Cage Rings</h1>
-                                  <span class="subHeading d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">World-class diamond</span>
-                                  <strong class="subTitle d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">Mother's Day Special</strong>
-                                  <router-link to="/products" class="btn btnThemeOutlined py-2 py-lg-3 px-6 px-lg-9" data-hover="Shop Now">
-                                      <span class="btnText">Shop Now</span>
-                                  </router-link>
-                              </div>
-                          </div>
-                          <div class="col-12 col-md-7 imgHolder iMgII">
-                              <img src="https://placehold.co/1000x600" class="w-100" alt="image description">
-                          </div>
-                      </article>
+                  <div v-if="banners.length > 0">
+                    <article class="ibsColumn ibsColII d-md-flex justify-content-md-center bgclr" v-for="banner in banners" :key="banner.id">
+                        <div class="col-12 col-md-5 py-5 my-md-auto pddngS">
+                            <div class="ahAlign">
+                                <h1 class="hhHeadingI fw-normal mb-1">{{ banner.title || 'Limited Edition Cage Rings' }}</h1>
+                                <span class="subHeading d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">{{ banner.subtitle || 'World-class diamond' }}</span>
+                                <strong class="subTitle d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">{{ banner.specialText || "Mother's Day Special" }}</strong>
+                                <router-link :to="banner.targetUrl || '/products'" class="btn btnThemeOutlined py-2 py-lg-3 px-6 px-lg-9" data-hover="Shop Now">
+                                    <span class="btnText">{{ banner.buttonText || 'Shop Now' }}</span>
+                                </router-link>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-7 imgHolder iMgII">
+                            <img :src="banner.imageUrl || 'https://placehold.co/1000x600'" class="w-100" :alt="banner.title || 'Banner'">
+                        </div>
+                    </article>
+                  </div>
+                  <!-- Fallback when no banners -->
+                  <div v-else>
+                    <article class="ibsColumn ibsColII d-md-flex justify-content-md-center bgclr">
+                        <div class="col-12 col-md-5 py-5 my-md-auto pddngS">
+                            <div class="ahAlign">
+                                <h1 class="hhHeadingI fw-normal mb-1">Limited Edition <br>Cage Rings</h1>
+                                <span class="subHeading d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">World-class diamond</span>
+                                <strong class="subTitle d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">Mother's Day Special</strong>
+                                <router-link to="/products" class="btn btnThemeOutlined py-2 py-lg-3 px-6 px-lg-9" data-hover="Shop Now">
+                                    <span class="btnText">Shop Now</span>
+                                </router-link>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-7 imgHolder iMgII">
+                            <img src="https://placehold.co/1000x600" class="w-100" alt="image description">
+                        </div>
+                    </article>
                   </div>
               </div>
           </div>
@@ -123,8 +141,9 @@ import { ref, onMounted } from 'vue'
 import ProductCard from '../components/ProductCard.vue'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
+const banners = ref([])
 const popularCategories = ref([
   { id: 1, name: 'Necklaces', slug: 'necklaces', image: 'https://placehold.co/185x185' },
   { id: 2, name: 'Rings', slug: 'rings', image: 'https://placehold.co/185x185' },
@@ -133,47 +152,64 @@ const popularCategories = ref([
   { id: 5, name: 'Charms & Dangles', slug: 'charms-dangles', image: 'https://placehold.co/185x185' }
 ])
 
+const featuredProducts = ref([
+    {
+        id: 1,
+        name: 'Cross Stripes & Stone Bracelet',
+        category: 'BRACELETS',
+        price: 169.00,
+        image: 'https://placehold.co/305x305'
+    },
+    {
+        id: 2,
+        name: 'Echoes Necklace Extension Piece',
+        category: 'CHARM AND DANGLES',
+        price: 199.00,
+        image: 'https://placehold.co/305x305'
+    },
+    {
+        id: 3,
+        name: 'Four-Leaf Clover Rings',
+        category: 'RINGS',
+        price: 99.00,
+        originalPrice: 129.00,
+        sale: true,
+        image: 'https://placehold.co/305x305'
+    },
+    {
+        id: 4,
+        name: 'Cross of Light Pendant',
+        category: 'NECKLACES',
+        price: 79.00,
+        image: 'https://placehold.co/305x305'
+    }
+])
+
 onMounted(async () => {
+  // Fetch active banners from ERP
   try {
-    const res = await axios.get(`${API_BASE}/api/categories`)
-    if (res.data.success && res.data.data.length) {
-      popularCategories.value = res.data.data.slice(0, 5)
+    const res = await axios.get(`${API_BASE}/api/v1/banners/active`)
+    if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+      banners.value = res.data
+    }
+  } catch (e) {
+    // Use empty banners (fallback slider shown)
+    banners.value = []
+  }
+
+  // Fetch categories from ERP
+  try {
+    const catRes = await axios.get(`${API_BASE}/api/v1/categories/root`)
+    if (catRes.data && Array.isArray(catRes.data) && catRes.data.length > 0) {
+      popularCategories.value = catRes.data.slice(0, 5).map(c => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-'),
+        image: 'https://placehold.co/185x185'
+      }))
     }
   } catch (e) {
     // Use defaults
   }
 })
-
-const featuredProducts = ref([
-  {
-      id: 1,
-      name: 'Cross Stripes & Stone Bracelet',
-      category: 'BRACELETS',
-      price: 169.00,
-      image: 'https://placehold.co/305x305'
-  },
-  {
-      id: 2,
-      name: 'Echoes Necklace Extension Piece',
-      category: 'CHARM AND DANGLES',
-      price: 199.00,
-      image: 'https://placehold.co/305x305'
-  },
-  {
-      id: 3,
-      name: 'Four-Leaf Clover Rings',
-      category: 'RINGS',
-      price: 99.00,
-      originalPrice: 129.00,
-      sale: true,
-      image: 'https://placehold.co/305x305'
-  },
-  {
-      id: 4,
-      name: 'Cross of Light Pendant',
-      category: 'NECKLACES',
-      price: 79.00,
-      image: 'https://placehold.co/305x305'
-  }
-])
 </script>

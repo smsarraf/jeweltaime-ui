@@ -89,9 +89,9 @@ const currencyStore = useCurrencyStore()
 const isLoggedIn = computed(() => wishlistStore.isLoggedIn())
 
 const itemLink = (item) => {
-  const slug = toSlug(item.name || '')
-  const id = item.id || item._id
-  return id ? `/products/${slug}-${id}` : `/products/${slug || id}`
+  const slug = toSlug(item.name || item.productName || '')
+  const id = item.id || item.productId
+  return id ? `/products/${id}/${slug}` : `/products/${slug || id}`
 }
 
 const removeItem = async (productId) => {
@@ -99,15 +99,15 @@ const removeItem = async (productId) => {
 }
 
 const moveToCart = (product) => {
-  cartStore.addToCart(product)
-  removeItem(product.id)
-  const cartOffcanvas = document.getElementById('filtersProduct')
-  if (cartOffcanvas && typeof window.bootstrap !== 'undefined') {
-    const bsOffcanvas = new window.bootstrap.Offcanvas(cartOffcanvas)
-    bsOffcanvas.show()
-  }
-}
-</script>
+  cartStore.addToCart({
+    id: product.id || product.productId,
+    name: product.name || product.productName,
+    price: product.price || product.productPrice || 0,
+    image: product.image || product.productImage || '',
+    category: product.category || product.productCategory || ''
+  })
+  removeItem(product.id || product.productId)
+}</script>
 
 <style scoped>
 .productColumn .imgHolder {

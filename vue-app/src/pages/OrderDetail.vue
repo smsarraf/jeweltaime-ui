@@ -47,9 +47,9 @@
                     </thead>
                     <tbody>
                       <tr v-for="item in order.items" :key="item.id || item.productId" class="border-top">
-                        <td class="py-3 px-4">
-                          <router-link :to="`/products/${item.productId}`" class="text-decoration-none">{{ item.productName || `Product #${item.productId}` }}</router-link>
-                        </td>
+                          <td class="py-3 px-4">
+                            <router-link :to="`/products/${item.productId}/${(item.productName || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`" class="text-decoration-none">{{ item.productName || `Product #${item.productId}` }}</router-link>
+                          </td>
                         <td class="py-3 px-4 text-center">{{ item.quantity }}</td>
                         <td class="py-3 px-4 text-end">{{ currencyStore.formatPrice(item.unitPriceAtTime || item.unitPrice || 0) }}</td>
                         <td class="py-3 px-4 text-end">{{ currencyStore.formatPrice((item.unitPriceAtTime || item.unitPrice || 0) * item.quantity) }}</td>

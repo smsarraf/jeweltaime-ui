@@ -69,7 +69,7 @@ router.get('/', authMiddleware, (req, res) => {
 });
 
 /**
- * POST /api/wishlist/add
+ * POST /api/v1/wishlist/add
  * Add a product to the wishlist
  * Body: { product: { id, name, price, image, slug, category } }
  */
@@ -124,7 +124,7 @@ router.post('/add', authMiddleware, (req, res) => {
 });
 
 /**
- * DELETE /api/wishlist/remove/:productId
+ * DELETE /api/v1/wishlist/remove/:productId
  * Remove a product from the wishlist
  */
 router.delete('/remove/:productId', authMiddleware, (req, res) => {
@@ -158,7 +158,7 @@ router.delete('/remove/:productId', authMiddleware, (req, res) => {
 });
 
 /**
- * POST /api/wishlist/check
+ * POST /api/v1/wishlist/check
  * Check if products are in the user's wishlist
  * Body: { productIds: string[] }
  * Returns: { [productId]: true/false }
@@ -193,7 +193,7 @@ router.post('/check', authMiddleware, (req, res) => {
 });
 
 /**
- * GET /api/wishlist/count
+ * GET /api/v1/wishlist/count
  * Get the count of wishlist items
  */
 router.get('/count', authMiddleware, (req, res) => {

@@ -5,14 +5,14 @@
         <div class="col-12 col-md-6 col-lg-3 mb-6 mb-lg-0">
           <div class="footerLogo mb-3">
             <router-link to="/">
-              <img src="/images/logo.png" class="img-fluid" alt="JewelT'Aime" style="max-width: 130px;">
+              <img :src="siteSettings.logo || '/images/logo.png'" class="img-fluid" alt="JewelT'Aime" style="max-width: 130px;">
             </router-link>
           </div>
           <p class="footerTagline fw-light mb-3">
             <em>"Where Elegance Meets You"</em>
           </p>
           <p class="fw-light mb-4">
-            Discover exquisite jewellery crafted with passion and precision. Each piece tells a story of elegance and timeless beauty.
+            {{ siteSettings.shortDescription || 'Discover exquisite jewellery crafted with passion and precision. Each piece tells a story of elegance and timeless beauty.' }}
           </p>
         </div>
         <div class="col-12 col-sm-6 col-lg-3 mb-6 mb-lg-0">
@@ -50,14 +50,32 @@
       <div class="container">
         <div class="row align-items-center">
           <div class="col-12 col-md-6 text-center text-md-start mb-3 mb-md-0">
-            <p class="mb-0 fw-light text-muted">&copy; {{ currentYear }} JewelT'Aime. All rights reserved.</p>
+            <p class="mb-0 fw-light text-muted">
+              &copy; {{ currentYear }} JewelT'Aime. All rights reserved.
+            </p>
           </div>
           <div class="col-12 col-md-6 text-center text-md-end">
             <ul class="list-unstyled d-flex flex-wrap justify-content-center justify-content-md-end gap-3 mb-0">
-              <li><a href="javascript:void(0);"><i class="icomoon-facebook facebookIcn"></i></a></li>
-              <li><a href="javascript:void(0);"><i class="icomoon-twitter twitterIcn"></i></a></li>
-              <li><a href="javascript:void(0);"><i class="icomoon-instagram instagramIcn"></i></a></li>
-              <li><a href="javascript:void(0);"><i class="icomoon-pinterest pinterestIcn"></i></a></li>
+              <li v-if="siteSettings.facebookLink">
+                <a :href="siteSettings.facebookLink" target="_blank" rel="noopener">
+                  <i class="icomoon-facebook facebookIcn"></i>
+                </a>
+              </li>
+              <li v-if="siteSettings.twitterLink">
+                <a :href="siteSettings.twitterLink" target="_blank" rel="noopener">
+                  <i class="icomoon-twitter twitterIcn"></i>
+                </a>
+              </li>
+              <li v-if="siteSettings.instagramLink">
+                <a :href="siteSettings.instagramLink" target="_blank" rel="noopener">
+                  <i class="icomoon-instagram instagramIcn"></i>
+                </a>
+              </li>
+              <li v-if="siteSettings.pinterestLink">
+                <a :href="siteSettings.pinterestLink" target="_blank" rel="noopener">
+                  <i class="icomoon-pinterest pinterestIcn"></i>
+                </a>
+              </li>
             </ul>
           </div>
         </div>
@@ -67,6 +85,10 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useSiteSettingsStore } from '../stores/siteSettingsStore'
+
+const siteSettings = useSiteSettingsStore()
 const currentYear = new Date().getFullYear()
 </script>
 
