@@ -1,7 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
 const airwallexRoutes = require('./routes/airwallex');
+const { passport } = require('./services/passport');
 
 dotenv.config();
 
@@ -14,11 +17,28 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser());
+
+// Session middleware (required by Passport)
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'jeweltaime-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 const ordersRoutes = require('./routes/orders');
 const categoriesRoutes = require('./routes/categories');
 const couponsRoutes = require('./routes/coupons');
 const authRoutes = require('./routes/auth');
+const socialAuthRoutes = require('./routes/social-auth');
 const wishlistRoutes = require('./routes/wishlist');
 const locationRoutes = require('./routes/locations');
 const shippingAddressRoutes = require('./routes/shipping-addresses');
@@ -30,6 +50,7 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/coupons', couponsRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/social', socialAuthRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/shipping-addresses', shippingAddressRoutes);

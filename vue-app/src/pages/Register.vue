@@ -94,6 +94,8 @@
                 </div>
               </form>
 
+              <SocialLoginButtons />
+
               <p class="text-center mb-0">
                 Already have an account?
                 <router-link to="/signin" class="text-decoration-none fw-medium">Sign in here</router-link>
@@ -109,6 +111,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import Captcha from '../components/Captcha.vue'
+import SocialLoginButtons from '../components/SocialLoginButtons.vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 

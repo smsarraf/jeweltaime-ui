@@ -1,13 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-// In-memory user storage (for demo purposes)
-// In production, replace with a database
-const users = [{
-"email" : "smsarraf@gmail.com",
-"password" : "Adi@1908",
-"username": "smsarraf"
-}];
+// Shared in-memory user storage
+const { users } = require('../services/userStore');
 
 /**
  * Middleware: extract user from auth token

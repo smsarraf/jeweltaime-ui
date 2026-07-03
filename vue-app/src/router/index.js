@@ -10,6 +10,7 @@ import About from '../pages/About.vue'
 import Contact from '../pages/Contact.vue'
 import SignIn from '../pages/SignIn.vue'
 import Register from '../pages/Register.vue'
+import AuthCallback from '../pages/AuthCallback.vue'
 import Wishlist from '../pages/Wishlist.vue'
 import Dashboard from '../pages/Dashboard.vue'
 import Profile from '../pages/Profile.vue'
@@ -69,6 +70,11 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Register
+  },
+  {
+    path: '/auth/callback',
+    name: 'AuthCallback',
+    component: AuthCallback
   },
   {
     path: '/wishlist',
