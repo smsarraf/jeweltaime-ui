@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 const WISHLIST_KEY = 'jeweltaime_wishlist'
 
 export const useWishlistStore = defineStore('wishlist', {
@@ -103,17 +103,15 @@ export const useWishlistStore = defineStore('wishlist', {
           return null
         }
       } else {
-        // Add to wishlist
+        // Add to wishlist — uses AddToWishlistRequest schema (flat body)
         try {
           const response = await axios.post(`${API_BASE}/api/v1/wishlist/add`, {
-            product: {
-              id: productId,
-              name: product.name,
-              price: product.price,
-              image: product.image,
-              slug: product.slug,
-              category: product.category
-            }
+            productId,
+            productName: product.name,
+            productPrice: product.price,
+            productImage: product.image,
+            productSlug: product.slug,
+            productCategory: product.category
           }, {
             headers: this.getAuthHeaders()
           })

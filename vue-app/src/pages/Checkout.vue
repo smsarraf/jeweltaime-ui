@@ -444,10 +444,10 @@ const applyCouponCode = async () => {
       }
     })
     const data = response.data
-    // Successful validation — apply discount
-    if (data.discountType === 'PERCENTAGE') {
+    // Successful validation — apply discount (API returns lowercase enum values)
+    if (data.discountType === 'percentage') {
       checkoutDiscount.value = (cartStore.totalPrice * data.discountValue) / 100
-    } else if (data.discountType === 'FIXED_AMOUNT') {
+    } else if (data.discountType === 'fixed_amount') {
       checkoutDiscount.value = data.discountValue
     } else {
       checkoutDiscount.value = data.discountValue || 0
@@ -519,7 +519,9 @@ async function createOrder() {
   const orderData = {
     userId: userId || 1,
     shippingAddress: `${billing.addressLine1}, ${billing.city}, ${billing.state} ${billing.postcode}`,
-    countryId: getCountryId(billing.country),
+    countryId: Number(billing.country) || getCountryId(billing.country),
+    stateId: billing.state ? Number(billing.state) : undefined,
+    cityId: billing.city ? Number(billing.city) : undefined,
     currencyId: 1,
     items: cartStore.items.map(item => ({
       productId: Number(item.id),

@@ -6,6 +6,7 @@ import ProductDetail from '../pages/ProductDetail.vue'
 import Cart from '../pages/Cart.vue'
 import Checkout from '../pages/Checkout.vue'
 import Blog from '../pages/Blog.vue'
+import BlogDetail from '../pages/BlogDetail.vue'
 import About from '../pages/About.vue'
 import Contact from '../pages/Contact.vue'
 import SignIn from '../pages/SignIn.vue'
@@ -50,6 +51,11 @@ const routes = [
     path: '/blog',
     name: 'Blog',
     component: Blog
+  },
+  {
+    path: '/blog/:slug',
+    name: 'BlogDetail',
+    component: BlogDetail
   },
   {
     path: '/about',

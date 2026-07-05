@@ -2,7 +2,7 @@
   <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
     <div class="imgHolder mb-2">
       <router-link :to="`/products/${productId || product._id}/${toSlug(product.name)}`">
-        <img :src="product.image || 'https://placehold.co/305x305'" class="w-100 img-fluid" :alt="product.name">
+        <img :src="productImage" class="w-100 img-fluid" :alt="product.name" loading="lazy">
       </router-link>
       <strong v-if="product.sale" class="position-absolute text-uppercase bg-danger fw-semibold text-white pcTag">-30%</strong>
       <ul class="list-unstyled d-flex flex-column gap-1 pcActionsList">
@@ -51,6 +51,13 @@ const wishlistStore = useWishlistStore()
 const currencyStore = useCurrencyStore()
 
 const productId = computed(() => props.product.id || props.product._id)
+
+const productImage = computed(() => {
+  // Use primary media image, or thumbnail, or fallback
+  if (props.product.thumbnail) return props.product.thumbnail
+  if (props.product.image && !props.product.image.includes('placehold.co')) return props.product.image
+  return 'https://placehold.co/305x305'
+})
 const isWishlisted = computed(() => wishlistStore.isInWishlist(productId.value))
 
 const urlSlug = computed(() => {

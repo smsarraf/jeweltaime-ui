@@ -266,15 +266,14 @@
     import { useCartStore } from '../stores/cartStore'
     import { useWishlistStore } from '../stores/wishlistStore'
     import { useCurrencyStore } from '../stores/currencyStore'
+    import { useCategoryStore } from '../stores/categoryStore'
     import { clearAuth } from '../utils/auth'
-    import axios from 'axios'
 
     const router = useRouter()
     const cartStore = useCartStore()
     const wishlistStore = useWishlistStore()
     const currencyStore = useCurrencyStore()
-    const parentCategories = ref([])
-    const allCategories = ref([])
+    const categoryStore = useCategoryStore()
     const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
     const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
@@ -302,93 +301,12 @@
       router.push('/')
     }
 
+    const parentCategories = computed(() => categoryStore.getRootCategories)
+    const allCategories = computed(() => categoryStore.getRootCategories)
+
     onMounted(async () => {
-      // Fetch root categories (for sidebar/quick links)
-      try {
-        const res = await axios.get(`${API_BASE}/api/v1/categories/root`)
-        if (res.data) {
-          parentCategories.value = res.data.map(cat => ({
-            id: cat.id,
-            name: cat.name,
-            slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')
-          }))
-        }
-      } catch (e) {
-        parentCategories.value = [
-          { id: 1, name: 'Necklaces', slug: 'necklaces' },
-          { id: 2, name: 'Rings', slug: 'rings' },
-          { id: 3, name: 'Bracelets', slug: 'bracelets' },
-          { id: 4, name: 'Earrings', slug: 'earrings' },
-          { id: 5, name: 'Charms & Dangles', slug: 'charms-dangles' },
-          { id: 6, name: 'Watches', slug: 'watches' }
-        ]
-      }
-
-      // Fetch full category hierarchy for mega-menu (with subcategories)
-      try {
-        const rootRes = await axios.get(`${API_BASE}/api/v1/categories/root`)
-        if (rootRes.data) {
-          const categoriesWithChildren = await Promise.all(
-            rootRes.data.map(async (cat) => {
-              try {
-                const subRes = await axios.get(`${API_BASE}/api/v1/categories/${cat.id}/all-subcategories`)
-                return {
-                  id: cat.id,
-                  name: cat.name,
-                  slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
-                  children: (subRes.data?.childCats || []).map(child => ({
-                    id: child.id,
-                    name: child.name,
-                    slug: child.slug || child.name.toLowerCase().replace(/\s+/g, '-')
-                  }))
-                }
-              } catch {
-                return {
-                  id: cat.id,
-                  name: cat.name,
-                  slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
-                  children: []
-                }
-              }
-            })
-          )
-          allCategories.value = categoriesWithChildren
-        }
-      } catch (e) {
-        // Fallback with children
-        allCategories.value = [
-          { id: 1, name: 'Necklaces', slug: 'necklaces', children: [
-            { id: 11, name: 'Gold Necklaces', slug: 'gold-necklaces' },
-            { id: 12, name: 'Silver Necklaces', slug: 'silver-necklaces' },
-            { id: 13, name: 'Pendants', slug: 'pendants' },
-            { id: 14, name: 'Pearl Necklaces', slug: 'pearl-necklaces' }
-          ]},
-          { id: 2, name: 'Rings', slug: 'rings', children: [
-            { id: 21, name: 'Engagement Rings', slug: 'engagement-rings' },
-            { id: 22, name: 'Wedding Bands', slug: 'wedding-bands' },
-            { id: 23, name: 'Fashion Rings', slug: 'fashion-rings' }
-          ]},
-          { id: 3, name: 'Bracelets', slug: 'bracelets', children: [
-            { id: 31, name: 'Gold Bracelets', slug: 'gold-bracelets' },
-            { id: 32, name: 'Silver Bracelets', slug: 'silver-bracelets' },
-            { id: 33, name: 'Charm Bracelets', slug: 'charm-bracelets' }
-          ]},
-          { id: 4, name: 'Earrings', slug: 'earrings', children: [
-            { id: 41, name: 'Stud Earrings', slug: 'stud-earrings' },
-            { id: 42, name: 'Hoop Earrings', slug: 'hoop-earrings' },
-            { id: 43, name: 'Drop Earrings', slug: 'drop-earrings' }
-          ]},
-          { id: 5, name: 'Charms & Dangles', slug: 'charms-dangles', children: [
-            { id: 51, name: 'Gold Charms', slug: 'gold-charms' },
-            { id: 52, name: 'Silver Charms', slug: 'silver-charms' }
-          ]},
-          { id: 6, name: 'Watches', slug: 'watches', children: [
-            { id: 61, name: "Men's Watches", slug: 'mens-watches' },
-            { id: 62, name: "Women's Watches", slug: 'womens-watches' }
-          ]}
-        ]
-      }
-
+      // Load categories from centralized store (15-min cache, auto-refresh)
+      await categoryStore.loadCategories()
       // Fetch wishlist if user is logged in
       wishlistStore.fetchWishlist()
     })

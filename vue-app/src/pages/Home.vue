@@ -21,23 +21,6 @@
                     </article>
                   </div>
                   <!-- Fallback when no banners -->
-                  <div v-else>
-                    <article class="ibsColumn ibsColII d-md-flex justify-content-md-center bgclr">
-                        <div class="col-12 col-md-5 py-5 my-md-auto pddngS">
-                            <div class="ahAlign">
-                                <h1 class="hhHeadingI fw-normal mb-1">Limited Edition <br>Cage Rings</h1>
-                                <span class="subHeading d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">World-class diamond</span>
-                                <strong class="subTitle d-block fw-light mb-2 mb-lg-3 mb-lgwd-5">Mother's Day Special</strong>
-                                <router-link to="/products" class="btn btnThemeOutlined py-2 py-lg-3 px-6 px-lg-9" data-hover="Shop Now">
-                                    <span class="btnText">Shop Now</span>
-                                </router-link>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-7 imgHolder iMgII">
-                            <img src="https://placehold.co/1000x600" class="w-100" alt="image description">
-                        </div>
-                    </article>
-                  </div>
               </div>
           </div>
       </section>
@@ -51,7 +34,7 @@
                   <div v-for="cat in popularCategories" :key="cat.id" class="chCol d-flex">
                     <router-link :to="`/category/${cat.slug}`" class="catColumn d-block w-100 text-center">
                       <div class="imgHolder mx-auto mb-5">
-                        <img :src="cat.image || 'https://placehold.co/185x185'" class="w-100 h-100 object-fit-cover" :alt="cat.name">
+                        <img :src="cat.thumbnailUrl || 'https://placehold.co/185x185'" class="w-100 h-100 object-fit-cover" :alt="cat.name">
                       </div>
                       <h3 class="ctHeading d-inline-block text-uppercase align-top">{{ cat.name.toUpperCase() }}</h3>
                     </router-link>

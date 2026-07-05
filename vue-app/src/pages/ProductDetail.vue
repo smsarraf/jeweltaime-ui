@@ -20,7 +20,7 @@
                   </div>
               </div>
           </div>
-          <span class="bgCover w-100 h-100 position-absolute bhBgImage" style="background-image: url('https://placehold.co/1920x300');"></span>
+          <span class="bgCover w-100 h-100 position-absolute bhBgImage" :style="{ backgroundImage: `url('${categoryBanner || 'https://cdn.jeweltaime.com/img63.jpg'}')` }"></span>
       </header>
 
       <!-- Product Details Area -->
@@ -269,6 +269,7 @@ import { useCartStore } from '../stores/cartStore'
 import { useWishlistStore } from '../stores/wishlistStore'
 import { useCurrencyStore } from '../stores/currencyStore'
 import { useSiteSettingsStore } from '../stores/siteSettingsStore'
+import { useCategoryStore } from '../stores/categoryStore'
 import { toSlug } from '../utils/slug'
 import axios from 'axios'
 
@@ -278,6 +279,7 @@ const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
 const currencyStore = useCurrencyStore()
 const siteSettings = useSiteSettingsStore()
+const categoryStore = useCategoryStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 const socialLinks = computed(() => ({
@@ -297,8 +299,9 @@ const product = ref({
   id: '',
   name: '',
   category: '',
+  categoryId: null,
   price: 0,
-  image: 'https://placehold.co/685x685',
+  thumbnailUrl: '',
   sku: '',
   description: '',
   supplierName: '',
@@ -319,6 +322,28 @@ const facebookShareUrl = computed(() => `https://www.facebook.com/sharer/sharer.
 const twitterShareUrl = computed(() => `https://twitter.com/intent/tweet?url=${shareUrl.value}&text=${shareTitle.value}`)
 const pinterestShareUrl = computed(() => `https://pinterest.com/pin/create/button/?url=${shareUrl.value}&description=${shareTitle.value}`)
 
+// Category banner for header background (1920x300) — uses category store for real banner images
+const categoryBanner = computed(() => {
+  // Direct ID lookup is most reliable
+  if (product.value.categoryId) {
+    const cat = categoryStore.getCategoryById(product.value.categoryId)
+    if (cat?.bannerUrl) return cat.bannerUrl
+  }
+  // Fallback slug-based lookup
+  if (product.value.category) {
+    const slugCandidates = [
+      product.value.category.toLowerCase().replace(/[\s&]+/g, '-'),
+      product.value.category.toLowerCase().replace(/\s+/g, '-'),
+      product.value.category.replace(/\s+/g, '')
+    ]
+    for (const slug of slugCandidates) {
+      const cat = categoryStore.getCategoryBySlug(slug)
+      if (cat?.bannerUrl) return cat.bannerUrl
+    }
+  }
+  return null
+})
+
 // Selected variant object
 const selectedVariant = computed(() => {
   if (!selectedVariantId.value) return null
@@ -332,9 +357,9 @@ const displayPrice = computed(() => {
   return base + additional
 })
 
-// Product images for carousel — uses variant media if selected, else base media
+// Product images for carousel — uses variant media if selected, else base media, fallback to thumbnailUrl
 const productImages = computed(() => {
-  const fallback = 'https://placehold.co/685x685'
+  const fallback = product.value.thumbnailUrl || 'https://placehold.co/685x685'
   if (selectedVariant.value?.media?.length) {
     return selectedVariant.value.media
       .filter(m => m.type === 'IMAGE')
@@ -347,8 +372,7 @@ const productImages = computed(() => {
       .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
       .map(m => m.url || fallback)
   }
-  const img = product.value.image || fallback
-  return [img, img, img, img]
+  return [fallback, fallback, fallback, fallback]
 })
 
 function selectVariant(variantId) {
@@ -421,10 +445,11 @@ async function fetchProduct() {
         id: p.id,
         name: p.name,
         category: p.categoryName || 'Jewelry',
+        categoryId: p.categoryId || null,
         price: p.basePriceUsd || 0,
-        image: 'https://placehold.co/685x685',
+        thumbnailUrl: p.thumbnailUrl || '',
         sku: p.sku || '',
-        description: p.description || '',
+        description: p.shortDescription || p.description || '',
         supplierName: p.supplierName || '',
         variants: (p.variants || []).map(v => ({
           id: v.id,
@@ -449,7 +474,7 @@ async function fetchProduct() {
       name: 'Blue Stripes & Stone Bracelet',
       category: 'BRACELETS',
       price: 199.00,
-      image: 'https://placehold.co/685x685',
+      thumbnailUrl: '',
       sku: 'DEMO-001',
       description: 'Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake.',
       supplierName: 'Demo Supplier'
@@ -460,6 +485,7 @@ async function fetchProduct() {
 }
 
 onMounted(() => {
+  categoryStore.loadCategories()
   fetchProduct()
   initCarouselListener()
 })
@@ -488,7 +514,7 @@ const addToCart = () => {
     name: product.value.name + (variant ? ` - ${variant.variantName}` : ''),
     category: product.value.category,
     price: displayPrice.value,
-    image: productImages.value[0] || product.value.image,
+    image: productImages.value[0] || product.value.thumbnailUrl,
     sku: product.value.sku,
     variantId: variant?.id || null,
     variantName: variant?.variantName || null,
@@ -530,7 +556,7 @@ const buyItNow = () => {
     name: product.value.name + (variant ? ` - ${variant.variantName}` : ''),
     category: product.value.category,
     price: displayPrice.value,
-    image: productImages.value[0] || product.value.image,
+    image: productImages.value[0] || product.value.thumbnailUrl,
     sku: product.value.sku,
     variantId: variant?.id || null,
     variantName: variant?.variantName || null,

@@ -286,7 +286,17 @@ async function cancelOrder(orderId) {
   }
 }
 
-const handleLogout = () => {
+const handleLogout = async () => {
+  try {
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      await axios.post(`${API_BASE}/api/v1/auth/logout`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    }
+  } catch (e) {
+    // Silent fail — clear local state regardless
+  }
   localStorage.removeItem('authToken')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')

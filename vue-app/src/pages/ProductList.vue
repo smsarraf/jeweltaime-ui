@@ -1,18 +1,26 @@
 <template>
   <main>
-    <header class="pageMainHead d-flex position-relative bgCover w-100 text-white" style="background-image: url(https://placehold.co/1920x300);">
-      <div class="align-self-center text-center w-100">
-        <div class="container">
-          <h1 class="pageHeading mb-3">{{ pageTitle }}</h1>
-          <nav aria-label="breadcrumb">
-            <ol class="breadcrumb d-flex justify-content-center mb-0">
-              <li class="breadcrumb-item"><router-link to="/">Home</router-link></li>
-              <li class="breadcrumb-item"><router-link to="/products">Shop</router-link></li>
-              <li class="breadcrumb-item active" aria-current="page">{{ pageTitle }}</li>
-            </ol>
-          </nav>
+    <!-- Banner Header matching shop-right-sidebar.html -->
+    <header class="bannerHead bannerheader w-100 overflow-hidden position-relative d-flex text-center">
+      <div class="alignHolder w-100 d-flex">
+        <div class="align my-auto py-2 w-100">
+          <div class="container headingHead">
+            <h1 class="hhHeading HDii">{{ pageTitle }}</h1>
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item">
+                  <router-link to="/" class="text-decoration-none">Home</router-link>
+                </li>
+                <li class="breadcrumb-item">
+                  <router-link to="/products" class="text-decoration-none">Shop</router-link>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">{{ pageTitle }}</li>
+              </ol>
+            </nav>
+          </div>
         </div>
       </div>
+      <span class="bgCover w-100 h-100 position-absolute bhBgImage" style="background-image: url(https://cdn.jeweltaime.com/img63.jpg);"></span>
     </header>
 
     <section class="itemContentBlock pt-8 pb-10 pt-lg-14 pb-lg-14">
@@ -92,12 +100,13 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ProductCard from '../components/ProductCard.vue'
+import { useCategoryStore } from '../stores/categoryStore'
 import axios from 'axios'
 
 const route = useRoute()
+const categoryStore = useCategoryStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
-const allCategories = ref([])
 const products = ref([])
 const totalProducts = ref(0)
 const totalPages = ref(0)
@@ -109,19 +118,16 @@ const error = ref('')
 
 const slug = computed(() => route.params.slug || 'all')
 
+const allCategories = computed(() => categoryStore.getRootCategories)
+
 const pageTitle = computed(() => {
   if (!slug.value || slug.value === 'all') return 'All Products'
-  const cat = findCategory(slug.value)
+  const cat = categoryStore.getCategoryBySlug(slug.value)
   return cat ? cat.name : slug.value.charAt(0).toUpperCase() + slug.value.slice(1)
 })
 
 function findCategory(slug) {
-  for (const cat of allCategories.value) {
-    if (cat.slug === slug) return cat
-    const child = cat.children?.find(c => c.slug === slug)
-    if (child) return child
-  }
-  return null
+  return categoryStore.getCategoryBySlug(slug)
 }
 
 function formatProduct(product) {
@@ -131,7 +137,8 @@ function formatProduct(product) {
     slug: product.sku || product.id,
     category: product.categoryName || 'Jewelry',
     price: product.basePriceUsd || 0,
-    image: 'https://placehold.co/305x305',
+    thumbnail: product.thumbnailUrl || '',
+    image: product.thumbnailUrl || 'https://placehold.co/305x305',
     sku: product.sku
   }
 }
@@ -214,49 +221,8 @@ function goToPage(page) {
   }
 }
 
-async function fetchCategories() {
-  try {
-    const rootRes = await axios.get(`${API_BASE}/api/v1/categories/root`)
-    if (rootRes.data) {
-      const categoriesWithChildren = await Promise.all(
-        rootRes.data.map(async (cat) => {
-          try {
-            const subRes = await axios.get(`${API_BASE}/api/v1/categories/${cat.id}/all-subcategories`)
-            return {
-              id: cat.id,
-              name: cat.name,
-              slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
-              children: (subRes.data?.childCats || []).map(child => ({
-                id: child.id,
-                name: child.name,
-                slug: child.slug || child.name.toLowerCase().replace(/\s+/g, '-')
-              }))
-            }
-          } catch {
-            return {
-              id: cat.id,
-              name: cat.name,
-              slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
-              children: []
-            }
-          }
-        })
-      )
-      allCategories.value = categoriesWithChildren
-    }
-  } catch (e) {
-    // Fallback categories
-    allCategories.value = [
-      { id: 1, name: 'Necklaces', slug: 'necklaces', children: [] },
-      { id: 2, name: 'Rings', slug: 'rings', children: [] },
-      { id: 3, name: 'Bracelets', slug: 'bracelets', children: [] },
-      { id: 4, name: 'Earrings', slug: 'earrings', children: [] }
-    ]
-  }
-}
-
 onMounted(() => {
-  fetchCategories()
+  categoryStore.loadCategories()
   fetchProducts()
 })
 

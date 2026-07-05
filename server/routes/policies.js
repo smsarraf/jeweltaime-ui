@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-// In-memory policy content (HTML)
+// In-memory policy content (HTML) — aligned with ERP Legal Policies API
+// Slug format follows LegalPolicy schema enum: UPPER_SNAKE_CASE
+// Response field: contentHtml (matches ERP API contract)
 // In production, replace with a CMS or database
 const policies = {
   TERMS_AND_CONDITIONS: {
     title: 'Terms & Conditions',
-    slug: 'terms-and-conditions',
-    content: `
+    slug: 'TERMS_AND_CONDITIONS',
+    legacySlug: 'terms-and-conditions',
+    contentHtml: `
       <h1>Terms & Conditions</h1>
       <p><em>Last updated: June 2025</em></p>
 
@@ -45,8 +48,9 @@ const policies = {
 
   PRIVACY_POLICY: {
     title: 'Privacy Policy',
-    slug: 'privacy-policy',
-    content: `
+    slug: 'PRIVACY_POLICY',
+    legacySlug: 'privacy-policy',
+    contentHtml: `
       <h1>Privacy Policy</h1>
       <p><em>Last updated: June 2025</em></p>
 
@@ -86,8 +90,9 @@ const policies = {
 
   SHIPPING_POLICY: {
     title: 'Shipping Policy',
-    slug: 'shipping-policy',
-    content: `
+    slug: 'SHIPPING_POLICY',
+    legacySlug: 'shipping-policy',
+    contentHtml: `
       <h1>Shipping Policy</h1>
       <p><em>Last updated: June 2025</em></p>
 
@@ -122,8 +127,9 @@ const policies = {
 
   REFUND_AND_RETURN_POLICY: {
     title: 'Refund & Return Policy',
-    slug: 'refund-and-return-policy',
-    content: `
+    slug: 'REFUND_AND_RETURN_POLICY',
+    legacySlug: 'refund-and-return-policy',
+    contentHtml: `
       <h1>Refund & Return Policy</h1>
       <p><em>Last updated: June 2025</em></p>
 
@@ -158,8 +164,9 @@ const policies = {
 
   COOKIE_POLICY: {
     title: 'Cookie Policy',
-    slug: 'cookie-policy',
-    content: `
+    slug: 'COOKIE_POLICY',
+    legacySlug: 'cookie-policy',
+    contentHtml: `
       <h1>Cookie Policy</h1>
       <p><em>Last updated: June 2025</em></p>
 
@@ -206,8 +213,9 @@ const policies = {
 
   ACCESSIBILITY_POLICY: {
     title: 'Accessibility Policy',
-    slug: 'accessibility-policy',
-    content: `
+    slug: 'ACCESSIBILITY_POLICY',
+    legacySlug: 'accessibility-policy',
+    contentHtml: `
       <h1>Accessibility Policy</h1>
       <p><em>Last updated: June 2025</em></p>
 
@@ -241,18 +249,197 @@ const policies = {
       <h2>7. Enforcement</h2>
       <p>This Accessibility Policy is reviewed periodically and updated as needed. All employees are trained on accessibility best practices and our commitment to inclusive design.</p>
     `
+  },
+
+  CONTACT_US: {
+    title: 'Contact Us',
+    slug: 'CONTACT_US',
+    legacySlug: 'contact-us',
+    contentHtml: `
+      <h1>Contact Us</h1>
+      <p><em>Last updated: June 2025</em></p>
+
+      <h2>Get in Touch</h2>
+      <p>We'd love to hear from you. Whether you have a question about our products, your order, or just want to say hello — we're here to help.</p>
+
+      <h2>Customer Service</h2>
+      <ul>
+        <li><strong>Email:</strong> support@jeweltaime.com</li>
+        <li><strong>Phone:</strong> (+800) 1234 5678</li>
+        <li><strong>Hours:</strong> Monday - Sunday, 09:00 am - 20:00 pm</li>
+      </ul>
+
+      <h2>Mailing Address</h2>
+      <p>JewelT'Aime Ltd.<br>7021 Washington Sq.<br>South New York, NY 10012</p>
+
+      <h2>Social Media</h2>
+      <p>Follow us on social media for the latest updates, promotions, and jewellery inspiration.</p>
+
+      <h2>Response Time</h2>
+      <p>We aim to respond to all inquiries within 24 business hours. During peak seasons, response times may be slightly longer.</p>
+    `
+  },
+
+  AUTHENTICITY_AND_WARRANTY_POLICY: {
+    title: 'Authenticity & Warranty Policy',
+    slug: 'AUTHENTICITY_AND_WARRANTY_POLICY',
+    legacySlug: null,
+    contentHtml: `
+      <h1>Authenticity & Warranty Policy</h1>
+      <p><em>Last updated: June 2025</em></p>
+
+      <h2>1. Authenticity Guarantee</h2>
+      <p>JewelT'Aime guarantees that all jewellery purchased from our Site is authentic and crafted from the materials described. Every piece undergoes rigorous quality control before being shipped to you.</p>
+
+      <h2>2. Certification</h2>
+      <p>Our fine jewellery comes with a Certificate of Authenticity detailing the materials, gemstone specifications, and craftsmanship of your piece. For diamond items, an independent gemological grading report is included where applicable.</p>
+
+      <h2>3. Warranty Coverage</h2>
+      <p>We offer a 2-year warranty on all jewellery against manufacturing defects. This warranty covers:</p>
+      <ul>
+        <li>Defective clasps, links, and findings</li>
+        <li>Stone setting issues</li>
+        <li>Manufacturing flaws in materials or workmanship</li>
+      </ul>
+
+      <h2>4. Warranty Exclusions</h2>
+      <p>The warranty does not cover:</p>
+      <ul>
+        <li>Damage caused by accident, misuse, or neglect</li>
+        <li>Normal wear and tear, including scratches and dents</li>
+        <li>Loss of gemstones not due to setting defects</li>
+        <li>Damage from third-party repairs or alterations</li>
+        <li>Loss or theft of the item</li>
+      </ul>
+
+      <h2>5. Making a Warranty Claim</h2>
+      <p>To make a warranty claim, contact our customer service team with your order number, a description of the issue, and photographs. We will assess your claim and provide return shipping instructions if approved.</p>
+
+      <h2>6. Lifetime Care</h2>
+      <p>We offer complimentary cleaning and inspection for the lifetime of your jewellery. Visit us in-store or contact customer service to arrange this service.</p>
+    `
+  },
+
+  ANTI_MONEY_LAUNDERING_POLICY: {
+    title: 'Anti-Money Laundering Policy',
+    slug: 'ANTI_MONEY_LAUNDERING_POLICY',
+    legacySlug: null,
+    contentHtml: `
+      <h1>Anti-Money Laundering Policy</h1>
+      <p><em>Last updated: June 2025</em></p>
+
+      <h2>1. Policy Statement</h2>
+      <p>JewelT'Aime is committed to preventing money laundering and terrorist financing through its business operations. We comply with all applicable anti-money laundering (AML) laws and regulations.</p>
+
+      <h2>2. Customer Due Diligence</h2>
+      <p>We verify the identity of our customers through appropriate documentation and maintain records of these verifications. For large transactions, enhanced due diligence measures may be applied.</p>
+
+      <h2>3. Transaction Monitoring</h2>
+      <p>We monitor transactions for unusual patterns or suspicious activity. This includes transactions involving large sums, unusual payment methods, or atypical purchase behaviour.</p>
+
+      <h2>4. Reporting Obligations</h2>
+      <p>Where we identify suspicious activity, we are obligated to report it to the relevant financial intelligence authority. We will keep such reports confidential.</p>
+
+      <h2>5. Record Keeping</h2>
+      <p>We maintain transaction records and customer identification documents for the period required by applicable law. These records are securely stored and accessible only to authorised personnel.</p>
+
+      <h2>6. Staff Training</h2>
+      <p>Our employees receive regular training on AML compliance, recognising suspicious activity, and following proper reporting procedures.</p>
+    `
+  },
+
+  ETHICAL_SOURCING_POLICY: {
+    title: 'Ethical Sourcing Policy',
+    slug: 'ETHICAL_SOURCING_POLICY',
+    legacySlug: null,
+    contentHtml: `
+      <h1>Ethical Sourcing Policy</h1>
+      <p><em>Last updated: June 2025</em></p>
+
+      <h2>1. Our Commitment</h2>
+      <p>JewelT'Aime is dedicated to sourcing materials and products in an ethical, responsible, and sustainable manner. We believe that luxury should never come at the expense of human dignity or environmental harm.</p>
+
+      <h2>2. Conflict-Free Diamonds</h2>
+      <p>All diamonds in our jewellery are sourced from conflict-free zones and comply with the Kimberley Process Certification Scheme. We require our suppliers to provide written guarantees that their diamonds are conflict-free.</p>
+
+      <h2>3. Responsible Gold Sourcing</h2>
+      <p>We source our gold from suppliers who adhere to responsible mining practices, including fair labour standards, environmental stewardship, and community engagement. Where possible, we use recycled gold in our collections.</p>
+
+      <h2>4. Supplier Code of Conduct</h2>
+      <p>All suppliers must agree to our Supplier Code of Conduct, which requires:</p>
+      <ul>
+        <li>Compliance with all applicable labour laws and regulations</li>
+        <li>Prohibition of child labour and forced labour</li>
+        <li>Fair wages and safe working conditions</li>
+        <li>Environmental compliance and sustainable practices</li>
+        <li>Transparency in their supply chain</li>
+      </ul>
+
+      <h2>5. Environmental Responsibility</h2>
+      <p>We strive to minimise our environmental footprint through responsible packaging, waste reduction, and energy-efficient operations. Our packaging is fully recyclable and we are continually working to improve our sustainability practices.</p>
+
+      <h2>6. Ongoing Monitoring</h2>
+      <p>We regularly audit our supply chain to ensure compliance with this policy. Suppliers found to be in violation will face corrective action, up to and including termination of the business relationship.</p>
+    `
+  },
+
+  ACCESSIBILITY_STATEMENT: {
+    title: 'Accessibility Statement',
+    slug: 'ACCESSIBILITY_STATEMENT',
+    legacySlug: null,
+    contentHtml: `
+      <h1>Accessibility Statement</h1>
+      <p><em>Last updated: June 2025</em></p>
+
+      <h2>Our Commitment to Accessibility</h2>
+      <p>JewelT'Aime is committed to making our website accessible to everyone, including individuals with disabilities. We continuously work to improve the accessibility of our digital experiences.</p>
+
+      <h2>Conformance Status</h2>
+      <p>Our website strives to meet the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA standards. We engage in regular accessibility reviews and testing to maintain compliance.</p>
+
+      <h2>Accessibility Features</h2>
+      <ul>
+        <li>Keyboard navigation support throughout the site</li>
+        <li>Descriptive alt text for meaningful images</li>
+        <li>High contrast colour scheme for readability</li>
+        <li>Consistent and predictable navigation structure</li>
+        <li>Scalable text that supports browser zoom</li>
+        <li>Accessible forms with proper labels and error messaging</li>
+        <li>Screen reader compatibility tested with NVDA, JAWS, and VoiceOver</li>
+      </ul>
+
+      <h2>Ongoing Efforts</h2>
+      <p>We regularly test our website using automated tools and manual reviews. Our development team follows accessibility best practices when building new features and updating existing ones.</p>
+
+      <h2>Feedback & Support</h2>
+      <p>If you experience any difficulty accessing our website or have suggestions for improvement, please contact us:</p>
+      <ul>
+        <li><strong>Email:</strong> accessibility@jeweltaime.com</li>
+        <li><strong>Phone:</strong> (+800) 1234 5678</li>
+      </ul>
+      <p>We aim to respond to accessibility feedback within 2 business days.</p>
+
+      <h2>Enforcement Procedure</h2>
+      <p>If you are not satisfied with our response to an accessibility issue, you may escalate your concern to our Customer Service Director who will review and address the matter within 14 business days.</p>
+    `
   }
 };
 
-// Map slug to policy key
+// Build lookup maps for both ERP-style slugs (UPPER_SNAKE_CASE) and legacy slugs (kebab-case)
 const slugToKey = {};
+const legacySlugToKey = {};
+
 Object.keys(policies).forEach(key => {
-  slugToKey[policies[key].slug] = key;
+  const policy = policies[key];
+  slugToKey[policy.slug] = key;
+  if (policy.legacySlug) {
+    legacySlugToKey[policy.legacySlug] = key;
+  }
 });
 
 /**
  * GET /api/policies
- * List all available policies (titles and slugs)
+ * List all available policies (titles and slugs — ERP enum format)
  */
 router.get('/', (req, res) => {
   const list = Object.keys(policies).map(key => ({
@@ -264,11 +451,15 @@ router.get('/', (req, res) => {
 
 /**
  * GET /api/policies/:slug
- * Get a single policy by slug
+ * Get a single policy by slug. Supports both ERP-style slugs (TERMS_AND_CONDITIONS)
+ * and legacy kebab-case slugs (terms-and-conditions) for backward compatibility.
+ * Response format aligned with ERP Legal Policy schema: { slug, title, contentHtml }
  */
 router.get('/:slug', (req, res) => {
   const { slug } = req.params;
-  const key = slugToKey[slug];
+
+  // Try exact UPPER_SNAKE_CASE match first, then legacy kebab-case fallback
+  const key = slugToKey[slug] || legacySlugToKey[slug];
 
   if (!key || !policies[key]) {
     return res.status(404).json({
@@ -282,7 +473,7 @@ router.get('/:slug', (req, res) => {
     data: {
       slug: policies[key].slug,
       title: policies[key].title,
-      content: policies[key].content
+      contentHtml: policies[key].contentHtml
     }
   });
 });

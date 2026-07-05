@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
@@ -50,26 +50,42 @@ const loading = ref(true)
 const error = ref(false)
 
 const ERP_API = import.meta.env.VITE_API_URL || 'http://localhost:8081'
-const LEGACY_API = 'http://localhost:3001'
+const LEGACY_API = import.meta.env.VITE_LEGACY_API_URL || 'http://localhost:3001'
 
-onMounted(async () => {
-  const slug = route.params.slug
+// Convert kebab-case slugs (legacy) to UPPER_SNAKE_CASE (ERP API format)
+function toErpSlug(slug) {
+  if (!slug) return slug
+  // Already UPPER_SNAKE_CASE — return as-is
+  if (/^[A-Z][A-Z_]*(_[A-Z][A-Z_]*)*$/.test(slug)) return slug
+  return slug
+    .replace(/-/g, '_')
+    .replace(/and/g, 'AND')
+    .toUpperCase()
+}
+
+async function fetchPolicy(slug) {
   if (!slug) {
     loading.value = false
     error.value = true
     return
   }
 
-  // Try ERP backend first, then fallback to legacy server
+  loading.value = true
+  error.value = false
+  content.value = ''
+
+  // Try ERP backend first (with UPPER_SNAKE_CASE conversion), then fallback to legacy server
+  const erpSlug = toErpSlug(slug)
   try {
-    const res = await axios.get(`${ERP_API}/api/v1/legal-policies/${slug}`)
-    if (res.data && res.data.title) {
-      title.value = res.data.title
-      content.value = res.data.content || res.data.body || ''
+    const res = await axios.get(`${ERP_API}/api/v1/legal-policies/${erpSlug}`)
+    if (res.data && (res.data.title || res.data.contentHtml)) {
+      title.value = res.data.title || ''
+      content.value = res.data.contentHtml || ''
+      loading.value = false
       return
     }
   } catch (e) {
-    // ERP doesn't have policies — try legacy
+    // ERP legal-policies endpoint failed — try legacy server
   }
 
   try {
@@ -85,6 +101,15 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+}
+
+onMounted(() => {
+  fetchPolicy(route.params.slug)
+})
+
+// Re-fetch when navigating between policy pages (same component, different slug)
+watch(() => route.params.slug, (newSlug) => {
+  fetchPolicy(newSlug)
 })
 </script>
 

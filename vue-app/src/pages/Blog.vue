@@ -1,109 +1,138 @@
 <template>
   <main>
-      <header class="pageMainHead d-flex position-relative bgCover w-100 text-white" style="background-image: url(https://placehold.co/1920x300);">
-          <div class="align-self-center text-center w-100">
-              <div class="container">
-                  <h1 class="pageHeading mb-3">Our Blog</h1>
-                  <nav aria-label="breadcrumb">
-                      <ol class="breadcrumb d-flex justify-content-center mb-0">
-                          <li class="breadcrumb-item"><router-link to="/">Home</router-link></li>
-                          <li class="breadcrumb-item active" aria-current="page">Blog</li>
-                      </ol>
-                  </nav>
-              </div>
+    <header class="bannerHead bannerheader w-100 overflow-hidden position-relative d-flex text-center">
+      <div class="alignHolder w-100 d-flex">
+        <div class="align my-auto py-2 w-100">
+          <div class="container headingHead">
+            <h1 class="hhHeading HDii">Our Blog</h1>
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item">
+                  <router-link to="/" class="text-decoration-none">Home</router-link>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Our Blog</li>
+              </ol>
+            </nav>
           </div>
-      </header>
+        </div>
+      </div>
+      <span class="bgCover w-100 h-100 position-absolute bhBgImage" style="background-image: url(https://cdn.jeweltaime.com/img63.jpg);"></span>
+    </header>
 
-      <section class="itemContentBlock pt-8 pb-10 pt-lg-14 pb-lg-14">
-          <div class="container">
-              <div class="row row-gap-6">
-                  <div class="col-12 col-md-6 col-lg-4" v-for="post in blogPosts" :key="post.id">
-                      <a href="javascript:void(0);" class="blogColumn overflow-hidden d-block text-decoration-none">
-                          <div class="imgHolder mb-5 position-relative">
-                              <img :src="post.image" class="img-fluid w-100" :alt="post.title">
-                              <strong class="position-absolute fw-medium text-uppercase blgTag py-1 px-2">{{ post.category }}</strong>
-                          </div>
-                          <div class="blgTitle mb-2">
-                              <strong class="blgAuthor fw-normal">{{ post.author }}</strong>
-                              -
-                              <time class="fw-normal" :datetime="post.date">{{ post.dateFormatted }}</time>
-                          </div>
-                          <h3 class="fw-medium blgHeading mb-4">{{ post.title }}</h3>
-                          <span class="btnLink">Continue Reading</span>
-                      </a>
-                  </div>
-              </div>
-              
-              <nav aria-label="Page navigation" class="mt-8">
-                  <ul class="pagination justify-content-center">
-                      <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-                      <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                      <li class="page-item"><a class="page-link" href="#">2</a></li>
-                      <li class="page-item"><a class="page-link" href="#">Next</a></li>
-                  </ul>
-              </nav>
+    <section class="itemContentBlock pt-8 pb-10 pt-lg-14 pb-lg-14">
+      <div class="container">
+        <!-- Loading -->
+        <div v-if="loading" class="text-center py-10">
+          <div class="spinner-border text-dark" role="status">
+            <span class="visually-hidden">Loading...</span>
           </div>
-      </section>
+          <p class="mt-3 text-muted">Loading blog posts...</p>
+        </div>
+
+        <!-- Error -->
+        <div v-else-if="error" class="text-center py-10">
+          <p class="text-muted">{{ error }}</p>
+          <button class="btn btn-outline-dark mt-3" @click="fetchBlogs">Try Again</button>
+        </div>
+
+        <!-- Blog Grid -->
+        <div v-else>
+          <div class="row row-gap-6">
+            <div class="col-12 col-md-6 col-lg-4" v-for="post in blogPosts" :key="post.id">
+              <router-link :to="`/blog/${post.slug}`" class="blogColumn overflow-hidden d-block text-decoration-none">
+                <div class="imgHolder mb-5 position-relative">
+                  <img :src="post.coverImageUrl || 'https://placehold.co/435x285'" class="img-fluid w-100" :alt="post.title">
+                  <strong class="position-absolute fw-medium text-uppercase blgTag py-1 px-2" v-if="post.keywords && post.keywords.length">{{ post.keywords[0] }}</strong>
+                </div>
+                <div class="blgTitle mb-2">
+                  <strong class="blgAuthor fw-normal">{{ post.author?.fullName || post.author?.username || 'Admin' }}</strong>
+                  -
+                  <time class="fw-normal" :datetime="post.publishDate">{{ formatDate(post.publishDate) }}</time>
+                </div>
+                <h3 class="fw-medium blgHeading mb-4">{{ post.title }}</h3>
+                <span class="btnLink">Continue Reading</span>
+              </router-link>
+            </div>
+          </div>
+
+          <!-- No posts -->
+          <div v-if="!loading && blogPosts.length === 0" class="text-center py-10">
+            <h4 class="mb-3">No blog posts yet.</h4>
+            <p class="text-muted">Check back soon for new articles.</p>
+          </div>
+
+          <!-- Pagination -->
+          <nav v-if="totalPages > 1" aria-label="Page navigation" class="mt-8">
+            <ul class="pagination justify-content-center">
+              <li class="page-item" :class="{ disabled: currentPage === 0 }">
+                <a class="page-link" href="javascript:void(0);" @click="goToPage(currentPage - 1)">Previous</a>
+              </li>
+              <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page - 1 }">
+                <a class="page-link" href="javascript:void(0);" @click="goToPage(page - 1)">{{ page }}</a>
+              </li>
+              <li class="page-item" :class="{ disabled: currentPage >= totalPages - 1 }">
+                <a class="page-link" href="javascript:void(0);" @click="goToPage(currentPage + 1)">Next</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </section>
   </main>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
-const blogPosts = ref([
-  {
-      id: 1,
-      title: 'Christmas Gift Guide',
-      category: 'Accessories',
-      author: 'NECKERT',
-      date: '2025-12-10',
-      dateFormatted: 'DECEMBER 10, 2025',
-      image: 'https://placehold.co/435x285'
-  },
-  {
-      id: 2,
-      title: 'How to Style a Quiff',
-      category: 'Fashion',
-      author: 'SANCER',
-      date: '2025-11-25',
-      dateFormatted: 'NOVEMBER 25, 2025',
-      image: 'https://placehold.co/435x285'
-  },
-  {
-      id: 3,
-      title: 'Selective Styles Help your look',
-      category: 'Collection',
-      author: 'MONCK',
-      date: '2025-10-15',
-      dateFormatted: 'OCTOBER 15, 2025',
-      image: 'https://placehold.co/435x285'
-  },
-  {
-      id: 4,
-      title: 'Diamond Jewelry Trends',
-      category: 'Jewelry',
-      author: 'ADMIN',
-      date: '2025-09-05',
-      dateFormatted: 'SEPTEMBER 05, 2025',
-      image: 'https://placehold.co/435x285'
-  },
-  {
-      id: 5,
-      title: 'Matching Bracelets with Outfits',
-      category: 'Style',
-      author: 'JULIA',
-      date: '2025-08-20',
-      dateFormatted: 'AUGUST 20, 2025',
-      image: 'https://placehold.co/435x285'
-  },
-  {
-      id: 6,
-      title: 'Taking Care of Gold Rings',
-      category: 'Care',
-      author: 'DAVID',
-      date: '2025-07-11',
-      dateFormatted: 'JULY 11, 2025',
-      image: 'https://placehold.co/435x285'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+
+const blogPosts = ref([])
+const loading = ref(true)
+const error = ref('')
+const currentPage = ref(0)
+const totalPages = ref(0)
+const pageSize = 9
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase()
+}
+
+async function fetchBlogs() {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const res = await axios.get(`${API_BASE}/api/v1/blogs/published`, {
+      params: {
+        page: currentPage.value,
+        size: pageSize,
+        sort: ['publishDate,desc']
+      }
+    })
+
+    if (res.data) {
+      blogPosts.value = res.data.content || []
+      totalPages.value = res.data.totalPages || 0
+    }
+  } catch (e) {
+    console.warn('Failed to fetch blogs:', e.message)
+    error.value = 'Unable to load blog posts. Please try again later.'
+  } finally {
+    loading.value = false
   }
-])
+}
+
+function goToPage(page) {
+  if (page < 0 || page >= totalPages.value) return
+  currentPage.value = page
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  fetchBlogs()
+}
+
+onMounted(() => {
+  fetchBlogs()
+})
 </script>

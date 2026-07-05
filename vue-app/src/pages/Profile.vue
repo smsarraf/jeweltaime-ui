@@ -293,7 +293,7 @@ import axios from 'axios'
 
 const router = useRouter()
 const locationStore = useLocationStore()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
 const userData = computed(() => {
@@ -368,13 +368,15 @@ async function loadProfile() {
   if (!isLoggedIn.value) return
   try {
     const token = localStorage.getItem('authToken')
-    const response = await axios.get(`${API_BASE}/api/auth/me`, {
+    const email = userData.value?.email
+    if (!email) return
+    const response = await axios.get(`${API_BASE}/api/v1/users/email/${email}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    if (response.data.success) {
-      const user = response.data.data
-      form.firstName = user.firstName || ''
-      form.lastName = user.lastName || ''
+    if (response.data) {
+      const user = response.data
+      form.firstName = user.firstName || user.fullName?.split(' ')[0] || ''
+      form.lastName = user.lastName || user.fullName?.split(' ').slice(1).join(' ') || ''
       form.email = user.email || ''
       form.phone = user.phone || ''
     }
@@ -408,20 +410,28 @@ async function updateProfile() {
   isUpdatingProfile.value = true
   try {
     const token = localStorage.getItem('authToken')
-    const response = await axios.put(`${API_BASE}/api/auth/profile`, {
-      firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone
+    const userId = userData.value?.id
+    if (!userId) throw new Error('User not found')
+    const response = await axios.put(`${API_BASE}/api/v1/users/${userId}`, {
+      username: form.email,
+      email: form.email,
+      fullName: `${form.firstName} ${form.lastName}`.trim(),
+      phone: form.phone
     }, { headers: { Authorization: `Bearer ${token}` } })
-    if (response.data.success) {
+    if (response.data) {
       profileSuccess.value = true
       profileMessage.value = 'Profile updated successfully!'
-      const updatedUser = response.data.data
+      const updatedUser = response.data
       localStorage.setItem('user', JSON.stringify({
-        id: updatedUser.id, firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName, email: updatedUser.email, phone: updatedUser.phone
+        id: updatedUser.id || userId,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: updatedUser.email || form.email,
+        phone: updatedUser.phone || form.phone
       }))
     } else {
       profileSuccess.value = false
-      profileMessage.value = response.data.error || 'Failed to update profile.'
+      profileMessage.value = response.data?.error || 'Failed to update profile.'
     }
   } catch (error) {
     profileSuccess.value = false
@@ -449,10 +459,12 @@ async function changePassword() {
   isUpdatingPassword.value = true
   try {
     const token = localStorage.getItem('authToken')
-    const response = await axios.put(`${API_BASE}/api/auth/password`, {
-      currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword
+    const userId = userData.value?.id
+    if (!userId) throw new Error('User not found')
+    const response = await axios.put(`${API_BASE}/api/v1/users/${userId}`, {
+      password: passwordForm.newPassword
     }, { headers: { Authorization: `Bearer ${token}` } })
-    if (response.data.success) {
+    if (response.data) {
       passwordSuccess.value = true
       passwordMessage.value = 'Password updated successfully!'
       passwordForm.currentPassword = ''
@@ -460,7 +472,7 @@ async function changePassword() {
       passwordForm.confirmNewPassword = ''
     } else {
       passwordSuccess.value = false
-      passwordMessage.value = response.data.error || 'Failed to update password.'
+      passwordMessage.value = response.data?.error || 'Failed to update password.'
     }
   } catch (error) {
     passwordSuccess.value = false
@@ -584,7 +596,17 @@ async function setDefaultAddress(addrId) {
   }
 }
 
-const handleLogout = () => {
+const handleLogout = async () => {
+  try {
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      await axios.post(`${API_BASE}/api/v1/auth/logout`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    }
+  } catch (e) {
+    // Silent fail — clear local state regardless
+  }
   localStorage.removeItem('authToken')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')

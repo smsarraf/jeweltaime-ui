@@ -241,7 +241,6 @@ const handleRegister = async () => {
       password: password.value,
       username: email.value.split('@')[0],
       fullName: fullName,
-      phone: phoneString,
       roleName: 'USER'
     })
 
