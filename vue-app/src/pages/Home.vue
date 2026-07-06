@@ -17,7 +17,7 @@
                 </div>
               </div>
               <div class="col-12 col-md-7 imgHolder iMgII">
-                <ImageWithSkeleton :src="banner.imageUrl || 'https://placehold.co/1000x600'" :alt="banner.title || 'Banner'" aspect-ratio="1000 / 600" />
+                <img :src="banner.imageUrl || 'https://placehold.co/1000x600'" class="w-100" :alt="banner.title || 'Banner'">
               </div>
             </article>
           </div>
@@ -35,7 +35,7 @@
                 </div>
               </div>
               <div class="col-12 col-md-7 imgHolder iMgII">
-                <ImageWithSkeleton src="https://placehold.co/1000x600" alt="image description" aspect-ratio="1000 / 600" />
+                <img src="https://placehold.co/1000x600" class="w-100" alt="image description">
               </div>
             </article>
           </div>
@@ -53,7 +53,7 @@
           <div v-for="cat in popularCategories" :key="cat.id" class="chCol d-flex">
             <router-link :to="`/category/${cat.slug}`" class="catColumn d-block w-100 text-center">
               <div class="imgHolder mx-auto mb-5">
-                <ImageWithSkeleton :src="cat.thumbnailUrl || 'https://placehold.co/185x185'" :alt="cat.name" aspect-ratio="1 / 1" />
+                <img :src="cat.thumbnailUrl || 'https://placehold.co/185x185'" class="w-100 h-100 object-fit-cover" :alt="cat.name">
               </div>
               <h3 class="ctHeading d-inline-block text-uppercase align-top">{{ cat.name.toUpperCase() }}</h3>
             </router-link>
@@ -144,7 +144,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import ProductCard from '../components/ProductCard.vue'
-import ImageWithSkeleton from '../components/ImageWithSkeleton.vue'
 import { useCategoryStore } from '../stores/categoryStore'
 import axios from 'axios'
 

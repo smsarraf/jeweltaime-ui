@@ -37,11 +37,30 @@
           <div class="col-12 col-lg-3 mb-6 mb-lg-0">
             <div class="card rounded-0 border">
               <div class="card-body text-center py-6">
-                <div class="avatar-placeholder rounded-circle bg-dark text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
-                  {{ userInitial }}
+                <h5 class="fw-medium mb-1">{{ userData?.firstName }} {{ userData?.lastName }}</h5>
+                <div class="position-relative d-inline-block mx-auto mb-3">
+                  <div v-if="avatarUrl" class="rounded-circle overflow-hidden" style="width: 80px; height: 80px;">
+                    <img :src="avatarUrl" :alt="userData?.firstName" class="w-100 h-100 object-fit-cover">
+                  </div>
+                  <div v-else class="avatar-placeholder rounded-circle bg-dark text-white d-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px; font-size: 2rem;">
+                    {{ userInitial }}
+                  </div>
+                  <button class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0 border shadow-sm" style="width: 28px; height: 28px; padding: 0;" @click="triggerAvatarUpload" title="Change avatar">
+                    <i class="fa-solid fa-camera"></i>
+                  </button>
+                  <input ref="avatarInput" type="file" accept="image/*" class="d-none" @change="onAvatarSelect">
                 </div>
                 <h5 class="fw-medium mb-1">{{ userData?.firstName }} {{ userData?.lastName }}</h5>
                 <p class="text-muted small mb-0">{{ userData?.email }}</p>
+                <div v-if="avatarUploading" class="mt-2">
+                  <div class="spinner-border spinner-border-sm text-dark" role="status">
+                    <span class="visually-hidden">Uploading...</span>
+                  </div>
+                  <small class="text-muted ms-1">Uploading avatar...</small>
+                </div>
+                <div v-if="avatarMessage" class="mt-2">
+                  <small :class="avatarSuccess ? 'text-success' : 'text-danger'">{{ avatarMessage }}</small>
+                </div>
               </div>
               <div class="list-group list-group-flush rounded-0">
                 <router-link to="/dashboard" class="list-group-item list-group-item-action d-flex align-items-center py-3">
@@ -287,6 +306,7 @@
 
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue'
+import { uploadFileUrl } from '../utils/upload'
 import { useRouter } from 'vue-router'
 import { useLocationStore } from '../stores/locationStore'
 import axios from 'axios'
@@ -307,6 +327,52 @@ const userInitial = computed(() => {
   if (userData.value?.firstName) return userData.value.firstName.charAt(0).toUpperCase()
   return 'U'
 })
+
+// Avatar upload
+const avatarInput = ref(null)
+const avatarUrl = ref(userData.value?.avatar || '')
+const avatarUploading = ref(false)
+const avatarMessage = ref('')
+const avatarSuccess = ref(false)
+
+function triggerAvatarUpload() {
+  avatarInput.value?.click()
+}
+
+async function onAvatarSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    avatarMessage.value = 'Please select an image file.'
+    avatarSuccess.value = false
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    avatarMessage.value = 'File size must be under 5MB.'
+    avatarSuccess.value = false
+    return
+  }
+
+  avatarUploading.value = true
+  avatarMessage.value = ''
+  avatarSuccess.value = false
+
+  try {
+    const url = await uploadFileUrl(file, `Avatar for ${userData.value?.email || 'user'}`)
+    avatarUrl.value = url
+    avatarMessage.value = 'Avatar uploaded! Save your profile to apply changes.'
+    avatarSuccess.value = true
+
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    user.avatar = url
+    localStorage.setItem('user', JSON.stringify(user))
+  } catch (err) {
+    avatarMessage.value = err.message || 'Failed to upload avatar.'
+    avatarSuccess.value = false
+  } finally {
+    avatarUploading.value = false
+  }
+}
 
 // -- Profile form
 const form = reactive({

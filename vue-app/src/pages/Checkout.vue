@@ -197,12 +197,101 @@
                     </div>
                   </div>
                   <span class="customCheckboxLabel mb-4 d-inline-block">
-                    <input class="form-check-input fakeInput" type="radio" id="diff-ship-address" v-model="shipToDifferent" :value="true">
+                    <input class="form-check-input fakeInput" type="checkbox" id="diff-ship-address" v-model="shipToDifferent">
                     <label class="h2vi fw-medium form-check-label ps-1" for="diff-ship-address">Ship to a Different Address?</label>
                   </span>
                   <div class="form-row">
-                    <div class="formCol">
-                      <div class="form-group d-block">
+
+                  <!-- Shipping Address Form (shown when shipToDifferent is checked) -->
+                  <div v-if="shipToDifferent" class="bilingDetailsWrap row pt-4 mb-8 border-top">
+                    <h3 class="h2vii fw-medium text-capitalize mb-6">Shipping Address</h3>
+                    <div class="form-row d-flex flex-wrap">
+                      <div class="formCol formCol50 mb-3">
+                        <div class="form-group d-block">
+                          <span class="fLabel fw-normal text-capitalize d-block mb-1">First Name <em class="req">*</em></span>
+                          <input type="text" class="form-control d-block w-100" v-model="shipping.firstName">
+                        </div>
+                      </div>
+                      <div class="formCol formCol50 mb-3">
+                        <div class="form-group d-block">
+                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Last Name <em class="req">*</em></span>
+                          <input type="text" class="form-control d-block w-100" v-model="shipping.lastName">
+                        </div>
+                      </div>
+                      <div class="formCol mb-3">
+                        <div class="form-group d-block">
+                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Country <em class="req">*</em></span>
+                          <div class="coolSelectWrapper">
+                            <select class="coolSelect form-control" v-model="shipping.country" @change="onShippingCountryChange">
+                              <option value="" disabled>Select Country</option>
+                              <option v-for="c in locationStore.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="formCol formCol50 mb-3">
+                        <div class="form-group d-block">
+                          <span class="fLabel fw-normal text-capitalize d-block mb-1">State / County <em class="req">*</em></span>
+                          <div class="coolSelectWrapper">
+                            <select class="coolSelect form-control" v-model="shipping.state" @change="onShippingStateChange">
+                              <option value="" disabled>Select State</option>
+                              <option v-for="s in locationStore.getStates(shipping.country)" :key="s.id" :value="s.id">{{ s.name }}</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="formCol formCol50 mb-3">
+                        <div class="form-group d-block">
+                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Town / City <em class="req">*</em></span>
+                          <div class="coolSelectWrapper" v-if="shipping.state && locationStore.getCities(shipping.state).length > 0">
+                            <select class="coolSelect form-control" v-model="shipping.city">
+                              <option value="" disabled>Select City</option>
+                              <option v-for="ct in locationStore.getCities(shipping.state)" :key="ct.id" :value="ct.id">{{ ct.name }}</option>
+                            </select>
+                          </div>
+                          <input type="text" class="form-control d-block w-100" v-else v-model="shipping.city" placeholder="Enter your city">
+                        </div>
+                      </div>
+                      <div class="formCol mb-3">
+                        <div class="form-group d-block">
+                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Address <em class="req">*</em></span>
+                          <input type="text" class="form-control d-block w-100 mb-2" v-model="shipping.addressLine1" placeholder="Street Address">
+                          <input type="text" class="form-control d-block w-100" v-model="shipping.addressLine2" placeholder="Apartment, suite, unit etc. (optional)">
+                        </div>
+                      </div>
+                      <div class="formCol formCol50 mb-3">
+                        <div class="form-group d-block">
+                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Postcode / ZIP <em class="req">*</em></span>
+                          <input type="text" class="form-control d-block w-100" v-model="shipping.postcode">
+                        </div>
+                      </div>
+                      <div class="formCol formCol50 mb-3">
+                        <div class="form-group d-block">
+                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Phone</span>
+                          <input type="tel" class="form-control d-block w-100" v-model="shipping.phone">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Gift Options per item -->
+                  <div v-if="giftBoxes.length > 0" class="bilingDetailsWrap row pt-4 mb-8 border-top">
+                    <h3 class="h2vii fw-medium text-capitalize mb-6">Gift Options</h3>
+                    <div class="form-row d-flex flex-wrap">
+                      <div class="formCol mb-3" v-for="item in cartStore.items" :key="item.id">
+                        <div class="form-group d-block">
+                          <span class="fLabel fw-normal text-capitalize d-block mb-1">{{ item.name }}</span>
+                          <div class="coolSelectWrapper">
+                            <select class="coolSelect form-control" v-model="itemGiftSelections[item.id]" @change="onGiftBoxChange(item.id, $event.target.value)">
+                              <option value="">No Gift Box</option>
+                              <option v-for="gb in giftBoxes" :key="gb.id" :value="String(gb.id)">{{ gb.name }} (+${{ gb.priceUsd }})</option>
+                            </select>
+                          </div>
+                          <input type="text" class="form-control d-block w-100 mt-2" v-model="itemGiftNotes[item.id]" placeholder="Gift note (optional)">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                         <span class="fLabel text-capitalize mb-2 d-block">Order Notes <em class="req">*</em></span>
                         <textarea class="form-control order-notes d-block w-100" v-model="billing.orderNotes" placeholder="Notes about your order, e.g. special notes for delivery."></textarea>
                       </div>
@@ -355,6 +444,52 @@ const cartDiscount = ref(0)
 const acceptTerms = ref(false)
 const createAccount = ref(false)
 const shipToDifferent = ref(false)
+
+// Shipping form data (used when shipToDifferent is checked)
+const shipping = reactive({
+  firstName: '',
+  lastName: '',
+  country: '',
+  addressLine1: '',
+  addressLine2: '',
+  city: '',
+  state: '',
+  postcode: '',
+  phone: ''
+})
+
+function onShippingCountryChange() {
+  shipping.state = ''
+  shipping.city = ''
+  if (shipping.country) {
+    locationStore.loadStates(shipping.country)
+  }
+}
+
+function onShippingStateChange() {
+  shipping.city = ''
+  if (shipping.state) {
+    locationStore.loadCities(shipping.state)
+  }
+
+// Gift box options
+const giftBoxes = ref([])
+const itemGiftSelections = ref({})
+const itemGiftNotes = ref({})
+
+async function loadGiftBoxes() {
+  try {
+    const res = await axios.get(`${API_BASE}/api/v1/gift-boxes/active`)
+    giftBoxes.value = Array.isArray(res.data) ? res.data : []
+  } catch {
+    giftBoxes.value = []
+  }
+}
+
+function onGiftBoxChange(itemId, value) {
+  itemGiftSelections.value[itemId] = value || ''
+}
+}
 
 // Billing form data
 const billing = reactive({
@@ -512,21 +647,30 @@ async function createPaymentIntent(totalAmount) {
  * Step 2: Create the order in the ERP backend via POST /api/v1/orders
  * Called after successful payment
  */
+
 async function createOrder() {
   const token = localStorage.getItem('authToken')
   const userId = getUserId()
 
+  const addr = shipToDifferent.value ? shipping : billing
   const orderData = {
-    userId: userId || 1,
-    shippingAddress: `${billing.addressLine1}, ${billing.city}, ${billing.state} ${billing.postcode}`,
-    countryId: Number(billing.country) || getCountryId(billing.country),
-    stateId: billing.state ? Number(billing.state) : undefined,
-    cityId: billing.city ? Number(billing.city) : undefined,
+    customerId: userId || 1,
+    shippingAddress: {
+      street: addr.addressLine1,
+      city: addr.city,
+      state: addr.state,
+      zipCode: addr.postcode,
+      country: addr.country
+    },
+    countryId: Number(addr.country) || getCountryId(addr.country),
+    stateId: addr.state ? Number(addr.state) : undefined,
+    cityId: addr.city ? Number(addr.city) : undefined,
     currencyId: 1,
+    notes: billing.orderNotes,
     items: cartStore.items.map(item => ({
       productId: Number(item.id),
-      quantity: item.quantity
-    }))
+      quantity: item.quantity,
+      giftBoxId: itemGiftSelections.value[item.id] ? Number(itemGiftSelections.value[item.id]) : undefined,
   }
 
   const response = await axios.post(`${API_BASE}/api/v1/orders`, orderData, {
@@ -535,7 +679,6 @@ async function createOrder() {
 
   return response.data
 }
-
 /**
  * Initialize the Airwallex drop-in element with the payment intent
  * Flow: createPaymentIntent → Airwallex drop-in → on confirm → createOrder
@@ -689,6 +832,7 @@ onMounted(() => {
     locationStore.loadAllLocations()
   }
 })
+  loadGiftBoxes()
 </script>
 
 <style scoped>
