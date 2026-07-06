@@ -2,7 +2,7 @@
   <article class="productColumn text-center text-decoration-none position-relative d-block overflow-hidden">
     <div class="imgHolder mb-2">
       <router-link :to="`/products/${productId || product._id}/${toSlug(product.name)}`">
-        <img :src="productImage" class="w-100 img-fluid" :alt="product.name" loading="lazy">
+        <ImageWithSkeleton :src="productImage" :alt="product.name" aspect-ratio="1 / 1" />
       </router-link>
       <strong v-if="product.sale" class="position-absolute text-uppercase bg-danger fw-semibold text-white pcTag">-30%</strong>
       <ul class="list-unstyled d-flex flex-column gap-1 pcActionsList">
@@ -38,6 +38,7 @@ import { useCartStore } from '../stores/cartStore'
 import { useWishlistStore } from '../stores/wishlistStore'
 import { useCurrencyStore } from '../stores/currencyStore'
 import { toSlug } from '../utils/slug'
+import ImageWithSkeleton from './ImageWithSkeleton.vue'
 
 const props = defineProps({
   product: {

@@ -192,7 +192,7 @@
             <div>
                 <div v-for="item in cartStore.items" :key="item.id" class="d-flex align-items-start justify-content-between mb-4">
                     <div class="imgholder me-2">
-                        <img :src="item.image" :alt="item.name" class="w-100 img-fluid">
+                        <ImageWithSkeleton :src="item.image" :alt="item.name" aspect-ratio="1 / 1" />
                     </div>
                     <div class="flex-grow-1">
                         <h4 class="cartHding fw-light mb-1">{{ item.name }}</h4>
@@ -267,6 +267,7 @@
     import { useWishlistStore } from '../stores/wishlistStore'
     import { useCurrencyStore } from '../stores/currencyStore'
     import { useCategoryStore } from '../stores/categoryStore'
+    import ImageWithSkeleton from './ImageWithSkeleton.vue'
     import { clearAuth } from '../utils/auth'
 
     const router = useRouter()

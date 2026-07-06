@@ -41,7 +41,7 @@
             <div class="col-12 col-md-6 col-lg-4" v-for="post in blogPosts" :key="post.id">
               <router-link :to="`/blog/${post.slug}`" class="blogColumn overflow-hidden d-block text-decoration-none">
                 <div class="imgHolder mb-5 position-relative">
-                  <img :src="post.coverImageUrl || 'https://placehold.co/435x285'" class="img-fluid w-100" :alt="post.title">
+                  <ImageWithSkeleton :src="post.coverImageUrl || 'https://placehold.co/435x285'" :alt="post.title" aspect-ratio="435 / 285" />
                   <strong class="position-absolute fw-medium text-uppercase blgTag py-1 px-2" v-if="post.keywords && post.keywords.length">{{ post.keywords[0] }}</strong>
                 </div>
                 <div class="blgTitle mb-2">
@@ -83,6 +83,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import ImageWithSkeleton from '../components/ImageWithSkeleton.vue'
 import axios from 'axios'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
