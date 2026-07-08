@@ -21,6 +21,36 @@ export const useWishlistStore = defineStore('wishlist', {
       return token ? { Authorization: `Bearer ${token}` } : {}
     },
 
+    // Normalize a wishlist entry (server or local) into a consistent shape
+    normalizeItem(raw) {
+      if (!raw || typeof raw !== 'object') return null
+      const productId = raw.productId ?? raw.id ?? raw._id ?? null
+      return {
+        id: productId,
+        productId,
+        wishlistEntryId: raw.id ?? null,
+        name: raw.productName ?? raw.name ?? '',
+        price: Number(raw.productPrice ?? raw.price ?? 0),
+        image: raw.productImage ?? raw.image ?? '',
+        slug: raw.productSlug ?? raw.slug ?? '',
+        category: raw.productCategory ?? raw.category ?? ''
+      }
+    },
+
+    // Extract an array of items from various response shapes
+    extractItems(payload) {
+      const rows = Array.isArray(payload)
+        ? payload
+        : (Array.isArray(payload?.data) ? payload.data : [])
+      return rows.map(row => this.normalizeItem(row)).filter(Boolean)
+    },
+
+    setItems(payload) {
+      this.items = this.extractItems(payload)
+      this.wishlistIds = new Set(this.items.map(item => item.productId))
+      this.saveLocalWishlist()
+    },
+
     // Check if user is logged in
     isLoggedIn() {
       return !!localStorage.getItem('authToken')
@@ -32,8 +62,8 @@ export const useWishlistStore = defineStore('wishlist', {
         const cached = localStorage.getItem(WISHLIST_KEY)
         if (cached) {
           const items = JSON.parse(cached)
-          this.items = Array.isArray(items) ? items : []
-          this.wishlistIds = new Set(this.items.map(item => item.id))
+          this.items = (Array.isArray(items) ? items : []).map(item => this.normalizeItem(item)).filter(Boolean)
+          this.wishlistIds = new Set(this.items.map(item => item.productId))
         }
       } catch (e) {
         this.items = []
@@ -58,11 +88,7 @@ export const useWishlistStore = defineStore('wishlist', {
         const response = await axios.get(`${API_BASE}/api/v1/wishlist`, {
           headers: this.getAuthHeaders()
         })
-        if (response.data.success) {
-          this.items = response.data.data || []
-          this.wishlistIds = new Set(this.items.map(item => item.id))
-          this.saveLocalWishlist()
-        }
+        this.setItems(response.data)
       } catch (error) {
         if (error.response?.status === 401) {
           // Token expired or invalid — fallback to local
@@ -90,13 +116,10 @@ export const useWishlistStore = defineStore('wishlist', {
       if (inWishlist) {
         // Remove from wishlist
         try {
-          const response = await axios.delete(`${API_BASE}/api/v1/wishlist/remove/${productId}`, {
+          await axios.delete(`${API_BASE}/api/v1/wishlist/remove/${productId}`, {
             headers: this.getAuthHeaders()
           })
-          if (response.data.success) {
-            this.items = response.data.data || []
-            this.wishlistIds = new Set(this.items.map(item => item.id))
-          }
+          await this.fetchWishlist()
           return false
         } catch (error) {
           console.error('Remove from wishlist error:', error.message)
@@ -105,7 +128,7 @@ export const useWishlistStore = defineStore('wishlist', {
       } else {
         // Add to wishlist — uses AddToWishlistRequest schema (flat body)
         try {
-          const response = await axios.post(`${API_BASE}/api/v1/wishlist/add`, {
+          await axios.post(`${API_BASE}/api/v1/wishlist/add`, {
             productId,
             productName: product.name,
             productPrice: product.price,
@@ -115,10 +138,7 @@ export const useWishlistStore = defineStore('wishlist', {
           }, {
             headers: this.getAuthHeaders()
           })
-          if (response.data.success) {
-            this.items = response.data.data || []
-            this.wishlistIds = new Set(this.items.map(item => item.id))
-          }
+          await this.fetchWishlist()
           return true
         } catch (error) {
           console.error('Add to wishlist error:', error.message)
