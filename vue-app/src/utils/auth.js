@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+export const AUTH_CHANGED_EVENT = 'auth-changed'
 
 // Track if we're currently refreshing to avoid infinite loops
 let isRefreshing = false
@@ -140,4 +141,11 @@ export function clearAuth() {
   localStorage.removeItem('authToken')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')
+  notifyAuthChanged()
+}
+
+export function notifyAuthChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(AUTH_CHANGED_EVENT))
+  }
 }

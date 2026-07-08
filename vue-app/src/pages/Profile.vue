@@ -69,6 +69,12 @@
                 <router-link to="/profile" class="list-group-item list-group-item-action d-flex align-items-center py-3 active">
                   <i class="fa-solid fa-user me-3"></i> My Profile
                 </router-link>
+                <router-link to="/orders" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                  <i class="fa-solid fa-box me-3"></i> My Orders
+                </router-link>
+                <router-link to="/invoices" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                  <i class="fa-regular fa-file-lines me-3"></i> My Invoices
+                </router-link>
                 <router-link to="/wishlist" class="list-group-item list-group-item-action d-flex align-items-center py-3">
                   <i class="fa-regular fa-heart me-3"></i> Wishlist
                 </router-link>
@@ -310,18 +316,14 @@ import { uploadFileUrl } from '../utils/upload'
 import { useRouter } from 'vue-router'
 import { useLocationStore } from '../stores/locationStore'
 import axios from 'axios'
+import { clearAuth } from '../utils/auth'
+import { useAuthSession } from '../composables/useAuthSession'
 
 const router = useRouter()
 const locationStore = useLocationStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
-const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
-const userData = computed(() => {
-  try {
-    const stored = localStorage.getItem('user')
-    return stored ? JSON.parse(stored) : null
-  } catch { return null }
-})
+const { isLoggedIn, user: userData } = useAuthSession()
 
 const userInitial = computed(() => {
   if (userData.value?.firstName) return userData.value.firstName.charAt(0).toUpperCase()
@@ -673,9 +675,7 @@ const handleLogout = async () => {
   } catch (e) {
     // Silent fail — clear local state regardless
   }
-  localStorage.removeItem('authToken')
-  localStorage.removeItem('refreshToken')
-  localStorage.removeItem('user')
+  clearAuth()
   router.push('/')
 }
 

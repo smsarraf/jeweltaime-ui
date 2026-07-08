@@ -103,7 +103,7 @@ export const useLocationStore = defineStore('location', {
       try {
         const data = { countries: [] }
         this.countries.forEach(c => {
-          const country = { id: c.id, name: c.name }
+          const country = { id: c.id, name: c.name, taxRate: Number(c.taxRate ?? 0) }
           const states = this.statesByCountry[c.id]
           if (states && states.length > 0) {
             country.states = states.map(s => {
@@ -139,7 +139,7 @@ export const useLocationStore = defineStore('location', {
     },
 
     _setData(countries) {
-      this.countries = countries.map(c => ({ id: c.id, name: c.name }))
+      this.countries = countries.map(c => ({ id: c.id, name: c.name, taxRate: Number(c.taxRate ?? 0) }))
       // If API returned full tree data, use it; otherwise lazy load will fill in
       countries.forEach(country => {
         if (country.states && Array.isArray(country.states) && country.states.length > 0) {

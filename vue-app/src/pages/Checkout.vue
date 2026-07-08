@@ -4,399 +4,180 @@
     <div class="container">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link to="/" class="text-decoration-none">Home</router-link>
-          </li>
+          <li class="breadcrumb-item"><router-link to="/" class="text-decoration-none">Home</router-link></li>
           <li class="breadcrumb-item active" aria-current="page">Checkout</li>
         </ol>
       </nav>
     </div>
 
-    <!-- Empty Cart -->
     <section v-if="cartStore.items.length === 0" class="carttablewrap pt-7 pb-20">
-      <div class="container">
-        <div class="row">
-          <div class="col-12 text-center py-10">
-            <h3 class="mb-4">Your cart is empty. Cannot proceed to checkout.</h3>
-            <router-link to="/products" class="btn btn-dark py-3 px-6 text-uppercase fw-medium">Return to Shop</router-link>
-          </div>
-        </div>
+      <div class="container text-center py-10">
+        <h3 class="mb-4">Your cart is empty. Cannot proceed to checkout.</h3>
+        <router-link to="/products" class="btn btn-dark py-3 px-6 text-uppercase fw-medium">Return to Shop</router-link>
       </div>
     </section>
 
-    <!-- Order Placed Success -->
-    <section v-else-if="orderPlaced" class="carttablewrap pt-7 pb-20">
-      <div class="container">
-        <div class="row">
-          <div class="col-12 text-center py-10">
-            <i class="fa-solid fa-circle-check text-success" style="font-size: 5rem; margin-bottom: 2rem;"></i>
-            <h2 class="mb-3">Order Placed Successfully!</h2>
-            <p class="mb-5">Thank you for your purchase. Your order number is #{{ orderNumber }}.</p>
-            <router-link to="/" class="btn btn-dark py-3 px-6 text-uppercase fw-medium">Back to Home</router-link>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Checkout Form -->
     <section v-else class="carttablewrap py-7">
       <div class="container">
         <div class="row">
-          <div class="col-12 text-center">
-            <h1 class="mnHding fw-normal mb-7 mb-md-14">Checkout</h1>
-          </div>
+          <div class="col-12 text-center"><h1 class="mnHding fw-normal mb-7 mb-md-10">Checkout</h1></div>
+        </div>
+
+        <div v-if="submitError" class="alert alert-danger rounded-0 mb-4">
+          <i class="fa-solid fa-circle-exclamation me-2"></i>{{ submitError }}
+        </div>
+
+        <div class="row g-4">
           <div class="col-12 col-lg-8">
-            <div class="pe-lg-16">
-              <!-- Returning Customer Alert (only show when not logged in) -->
-              <aside v-if="!isLoggedIn" class="alert checkoutAlert d-flex justify-content-center fw-normal rounded-0 pt-4 pb-3 px-3 mb-4">
-                <i class="fa-regular fa-user me-2"></i> Returning Customer?
-                <a class="alertPopBtn text-decoration-none ms-1" data-bs-toggle="collapse" href="#loginAlertPopup" aria-expanded="false" aria-controls="loginAlertPopup">
-                  Click here to login <i class="fa-solid fa-chevron-down"></i>
-                </a>
-              </aside>
-              <div v-if="!isLoggedIn" id="loginAlertPopup" class="alertCollapseWrap collapse py-2 ps-1 pe-2 mb-4">
-                <form action="#" class="alertPopForm">
-                  <div class="row">
-                    <div class="col-12 col-md-7 col-lg-8 col-xl-7 mx-md-auto">
-                      <p class="fw-light">If you have shopped with us before, please enter your details in the boxes below. If you are a new customer, please proceed to the Billing & Shipping section.</p>
-                      <div class="form-group mb-3">
-                        <label class="d-block f-label fw-normal mb-2">User Name or Email <em class="req">*</em></label>
-                        <input type="email" class="form-control d-block w-100" v-model="loginEmail">
-                      </div>
-                      <div class="form-group mb-4">
-                        <label class="d-block f-label fw-normal mb-2">Password <em class="req">*</em></label>
-                        <input type="password" class="form-control d-block w-100" v-model="loginPassword">
-                      </div>
-                      <div class="form-group d-md-flex justify-content-md-between mb-4">
-                        <span class="customCheckboxLabel d-block mb-3 mb-md-0">
-                          <input class="form-check-input fakeInput m-0" type="radio" id="save-password" v-model="rememberMe" :value="true">
-                          <label class="form-check-label fw-normal cuFakeLabel" for="save-password">Remember me</label>
-                        </span>
-                        <a href="javascript:void(0);" class="txtLink text-decoration-none fw-normal forgot-password">Lost your password?</a>
-                      </div>
-                      <div class="form-group">
-                        <button type="button" class="btn btn-dark fw-medium text-capitalize w-100" @click="handleLogin">Login</button>
-                      </div>
-                    </div>
-                  </div>
-                </form>
+            <div class="border p-4 mb-4">
+              <h3 class="h5 mb-3">1. Address</h3>
+              <div v-if="addressesLoading" class="row g-2">
+                <div v-for="i in 2" :key="`addr-skeleton-${i}`" class="col-12"><div class="placeholder-glow border p-3"><span class="placeholder col-12"></span></div></div>
               </div>
-
-              <!-- Coupon Alert -->
-              <aside class="alert checkoutAlert d-flex justify-content-center rounded-0 fw-normal pt-4 pb-3 px-3">
-                <i class="fa-solid fa-tag fa-flip-horizontal me-2"></i> Have a coupon?
-                <a class="alertPopBtn text-decoration-none ms-1" data-bs-toggle="collapse" href="#couponAlertPopup" aria-expanded="false" aria-controls="couponAlertPopup">
-                  Click here to enter your code <i class="fa-solid fa-chevron-down"></i>
-                </a>
-              </aside>
-              <div id="couponAlertPopup" class="alertCollapseWrap collapse py-2 ps-1 pe-2 mb-4">
-                <form action="#" class="alertPopForm" @submit.prevent="applyCouponCode">
-                  <div class="row">
-                    <div class="col-7 col-md-7 col-lg-8 col-xl-7 mx-auto">
-                      <div class="form-group mb-3">
-                        <input type="text" class="form-control d-block w-100" v-model="checkoutCouponCode" placeholder="Coupon Code">
-                      </div>
-                      <div class="form-group">
-                        <button type="submit" class="btn btn-dark fw-medium text-capitalize w-100">Apply Coupon</button>
-                      </div>
-                      <div v-if="checkoutCouponMessage" class="mt-2">
-                        <small :class="checkoutCouponSuccess ? 'text-success' : 'text-danger'">{{ checkoutCouponMessage }}</small>
-                      </div>
-                    </div>
-                  </div>
-                </form>
+              <div v-else-if="addressesError" class="alert alert-warning rounded-0">
+                {{ addressesError }} <button class="btn btn-link p-0 align-baseline" @click="loadAddresses">Retry</button>
               </div>
-
-              <form action="#" class="ChForm">
-                <!-- Billing Details -->
-                <div class="bilingDetailsWrap row pt-lg-5 pt-xl-6 mb-8 mb-xl-14">
-                  <h3 class="h2vii fw-medium text-capitalize mb-6">Billing Details</h3>
-                  <div class="form-row d-flex flex-wrap">
-                    <div class="formCol formCol50 mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">First Name <em class="req">*</em></span>
-                        <input type="text" class="form-control d-block w-100" v-model="billing.firstName" required>
-                      </div>
-                    </div>
-                    <div class="formCol formCol50 mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Last Name <em class="req">*</em></span>
-                        <input type="text" class="form-control d-block w-100" v-model="billing.lastName" required>
-                      </div>
-                    </div>
-                    <div class="formCol mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Company Name</span>
-                        <input type="text" class="form-control d-block w-100" v-model="billing.company">
-                      </div>
-                    </div>
-                    <div class="formCol formCol50 mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Email Address</span>
-                        <input type="email" class="form-control d-block w-100" v-model="billing.email" required>
-                      </div>
-                    </div>
-                    <div class="formCol formCol50 mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Phone</span>
-                        <input type="tel" class="form-control d-block w-100" v-model="billing.phone" required>
-                      </div>
-                    </div>
-                    <div class="formCol mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Country <em class="req">*</em></span>
-                        <div class="coolSelectWrapper">
-                          <select class="coolSelect form-control" v-model="billing.country" @change="onCountryChange">
-                            <option value="" disabled>Select Country</option>
-                            <option v-for="c in locationStore.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="formCol formCol50 mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">State / County <em class="req">*</em></span>
-                        <div class="coolSelectWrapper">
-                          <select class="coolSelect form-control" v-model="billing.state" @change="onStateChange">
-                            <option value="" disabled>Select State</option>
-                            <option v-for="s in locationStore.getStates(billing.country)" :key="s.id" :value="s.id">{{ s.name }}</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="formCol formCol50 mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Town / City <em class="req">*</em></span>
-                        <div class="coolSelectWrapper" v-if="billing.state && locationStore.getCities(billing.state).length > 0">
-                          <select class="coolSelect form-control" v-model="billing.city">
-                            <option value="" disabled>Select City</option>
-                            <option v-for="ct in locationStore.getCities(billing.state)" :key="ct.id" :value="ct.id">{{ ct.name }}</option>
-                          </select>
-                        </div>
-                        <input type="text" class="form-control d-block w-100" v-else v-model="billing.city" placeholder="Enter your city" required>
-                      </div>
-                    </div>
-                    <div class="formCol mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Address <em class="req">*</em></span>
-                        <input type="text" class="form-control d-block w-100 mb-2" v-model="billing.addressLine1" placeholder="Street Address">
-                        <input type="text" class="form-control d-block w-100" v-model="billing.addressLine2" placeholder="Apartment, suite, unit etc. (optional)">
-                      </div>
-                    </div>
-                    <div class="formCol formCol50 mb-3">
-                      <div class="form-group d-block">
-                        <span class="fLabel fw-normal text-capitalize d-block mb-1">Postcode / ZIP <em class="req">*</em></span>
-                        <input type="text" class="form-control d-block w-100" v-model="billing.postcode" required>
-                      </div>
-                    </div>
-                    <div class="formCol mb-8">
-                      <span class="customCheckboxLabel d-inline-block">
-                        <input class="form-check-input fakeInput" type="checkbox" id="create-account" v-model="createAccount">
-                        <label class="form-check-label cuFakeLabel ps-1" for="create-account">Create an account?</label>
-                      </span>
-                    </div>
-                  </div>
-                  <span class="customCheckboxLabel mb-4 d-inline-block">
-                    <input class="form-check-input fakeInput" type="checkbox" id="diff-ship-address" v-model="shipToDifferent">
-                    <label class="h2vi fw-medium form-check-label ps-1" for="diff-ship-address">Ship to a Different Address?</label>
-                  </span>
-                  <div class="form-row">
-
-                  <!-- Shipping Address Form (shown when shipToDifferent is checked) -->
-                  <div v-if="shipToDifferent" class="bilingDetailsWrap row pt-4 mb-8 border-top">
-                    <h3 class="h2vii fw-medium text-capitalize mb-6">Shipping Address</h3>
-                    <div class="form-row d-flex flex-wrap">
-                      <div class="formCol formCol50 mb-3">
-                        <div class="form-group d-block">
-                          <span class="fLabel fw-normal text-capitalize d-block mb-1">First Name <em class="req">*</em></span>
-                          <input type="text" class="form-control d-block w-100" v-model="shipping.firstName">
-                        </div>
-                      </div>
-                      <div class="formCol formCol50 mb-3">
-                        <div class="form-group d-block">
-                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Last Name <em class="req">*</em></span>
-                          <input type="text" class="form-control d-block w-100" v-model="shipping.lastName">
-                        </div>
-                      </div>
-                      <div class="formCol mb-3">
-                        <div class="form-group d-block">
-                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Country <em class="req">*</em></span>
-                          <div class="coolSelectWrapper">
-                            <select class="coolSelect form-control" v-model="shipping.country" @change="onShippingCountryChange">
-                              <option value="" disabled>Select Country</option>
-                              <option v-for="c in locationStore.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="formCol formCol50 mb-3">
-                        <div class="form-group d-block">
-                          <span class="fLabel fw-normal text-capitalize d-block mb-1">State / County <em class="req">*</em></span>
-                          <div class="coolSelectWrapper">
-                            <select class="coolSelect form-control" v-model="shipping.state" @change="onShippingStateChange">
-                              <option value="" disabled>Select State</option>
-                              <option v-for="s in locationStore.getStates(shipping.country)" :key="s.id" :value="s.id">{{ s.name }}</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="formCol formCol50 mb-3">
-                        <div class="form-group d-block">
-                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Town / City <em class="req">*</em></span>
-                          <div class="coolSelectWrapper" v-if="shipping.state && locationStore.getCities(shipping.state).length > 0">
-                            <select class="coolSelect form-control" v-model="shipping.city">
-                              <option value="" disabled>Select City</option>
-                              <option v-for="ct in locationStore.getCities(shipping.state)" :key="ct.id" :value="ct.id">{{ ct.name }}</option>
-                            </select>
-                          </div>
-                          <input type="text" class="form-control d-block w-100" v-else v-model="shipping.city" placeholder="Enter your city">
-                        </div>
-                      </div>
-                      <div class="formCol mb-3">
-                        <div class="form-group d-block">
-                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Address <em class="req">*</em></span>
-                          <input type="text" class="form-control d-block w-100 mb-2" v-model="shipping.addressLine1" placeholder="Street Address">
-                          <input type="text" class="form-control d-block w-100" v-model="shipping.addressLine2" placeholder="Apartment, suite, unit etc. (optional)">
-                        </div>
-                      </div>
-                      <div class="formCol formCol50 mb-3">
-                        <div class="form-group d-block">
-                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Postcode / ZIP <em class="req">*</em></span>
-                          <input type="text" class="form-control d-block w-100" v-model="shipping.postcode">
-                        </div>
-                      </div>
-                      <div class="formCol formCol50 mb-3">
-                        <div class="form-group d-block">
-                          <span class="fLabel fw-normal text-capitalize d-block mb-1">Phone</span>
-                          <input type="tel" class="form-control d-block w-100" v-model="shipping.phone">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Gift Options per item -->
-                  <div v-if="giftBoxes.length > 0" class="bilingDetailsWrap row pt-4 mb-8 border-top">
-                    <h3 class="h2vii fw-medium text-capitalize mb-6">Gift Options</h3>
-                    <div class="form-row d-flex flex-wrap">
-                      <div class="formCol mb-3" v-for="item in cartStore.items" :key="item.id">
-                        <div class="form-group d-block">
-                          <span class="fLabel fw-normal text-capitalize d-block mb-1">{{ item.name }}</span>
-                          <div class="coolSelectWrapper">
-                            <select class="coolSelect form-control" v-model="itemGiftSelections[item.id]" @change="onGiftBoxChange(item.id, $event.target.value)">
-                              <option value="">No Gift Box</option>
-                              <option v-for="gb in giftBoxes" :key="gb.id" :value="String(gb.id)">{{ gb.name }} (+${{ gb.priceUsd }})</option>
-                            </select>
-                          </div>
-                          <input type="text" class="form-control d-block w-100 mt-2" v-model="itemGiftNotes[item.id]" placeholder="Gift note (optional)">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                        <span class="fLabel text-capitalize mb-2 d-block">Order Notes <em class="req">*</em></span>
-                        <textarea class="form-control order-notes d-block w-100" v-model="billing.orderNotes" placeholder="Notes about your order, e.g. special notes for delivery."></textarea>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-          <div class="col-12 col-lg-4">
-            <div class="ms-lg-n10">
-              <div class="odrSide border py-7 px-7">
-                <h5 class="cartHeading fw-medium mb-4">Your Order</h5>
-                <div class="d-flex justify-content-between mb-3">
-                  <span class="subheading fw-normal">Product</span>
-                  <span class="Hprice fw-normal">Subtotal</span>
-                </div>
-                <hr class="mb-4">
-                <div v-for="item in cartStore.items" :key="item.id" class="d-flex justify-content-between align-items-start mb-3 border-bottom pb-3">
-                  <div class="d-flex">
-                    <img :src="item.image || 'https://placehold.co/60x60'" alt="Product" class="img-thumbnail border-0 p-0 me-3 rounded-0 tb-img" width="50px" height="50px">
-                    <div>
-                      <span class="tb-heading d-block fw-light mb-1">{{ item.name }}</span>
-                      <div class="d-flex align-items-center gap-2">
-                        <div class="input-group input-group-sm" style="max-width: 100px;">
-                          <button class="btn btn-outline-secondary btn-sm border" @click="decreaseItemQty(item)" :disabled="item.quantity <= 1">−</button>
-                          <input type="text" class="form-control text-center form-control-sm border px-1" :value="item.quantity" readonly style="width: 32px;">
-                          <button class="btn btn-outline-secondary btn-sm border" @click="increaseItemQty(item)">+</button>
-                        </div>
-                        <button class="btn btn-sm text-danger border-0 p-0" @click="removeItem(item.id)" title="Remove item">
-                          <i class="fa-regular fa-trash-can"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <span class="tb-price fw-normal flex-shrink-0 ms-2">{{ currencyStore.formatPrice(item.price * item.quantity) }}</span>
-                </div>
-                <hr class="mb-4">
-                <div class="d-flex justify-content-between mb-4">
-                  <span class="Hprice fw-normal">Subtotal</span>
-                  <span class="tb-price fw-normal">{{ currencyStore.formatPrice(subtotalAfterDiscount) }}</span>
-                </div>
-                <hr class="mb-4">
-
-                <!-- Shipping -->
-                <div class="d-flex align-items-start mb-4">
-                  <span class="Shding fw-normal me-2 me-md-10">Shipping</span>
-                  <div class="pe-6">
-                    <div class="form-check text-start">
-                      <input class="form-check-input" type="radio" name="checkoutShipping" id="checkoutFreeShipping" value="free" v-model="checkoutShipping" @change="updateCheckoutShipping">
-                      <label class="form-check-label" for="checkoutFreeShipping">Free Shipping</label>
-                    </div>
-                    <div class="form-check text-start">
-                      <input class="form-check-input" type="radio" name="checkoutShipping" id="checkoutFlatRate" value="flat" v-model="checkoutShipping" @change="updateCheckoutShipping">
-                      <label class="form-check-label" for="checkoutFlatRate">Flat Rate: <span class="clr fw-normal ps-1">{{ currencyStore.formatPrice(10.00) }}</span></label>
-                    </div>
-                  </div>
-                </div>
-                <hr class="mb-4">
-                <div class="d-flex justify-content-between mb-6">
-                  <span class="subheading fw-normal">Total</span>
-                  <strong class="Hprice fw-medium">{{ currencyStore.formatPrice(totalWithShipping) }}</strong>
-                </div>
-
-                <!-- Payment Method -->
-                <div class="border py-2 px-2 py-md-5 ps-md-4 pe-md-5 mb-4">
-                  <div class="form-check Fs d-md-flex align-items-md-center">
-                    <input class="form-check-input me-2" type="radio" name="paymentMethod" id="paypal" value="airwallex" v-model="selectedPayment" @change="onPaymentMethodChange">
-                    <label class="form-check-label d-flex align-items-center fw-normal clr mb-2 mb-md-0" for="paypal">
-                      Pay with Card (Airwallex)
-                      <img src="/images/payment-gateway.png" alt="PayPal" class="ms-2">
-                    </label>
-                    <a href="javascript:void(0);" class="text-decoration-none small-txt ms-auto fw-normal clr">What is Airwallex?</a>
-                  </div>
-                </div>
-
-                <!-- Airwallex Drop-in UI Container -->
-                <div v-if="selectedPayment === 'airwallex'" class="airwallex-payment-section mb-4">
-                  <div id="airwallex-dropin-container" ref="dropinContainer"></div>
-                  <div v-if="paymentError" class="alert alert-danger mt-3 mb-0 rounded-0">
-                    <i class="fa-solid fa-circle-exclamation me-2"></i>{{ paymentError }}
-                  </div>
-                  <div v-if="paymentLoading" class="text-center mt-3">
-                    <div class="spinner-border text-dark" role="status">
-                      <span class="visually-hidden">Loading payment...</span>
-                    </div>
-                    <p class="mt-2 text-muted small">Initializing secure payment...</p>
-                  </div>
-                </div>
-
-                <!-- Terms Checkbox -->
-                <div class="form-check clor mb-5">
-                  <input class="form-check-input" type="checkbox" id="terms" v-model="acceptTerms">
-                  <label class="form-check-label small ps-1" for="terms">
-                    I have read and agree to the website <router-link to="/policy/TERMS_AND_CONDITIONS" class="text-decoration-underline">terms and conditions</router-link> *
+              <div v-else-if="savedAddresses.length > 0" class="mb-3">
+                <label class="fLabel d-block mb-2">Saved addresses</label>
+                <div class="d-flex flex-column gap-2">
+                  <label v-for="addr in savedAddresses" :key="addr.id" class="border p-3 d-block">
+                    <input class="form-check-input me-2" type="radio" name="savedAddress" :value="addr.id" v-model="selectedAddressId">
+                    <strong>{{ addr.street }}</strong>, {{ addr.city }}, {{ addr.state }}, {{ addr.country }} {{ addr.zipCode }}
+                  </label>
+                  <label class="border p-3 d-block">
+                    <input class="form-check-input me-2" type="radio" name="savedAddress" :value="null" v-model="selectedAddressId">
+                    Use a different address
                   </label>
                 </div>
-
-                <button class="btn btnP btn-dark fw-medium w-100 mb-1" @click="initAirwallexDropin" :disabled="paymentLoading || isProcessing || !acceptTerms">
-                  <span v-if="isProcessing">
-                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...
-                  </span>
-                  <span v-else>Pay Now</span>
-                </button>
               </div>
+
+              <div v-if="!selectedAddressId" class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">Country *</label>
+                  <select class="form-control rounded-0" v-model="manualAddress.countryId" @change="onManualCountryChange">
+                    <option value="">Select Country</option>
+                    <option v-for="c in locationStore.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">State</label>
+                  <select class="form-control rounded-0" v-model="manualAddress.stateId" @change="onManualStateChange" :disabled="!manualAddress.countryId">
+                    <option value="">Select State</option>
+                    <option v-for="s in locationStore.getStates(manualAddress.countryId)" :key="s.id" :value="s.id">{{ s.name }}</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">City</label>
+                  <select class="form-control rounded-0" v-model="manualAddress.cityId" :disabled="!manualAddress.stateId">
+                    <option value="">Select City</option>
+                    <option v-for="ct in locationStore.getCities(manualAddress.stateId)" :key="ct.id" :value="ct.id">{{ ct.name }}</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">Postcode / ZIP *</label>
+                  <input type="text" class="form-control rounded-0" v-model="manualAddress.zipCode">
+                </div>
+                <div class="col-12">
+                  <label class="fLabel d-block mb-1">Street Address *</label>
+                  <input type="text" class="form-control rounded-0" v-model="manualAddress.street">
+                </div>
+              </div>
+            </div>
+
+            <div class="border p-4 mb-4">
+              <h3 class="h5 mb-3">2. Shipping Method</h3>
+              <div v-if="shippersLoading" class="placeholder-glow"><span class="placeholder col-12"></span></div>
+              <div v-else-if="shippersError" class="alert alert-warning rounded-0">
+                {{ shippersError }} <button class="btn btn-link p-0 align-baseline" @click="loadShippingOptions">Retry</button>
+              </div>
+              <div v-else>
+                <div class="mb-3">
+                  <label class="fLabel d-block mb-1">Shipper *</label>
+                  <select class="form-control rounded-0" v-model="selectedShipperId" @change="onShipperChange">
+                    <option value="">Select shipper</option>
+                    <option v-for="s in shippers" :key="s.id" :value="s.id">{{ s.name }}</option>
+                  </select>
+                </div>
+                <div class="mb-3" v-if="shippingMethods.length > 0">
+                  <label class="fLabel d-block mb-1">Service *</label>
+                  <select class="form-control rounded-0" v-model="selectedShippingMethodId">
+                    <option value="">Select shipping service</option>
+                    <option v-for="m in shippingMethods" :key="m.id" :value="m.id">
+                      {{ m.name }} ({{ m.estimatedDays || 'ETA N/A' }})
+                    </option>
+                  </select>
+                </div>
+                <div class="small text-muted">
+                  Shipping cost is calculated by backend shipper rules and destination.
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="col-12 col-lg-4">
+            <div class="border p-4">
+              <h3 class="h5 mb-4">3. Order Summary</h3>
+
+              <div v-for="item in cartStore.items" :key="cartStore.getItemKey(item)" class="d-flex justify-content-between mb-3">
+                <div class="pe-2">
+                  <div class="small">{{ item.name }} × {{ item.quantity }}</div>
+                  <div class="small text-muted" v-if="item.giftBoxId || item.giftCardId">
+                    <span v-if="item.giftBoxId">{{ item.giftBoxName || 'Gift Box' }}</span>
+                    <span v-if="item.giftCardId" class="ms-1">{{ item.giftCardName || 'Gift Card' }}</span>
+                  </div>
+                </div>
+                <strong>{{ currencyStore.formatPrice(itemLineTotal(item)) }}</strong>
+              </div>
+
+              <hr>
+              <div aria-live="polite" :aria-busy="totalsLoading ? 'true' : 'false'" class="mb-2">
+                <template v-if="totalsLoading">
+                  <div class="placeholder-glow mb-2"><span class="placeholder col-12"></span></div>
+                  <div class="placeholder-glow mb-2"><span class="placeholder col-10"></span></div>
+                  <div class="placeholder-glow mb-2"><span class="placeholder col-11"></span></div>
+                </template>
+                <template v-else>
+                  <div class="d-flex justify-content-between mb-2"><span>Items subtotal</span><span>{{ currencyStore.formatPrice(itemsSubtotal) }}</span></div>
+                  <div class="d-flex justify-content-between mb-2"><span>Add-ons subtotal</span><span>{{ currencyStore.formatPrice(addonsSubtotal) }}</span></div>
+                  <div class="d-flex justify-content-between mb-2"><span>Shipping</span><span>{{ currencyStore.formatPrice(shippingCost) }}</span></div>
+                  <div class="d-flex justify-content-between mb-2"><span>Tax (%)</span><span>{{ displayTaxPercentage }}%</span></div>
+                  <div class="d-flex justify-content-between mb-2"><span>Tax Amount</span><span>{{ currencyStore.formatPrice(taxAmount) }}</span></div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Discount</span>
+                    <span class="text-success">-{{ currencyStore.formatPrice(discountAmount) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2"><strong>Final payable total</strong><strong>{{ currencyStore.formatPrice(payableTotal) }}</strong></div>
+                </template>
+              </div>
+              <small v-if="totalsHint" class="d-block text-muted mb-2">{{ totalsHint }}</small>
+              <div v-if="totalsError" class="alert alert-warning rounded-0 py-2">
+                {{ totalsError }}
+                <button class="btn btn-link p-0 align-baseline ms-1" @click="retryTotals">Retry</button>
+              </div>
+              <hr>
+              <div class="border p-2 mb-3 bg-light">
+                <div class="d-flex justify-content-between">
+                  <span class="small fw-medium">You will be charged</span>
+                  <strong>{{ currencyStore.formatPrice(payableTotal) }}</strong>
+                </div>
+                <small class="text-muted d-block mt-1">Tax is calculated based on destination country.</small>
+              </div>
+
+              <form class="mb-3" @submit.prevent="applyVoucher">
+                <label class="fLabel d-block mb-1">Voucher</label>
+                <div class="input-group">
+                  <input class="form-control rounded-0" v-model="voucherCode" placeholder="Voucher code">
+                  <button class="btn btn-outline-dark rounded-0" type="submit">Apply</button>
+                </div>
+                <small v-if="voucherMessage" :class="voucherSuccess ? 'text-success' : 'text-danger'">{{ voucherMessage }}</small>
+              </form>
+
+              <button class="btn btn-dark w-100 rounded-0" :disabled="submitting || !canSubmit || totalsLoading" @click="placeOrder">
+                <span v-if="submitting"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Placing order...</span>
+                <span v-else>Place Order</span>
+              </button>
+              <p class="small text-muted mt-2 mb-0">Final totals and stock are validated by server during order placement.</p>
             </div>
           </div>
         </div>
@@ -406,446 +187,628 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '../stores/cartStore'
 import { useCurrencyStore } from '../stores/currencyStore'
 import { useLocationStore } from '../stores/locationStore'
 import axios from 'axios'
+import { API_BASE, getCurrentUserId } from '../services/apiConfig'
+import { getUserAddresses } from '../services/addressService'
+import { calculateShippingRates, getActiveShippers, getShipperMethods, previewShippingCost, getCountryTaxRate } from '../services/shippingService'
 
+const router = useRouter()
+const route = useRoute()
 const cartStore = useCartStore()
 const currencyStore = useCurrencyStore()
 const locationStore = useLocationStore()
-const orderPlaced = ref(false)
-const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
-const orderNumber = ref('')
-const isProcessing = ref(false)
-const selectedPayment = ref('airwallex')
-const dropinContainer = ref(null)
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const addressesLoading = ref(false)
+const addressesError = ref('')
+const savedAddresses = ref([])
+const selectedAddressId = ref(null)
 
-// Login form
-const loginEmail = ref('')
-const loginPassword = ref('')
-const rememberMe = ref(false)
+const shippersLoading = ref(false)
+const shippersError = ref('')
+const shippers = ref([])
+const shippingMethods = ref([])
+const rateMethodsByShipper = ref({})
+const selectedShipperId = ref('')
+const selectedShippingMethodId = ref('')
+const shippingLoading = ref(false)
+const countryTaxSyncing = ref(false)
+const syncedTaxCountryId = ref(0)
+const countryTaxRatePercentage = ref(0)
+const shippingCost = ref(0)
+const orderWeightKg = ref(0)
+const taxPercentage = ref(0)
+const totalsError = ref('')
 
-// Coupon
-const checkoutCouponCode = ref('')
-const checkoutCouponMessage = ref('')
-const checkoutCouponSuccess = ref(false)
-const checkoutDiscount = ref(0)
+const voucherCode = ref('')
+const voucherId = ref(null)
+const voucherSuccess = ref(false)
+const voucherMessage = ref('')
+const discountAmount = ref(0)
+const taxAmount = ref(0)
 
-// Shipping
-const checkoutShipping = ref('free')
-const checkoutShippingCost = ref(0)
-const cartDiscount = ref(0)
+const PAYMENT_TERM_ID = 'IMMEDIATE'
+const PAYMENT_GATEWAY_ID = 1
+const AIRWALLEX_DRAFT_PREFIX = 'airwallex-order-draft:'
+const AIRWALLEX_LAST_DRAFT_KEY = 'airwallex-order-draft:last'
 
-// Terms
-const acceptTerms = ref(false)
-const createAccount = ref(false)
-const shipToDifferent = ref(false)
+const submitting = ref(false)
+const submitError = ref('')
 
-// Shipping form data (used when shipToDifferent is checked)
-const shipping = reactive({
-  firstName: '',
-  lastName: '',
-  country: '',
-  addressLine1: '',
-  addressLine2: '',
-  city: '',
-  state: '',
-  postcode: '',
-  phone: ''
+const manualAddress = reactive({
+  street: '',
+  cityId: '',
+  stateId: '',
+  countryId: '',
+  zipCode: ''
 })
 
-function onShippingCountryChange() {
-  shipping.state = ''
-  shipping.city = ''
-  if (shipping.country) {
-    locationStore.loadStates(shipping.country)
+const selectedAddress = computed(() => savedAddresses.value.find(a => a.id === selectedAddressId.value) || null)
+function resolveLocationId(value, options = []) {
+  if (value === null || value === undefined || value === '') return 0
+  const direct = Number(value)
+  if (Number.isFinite(direct) && direct > 0) return direct
+  const asString = String(value).trim().toLowerCase()
+  const found = options.find(opt => String(opt.name || '').trim().toLowerCase() === asString)
+  return Number(found?.id || 0)
+}
+const selectedCountryId = computed(() => resolveLocationId(
+  selectedAddress.value?.countryId ?? selectedAddress.value?.country ?? manualAddress.countryId,
+  locationStore.countries
+))
+const selectedStateId = computed(() => {
+  const stateOptions = locationStore.getStates(selectedCountryId.value)
+  return resolveLocationId(
+    selectedAddress.value?.stateId ?? selectedAddress.value?.state ?? manualAddress.stateId,
+    stateOptions
+  )
+})
+const selectedCityId = computed(() => {
+  const cityOptions = locationStore.getCities(selectedStateId.value)
+  return resolveLocationId(
+    selectedAddress.value?.cityId ?? selectedAddress.value?.city ?? manualAddress.cityId,
+    cityOptions
+  )
+})
+const shippingAddressText = computed(() => {
+  if (selectedAddress.value) {
+    return `${selectedAddress.value.street || ''}, ${selectedAddress.value.city || ''}, ${selectedAddress.value.state || ''}, ${selectedAddress.value.country || ''} ${selectedAddress.value.zipCode || ''}`.replace(/\s+,/g, ',').trim()
   }
+  return `${manualAddress.street}, ${manualAddress.cityId}, ${manualAddress.stateId}, ${manualAddress.countryId} ${manualAddress.zipCode}`.trim()
+})
+
+const itemsSubtotal = computed(() => cartStore.totalPrice)
+const addonsSubtotal = computed(() => cartStore.addonsTotal)
+const payableTotal = computed(() => Math.max(0, itemsSubtotal.value + addonsSubtotal.value + shippingCost.value + taxAmount.value - discountAmount.value))
+const totalsLoading = computed(() => shippingLoading.value || shippersLoading.value || countryTaxSyncing.value)
+const displayTaxPercentage = computed(() => Number(taxPercentage.value || countryTaxRatePercentage.value || 0).toFixed(2))
+const isTaxRateSynced = computed(() => {
+  const countryId = Number(selectedCountryId.value || 0)
+  return countryId > 0 && countryId === Number(syncedTaxCountryId.value || 0)
+})
+const totalsHint = computed(() => {
+  if (!selectedCountryId.value) return 'Select country to calculate tax'
+  if (totalsLoading.value) return 'Recalculating shipping, tax and final payable total...'
+  if (!isTaxRateSynced.value) return 'Updating country tax rate...'
+  return ''
+})
+
+const canSubmit = computed(() => {
+  if (!selectedCountryId.value) return false
+  if (!isTaxRateSynced.value) return false
+  if (!selectedShipperId.value) return false
+  if (shippingMethods.value.length > 0 && !selectedShippingMethodId.value) return false
+  if (!shippingAddressText.value) return false
+  if (totalsLoading.value || !!totalsError.value) return false
+  return cartStore.items.length > 0
+})
+
+function itemLineTotal(item) {
+  const addons = Number(item.giftBoxPriceUsd || 0) + Number(item.giftCardPrice || 0)
+  return (Number(item.price || 0) + addons) * (item.quantity || 1)
 }
 
-function onShippingStateChange() {
-  shipping.city = ''
-  if (shipping.state) {
-    locationStore.loadCities(shipping.state)
+function normalizeCheckoutError(error) {
+  const raw = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to place order.'
+  const lower = raw.toLowerCase()
+  if (lower.includes('insufficient stock') || lower.includes('out of stock')) {
+    return 'Some items are no longer available in requested quantity. Please adjust your cart and retry.'
   }
+  if (lower.includes('inventory') && (lower.includes('initialize') || lower.includes('not found'))) {
+    return 'Inventory is not initialized for one or more products. Please contact support before retrying.'
+  }
+  if (lower.includes('shipper') || lower.includes('shipping')) {
+    return 'Selected shipping option is invalid for this address. Please reselect shipper/service.'
+  }
+  return raw
+}
 
-// Gift box options
-const giftBoxes = ref([])
-const itemGiftSelections = ref({})
-const itemGiftNotes = ref({})
-
-async function loadGiftBoxes() {
+async function loadAddresses() {
+  addressesLoading.value = true
+  addressesError.value = ''
   try {
-    const res = await axios.get(`${API_BASE}/api/v1/gift-boxes/active`)
-    giftBoxes.value = Array.isArray(res.data) ? res.data : []
-  } catch {
-    giftBoxes.value = []
+    const userId = getCurrentUserId()
+    savedAddresses.value = await getUserAddresses(userId)
+    const def = savedAddresses.value.find(a => a.isDefault)
+    selectedAddressId.value = def?.id || null
+  } catch (e) {
+    addressesError.value = e.response?.data?.message || 'Unable to load saved addresses.'
+  } finally {
+    addressesLoading.value = false
   }
 }
 
-function onGiftBoxChange(itemId, value) {
-  itemGiftSelections.value[itemId] = value || ''
-}
-}
-
-// Billing form data
-const billing = reactive({
-  firstName: '',
-  lastName: '',
-  company: '',
-  country: '',
-  addressLine1: '',
-  addressLine2: '',
-  city: '',
-  state: '',
-  postcode: '',
-  phone: '',
-  email: '',
-  orderNotes: ''
-})
-
-// Airwallex state
-let airwallex = null
-let dropinElement = null
-let paymentSession = null
-const paymentLoading = ref(false)
-const paymentError = ref('')
-
-// Order reference (stored after creation, before payment)
-let createdOrderId = null
-
-// Map of country codes to ERP country IDs
-function getCountryId(code) {
-  const map = { 'US': 1, 'GB': 2, 'AU': 3, 'CA': 4, 'AE': 5, 'SG': 6, 'HK': 7, 'DE': 8, 'FR': 9, 'IT': 10 }
-  return map[code?.toUpperCase()] || 1
+async function loadShippingOptions() {
+  shippersLoading.value = true
+  shippersError.value = ''
+  try {
+    shippers.value = await getActiveShippers()
+    if (shippers.value.length && !selectedShipperId.value) {
+      selectedShipperId.value = shippers.value[0].id
+      await onShipperChange()
+    }
+  } catch (e) {
+    shippersError.value = e.response?.data?.message || 'Unable to load shipping providers.'
+  } finally {
+    shippersLoading.value = false
+  }
 }
 
-// Get current user ID from localStorage
-function getUserId() {
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  return user.id || null
-}
-
-const subtotalAfterDiscount = computed(() => {
-  return Math.max(0, cartStore.totalPrice - checkoutDiscount.value)
-})
-
-const totalWithShipping = computed(() => {
-  return subtotalAfterDiscount.value + checkoutShippingCost.value
-})
-
-const handleLogin = () => {
-  if (loginEmail.value && loginPassword.value) {
-    alert('Login feature coming soon!')
+async function onShipperChange() {
+  selectedShippingMethodId.value = ''
+  if (!selectedShipperId.value) {
+    shippingMethods.value = []
+    shippingCost.value = 0
+    taxPercentage.value = 0
+    taxAmount.value = 0
+    return
+  }
+  const shipperMethodsFromRates = rateMethodsByShipper.value[String(selectedShipperId.value)] || []
+  if (shipperMethodsFromRates.length > 0) {
+    shippingMethods.value = shipperMethodsFromRates
   } else {
-    alert('Please enter your email and password.')
+    shippingMethods.value = await getShipperMethods(selectedShipperId.value)
+  }
+  if (shippingMethods.value.length) {
+    selectedShippingMethodId.value = shippingMethods.value[0].id
+  }
+  await recalculateTotals()
+}
+
+function computeOrderWeight() {
+  orderWeightKg.value = cartStore.items.reduce((sum, item) => {
+    const unitWeight = Number(item.jewelleryWeightKg || item.weightKg || 0)
+    return sum + (unitWeight * (item.quantity || 1))
+  }, 0)
+}
+
+async function onManualCountryChange() {
+  manualAddress.stateId = ''
+  manualAddress.cityId = ''
+  syncedTaxCountryId.value = 0
+  await nextTick()
+  if (manualAddress.countryId) {
+    await locationStore.loadStates(Number(manualAddress.countryId))
+  }
+  await recalculateTotals({ syncCountryTax: Boolean(manualAddress.countryId) })
+}
+
+function onManualStateChange() {
+  manualAddress.cityId = ''
+}
+
+async function syncSelectedCountryTaxRate() {
+  const countryId = Number(selectedCountryId.value || 0)
+  if (!countryId) {
+    syncedTaxCountryId.value = 0
+    return true
+  }
+  countryTaxSyncing.value = true
+  try {
+    const taxResponse = await getCountryTaxRate(countryId)
+    const rawRate = Number(taxResponse?.taxRate ?? 0)
+    const nextTaxPercentage = rawRate > 0 && rawRate <= 1 ? rawRate * 100 : rawRate
+    countryTaxRatePercentage.value = Number.isFinite(nextTaxPercentage) ? Math.max(0, nextTaxPercentage) : 0
+    const baseForTax = Number(itemsSubtotal.value + addonsSubtotal.value + shippingCost.value - discountAmount.value)
+    const computedTaxAmount = (baseForTax * countryTaxRatePercentage.value) / 100
+    taxPercentage.value = countryTaxRatePercentage.value
+    taxAmount.value = Number.isFinite(computedTaxAmount) ? Math.max(0, computedTaxAmount) : 0
+    syncedTaxCountryId.value = countryId
+    return true
+  } catch (e) {
+    totalsError.value = e.response?.data?.message || 'Could not fetch country tax rate. Please retry.'
+    syncedTaxCountryId.value = 0
+    countryTaxRatePercentage.value = 0
+    taxPercentage.value = 0
+    taxAmount.value = 0
+    return false
+  } finally {
+    countryTaxSyncing.value = false
   }
 }
 
-// Cascading location dropdown handlers
-function onCountryChange() {
-  billing.state = ''
-  billing.city = ''
-  if (billing.country) {
-    locationStore.loadStates(billing.country)
+function applyPreviewTotals(preview = {}) {
+  const nextShipping = Number(preview.shippingCost ?? preview.cost ?? shippingCost.value ?? 0)
+  const hasPreviewTaxPercentage = [preview.taxPercentage, preview.taxPercent, preview.taxRate].some(
+    (value) => value !== undefined && value !== null
+  )
+  const nextTaxPercentage = hasPreviewTaxPercentage
+    ? Number(preview.taxPercentage ?? preview.taxPercent ?? preview.taxRate ?? 0)
+    : Number(countryTaxRatePercentage.value || taxPercentage.value || 0)
+  const baseForTax = Number(itemsSubtotal.value + addonsSubtotal.value + nextShipping - discountAmount.value)
+  const computedTaxFromRate = (baseForTax * nextTaxPercentage) / 100
+  const hasPreviewTaxAmount = [preview.taxAmount, preview.tax].some((value) => value !== undefined && value !== null)
+  const nextTaxAmount = hasPreviewTaxAmount ? Number(preview.taxAmount ?? preview.tax ?? 0) : Number(computedTaxFromRate ?? 0)
+
+  shippingCost.value = Math.max(0, nextShipping)
+  taxPercentage.value = Number.isFinite(nextTaxPercentage) ? Math.max(0, nextTaxPercentage) : 0
+  taxAmount.value = Number.isFinite(nextTaxAmount) ? Math.max(0, nextTaxAmount) : 0
+}
+
+async function applyPreviewShipper(preview = {}) {
+  const previewShipperId = Number(preview.shipperId || 0)
+  if (!previewShipperId) return
+
+  const previewShipperName = String(preview.shipperName || '').trim()
+  const existing = shippers.value.find((shipper) => Number(shipper.id) === previewShipperId)
+  if (!existing) {
+    shippers.value = [
+      { id: previewShipperId, name: previewShipperName || `Shipper #${previewShipperId}` },
+      ...shippers.value
+    ]
+  }
+
+  const selectedChanged = Number(selectedShipperId.value || 0) !== previewShipperId
+  if (selectedChanged) {
+    selectedShipperId.value = previewShipperId
+  }
+
+  if (!selectedChanged && shippingMethods.value.length > 0) return
+
+  const shipperMethodsFromRates = rateMethodsByShipper.value[String(previewShipperId)] || []
+  shippingMethods.value = shipperMethodsFromRates.length > 0
+    ? shipperMethodsFromRates
+    : await getShipperMethods(previewShipperId)
+
+  if (shippingMethods.value.length && !shippingMethods.value.some((method) => String(method.id) === String(selectedShippingMethodId.value))) {
+    selectedShippingMethodId.value = shippingMethods.value[0].id
   }
 }
 
-function onStateChange() {
-  billing.city = ''
-  if (billing.state) {
-    locationStore.loadCities(billing.state)
-  }
+function compareRateOptions(a, b) {
+  const aRecommended = a.isRecommendationEligible ? 1 : 0
+  const bRecommended = b.isRecommendationEligible ? 1 : 0
+  if (aRecommended !== bRecommended) return bRecommended - aRecommended
+
+  const aPriority = Number(a.priorityScore || 0)
+  const bPriority = Number(b.priorityScore || 0)
+  if (aPriority !== bPriority) return bPriority - aPriority
+
+  const aCost = Number(a.cost || 0)
+  const bCost = Number(b.cost || 0)
+  return aCost - bCost
 }
 
-const applyCouponCode = async () => {
-  if (!checkoutCouponCode.value.trim()) {
-    checkoutCouponMessage.value = 'Please enter a coupon code.'
-    checkoutCouponSuccess.value = false
+function normalizeRateOptions(rates = []) {
+  return (Array.isArray(rates) ? rates : [])
+    .map((rate) => ({
+      shipperId: Number(rate.shipperId || 0),
+      shipperName: String(rate.shipperName || '').trim(),
+      shippingMethodId: Number(rate.shippingMethodId || 0),
+      serviceName: String(rate.serviceName || '').trim(),
+      cost: Number(rate.cost || 0),
+      estimatedDays: rate.estimatedDays ?? null,
+      isRecommendationEligible: Boolean(rate.isRecommendationEligible),
+      priorityScore: Number(rate.priorityScore || 0)
+    }))
+    .filter((rate) => rate.shipperId > 0 && rate.shippingMethodId > 0)
+    .sort(compareRateOptions)
+}
+
+async function refreshBestShippers() {
+  computeOrderWeight()
+  const rates = normalizeRateOptions(await calculateShippingRates({
+    countryId: selectedCountryId.value,
+    stateId: selectedStateId.value || undefined,
+    cityId: selectedCityId.value || undefined,
+    orderWeightKg: Number(orderWeightKg.value || 0),
+    orderTotalUsd: Number(itemsSubtotal.value + addonsSubtotal.value)
+  }))
+
+  if (!rates.length) {
+    rateMethodsByShipper.value = {}
     return
   }
 
-  checkoutCouponMessage.value = ''
-  checkoutCouponSuccess.value = false
+  /** @type {Record<string, Array<{id:number,name:string,estimatedDays:number|null,cost:number,priorityScore:number,isRecommendationEligible:boolean}>>} */
+  const methodsByShipper = {}
+  /** @type {Array<{id:number,name:string,priorityScore:number,isRecommendationEligible:boolean,minCost:number}>} */
+  const shipperRows = []
 
+  rates.forEach((rate) => {
+    const shipperKey = String(rate.shipperId)
+    if (!methodsByShipper[shipperKey]) methodsByShipper[shipperKey] = []
+    methodsByShipper[shipperKey].push({
+      id: rate.shippingMethodId,
+      name: rate.serviceName || 'Service',
+      estimatedDays: rate.estimatedDays,
+      cost: rate.cost,
+      priorityScore: rate.priorityScore,
+      isRecommendationEligible: rate.isRecommendationEligible
+    })
+
+    const existingShipper = shipperRows.find((shipper) => shipper.id === rate.shipperId)
+    if (!existingShipper) {
+      shipperRows.push({
+        id: rate.shipperId,
+        name: rate.shipperName || `Shipper #${rate.shipperId}`,
+        priorityScore: rate.priorityScore,
+        isRecommendationEligible: rate.isRecommendationEligible,
+        minCost: rate.cost
+      })
+    } else {
+      existingShipper.priorityScore = Math.max(existingShipper.priorityScore, rate.priorityScore)
+      existingShipper.isRecommendationEligible = existingShipper.isRecommendationEligible || rate.isRecommendationEligible
+      existingShipper.minCost = Math.min(existingShipper.minCost, rate.cost)
+    }
+  })
+
+  Object.keys(methodsByShipper).forEach((shipperKey) => {
+    methodsByShipper[shipperKey].sort(compareRateOptions)
+  })
+
+  shipperRows.sort((a, b) => {
+    if (a.isRecommendationEligible !== b.isRecommendationEligible) {
+      return Number(b.isRecommendationEligible) - Number(a.isRecommendationEligible)
+    }
+    if (a.priorityScore !== b.priorityScore) return b.priorityScore - a.priorityScore
+    return a.minCost - b.minCost
+  })
+
+  rateMethodsByShipper.value = methodsByShipper
+  shippers.value = shipperRows
+
+  const selectedShipperKey = String(selectedShipperId.value || '')
+  if (!selectedShipperKey || !methodsByShipper[selectedShipperKey]) {
+    selectedShipperId.value = shipperRows[0]?.id || ''
+  }
+
+  const activeShipperMethods = methodsByShipper[String(selectedShipperId.value)] || []
+  shippingMethods.value = activeShipperMethods
+  if (activeShipperMethods.length && !activeShipperMethods.some((method) => String(method.id) === String(selectedShippingMethodId.value))) {
+    selectedShippingMethodId.value = activeShipperMethods[0].id
+  }
+}
+
+async function recalculateTotals(options = {}) {
+  const { syncCountryTax = false } = options
+  totalsError.value = ''
+  if (!selectedCountryId.value) {
+    shippingCost.value = 0
+    syncedTaxCountryId.value = 0
+    countryTaxRatePercentage.value = 0
+    taxPercentage.value = 0
+    taxAmount.value = 0
+    return
+  }
+  if (syncCountryTax) {
+    const synced = await syncSelectedCountryTaxRate()
+    if (!synced) {
+      shippingCost.value = 0
+      taxPercentage.value = 0
+      taxAmount.value = 0
+      return
+    }
+  }
+  try {
+    await refreshBestShippers()
+  } catch (e) {
+    rateMethodsByShipper.value = {}
+  }
+  if (!selectedShipperId.value) {
+    totalsError.value = 'Select shipping provider to calculate tax and final total.'
+    return
+  }
+  shippingLoading.value = true
+  try {
+    computeOrderWeight()
+    const preview = await previewShippingCost({
+      countryId: selectedCountryId.value,
+      stateId: selectedStateId.value || undefined,
+      cityId: selectedCityId.value || undefined,
+      shipperId: Number(selectedShipperId.value),
+      orderWeightKg: Number(orderWeightKg.value || 0),
+      orderTotalUsd: Number(itemsSubtotal.value + addonsSubtotal.value)
+    })
+    await applyPreviewShipper(preview || {})
+    applyPreviewTotals(preview || {})
+  } catch (e) {
+    shippingCost.value = 0
+    taxPercentage.value = 0
+    taxAmount.value = 0
+    totalsError.value = e.response?.data?.message || 'Could not recalculate totals. Please retry.'
+  } finally {
+    shippingLoading.value = false
+  }
+}
+
+async function applyVoucher() {
+  voucherMessage.value = ''
+  voucherSuccess.value = false
+  voucherId.value = null
+  discountAmount.value = 0
+  if (!voucherCode.value.trim()) return
   try {
     const response = await axios.post(`${API_BASE}/api/v1/vouchers/validate`, null, {
       params: {
-        code: checkoutCouponCode.value.trim(),
-        orderTotal: cartStore.totalPrice
+        code: voucherCode.value.trim(),
+        orderTotal: itemsSubtotal.value + addonsSubtotal.value + shippingCost.value
       }
     })
-    const data = response.data
-    // Successful validation — apply discount (API returns lowercase enum values)
+    const data = response.data || {}
+    voucherId.value = data.id || null
     if (data.discountType === 'percentage') {
-      checkoutDiscount.value = (cartStore.totalPrice * data.discountValue) / 100
-    } else if (data.discountType === 'fixed_amount') {
-      checkoutDiscount.value = data.discountValue
+      discountAmount.value = ((itemsSubtotal.value + addonsSubtotal.value + shippingCost.value) * Number(data.discountValue || 0)) / 100
     } else {
-      checkoutDiscount.value = data.discountValue || 0
+      discountAmount.value = Number(data.discountValue || 0)
     }
-    checkoutCouponMessage.value = `Coupon applied! You saved ${currencyStore.formatPrice(checkoutDiscount.value)}`
-    checkoutCouponSuccess.value = true
-  } catch (error) {
-    const msg = error.response?.data?.message || error.response?.data?.error || 'Invalid or expired coupon code.'
-    checkoutCouponMessage.value = msg
-    checkoutCouponSuccess.value = false
-    checkoutDiscount.value = 0
+    voucherSuccess.value = true
+    voucherMessage.value = 'Voucher applied.'
+    await recalculateTotals()
+  } catch (e) {
+    voucherSuccess.value = false
+    voucherMessage.value = e.response?.data?.message || 'Voucher is invalid or expired.'
   }
 }
 
-const increaseItemQty = (item) => {
-  cartStore.updateQuantity(item.id, item.quantity + 1)
-}
-
-const decreaseItemQty = (item) => {
-  if (item.quantity > 1) {
-    cartStore.updateQuantity(item.id, item.quantity - 1)
+async function placeOrder() {
+  submitError.value = ''
+  if (!canSubmit.value) {
+    submitError.value = totalsError.value || totalsHint.value || 'Please complete address and shipping selection before placing order.'
+    return
+  }
+  submitting.value = true
+  try {
+    const payload = buildOrderPayload()
+    await startAirwallexPayment(payload)
+  } catch (e) {
+    submitError.value = normalizeCheckoutError(e)
+  } finally {
+    submitting.value = false
   }
 }
 
-const removeItem = (itemId) => {
-  cartStore.removeFromCart(itemId)
+async function retryTotals() {
+  await recalculateTotals({ syncCountryTax: Boolean(selectedCountryId.value) })
 }
 
-const updateCheckoutShipping = () => {
-  checkoutShippingCost.value = checkoutShipping.value === 'flat' ? 10.00 : 0
+function buildOrderPayload() {
+  const userId = getCurrentUserId()
+  return {
+    customerId: userId || 1,
+    userAddressId: selectedAddressId.value || undefined,
+    shippingAddress: selectedAddressId.value ? undefined : {
+      street: manualAddress.street,
+      city: String(manualAddress.cityId || ''),
+      state: String(manualAddress.stateId || ''),
+      zipCode: manualAddress.zipCode,
+      country: String(manualAddress.countryId || '')
+    },
+    countryId: selectedCountryId.value,
+    stateId: selectedStateId.value || undefined,
+    cityId: selectedCityId.value || undefined,
+    currencyId: 1,
+    voucherId: voucherId.value || undefined,
+    paymentTermId: PAYMENT_TERM_ID,
+    paymentGatewayId: PAYMENT_GATEWAY_ID,
+    shipperId: Number(selectedShipperId.value),
+    shippingMatrixId: selectedShippingMethodId.value ? Number(selectedShippingMethodId.value) : undefined,
+    orderWeightKg: Number(orderWeightKg.value || 0),
+    notes: '',
+    items: cartStore.items.map(item => ({
+      productId: Number(item.id),
+      quantity: Number(item.quantity || 1),
+      giftBoxId: item.giftBoxId || undefined,
+      giftCardId: item.giftCardId || undefined,
+      giftNote: item.giftNote || undefined
+    }))
+  }
 }
 
-function validateBilling() {
+function makeDraftKey() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function getAirwallexRedirectUrl(paymentIntent = {}) {
   return (
-    billing.firstName &&
-    billing.lastName &&
-    billing.country &&
-    billing.addressLine1 &&
-    billing.city &&
-    billing.state &&
-    billing.postcode &&
-    billing.phone &&
-    billing.email
+    paymentIntent.paymentUrl ||
+    paymentIntent.payment_url ||
+    paymentIntent.redirectUrl ||
+    paymentIntent.redirect_url ||
+    paymentIntent.hostedPaymentUrl ||
+    paymentIntent.hosted_payment_url ||
+    paymentIntent.paymentLink ||
+    paymentIntent.payment_link ||
+    paymentIntent.nextAction?.url ||
+    paymentIntent.next_action?.url ||
+    ''
   )
 }
 
-/**
- * Step 1: Create payment intent via POST /api/v1/payments/create-intent
- * Returns payment link/client_secret for Airwallex
- */
-async function createPaymentIntent(totalAmount) {
-  const response = await axios.post(`${API_BASE}/api/v1/payments/create-intent`, {
-    amount: totalAmount,
-    currency: currencyStore.currency,
-    orderId: 'pending'
-  })
-
-  return response.data
-}
-
-/**
- * Step 2: Create the order in the ERP backend via POST /api/v1/orders
- * Called after successful payment
- */
-
-async function createOrder() {
-  const token = localStorage.getItem('authToken')
-  const userId = getUserId()
-
-  const addr = shipToDifferent.value ? shipping : billing
-  const orderData = {
-    customerId: userId || 1,
-    shippingAddress: {
-      street: addr.addressLine1,
-      city: addr.city,
-      state: addr.state,
-      zipCode: addr.postcode,
-      country: addr.country
-    },
-    countryId: Number(addr.country) || getCountryId(addr.country),
-    stateId: addr.state ? Number(addr.state) : undefined,
-    cityId: addr.city ? Number(addr.city) : undefined,
-    currencyId: 1,
-    notes: billing.orderNotes,
-    items: cartStore.items.map(item => ({
-      productId: Number(item.id),
-      quantity: item.quantity,
-      giftBoxId: itemGiftSelections.value[item.id] ? Number(itemGiftSelections.value[item.id]) : undefined,
+async function startAirwallexPayment(orderPayload) {
+  const draftKey = makeDraftKey()
+  const returnUrl = `${window.location.origin}/payment-success?draft=${encodeURIComponent(draftKey)}`
+  const paymentRequest = {
+    amount: Number(payableTotal.value),
+    currency: currencyStore.currency || 'USD',
+    orderId: `pending-${draftKey}`,
+    returnUrl,
+    metadata: {
+      draftKey,
+      customerId: orderPayload.customerId,
+      amount: Number(payableTotal.value)
+    }
   }
 
-  const response = await axios.post(`${API_BASE}/api/v1/orders`, orderData, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {}
-  })
+  sessionStorage.setItem(`${AIRWALLEX_DRAFT_PREFIX}${draftKey}`, JSON.stringify(orderPayload))
+  sessionStorage.setItem(AIRWALLEX_LAST_DRAFT_KEY, draftKey)
 
-  return response.data
-}
-/**
- * Initialize the Airwallex drop-in element with the payment intent
- * Flow: createPaymentIntent → Airwallex drop-in → on confirm → createOrder
- */
-async function initAirwallexDropin() {
-  paymentLoading.value = true
-  paymentError.value = ''
+  const response = await axios.post(`${API_BASE}/api/v1/payments/create-intent`, paymentRequest)
+  const paymentIntent = response.data || {}
+  const redirectUrl = getAirwallexRedirectUrl(paymentIntent)
 
-  try {
-    if (typeof window.Airwallex === 'undefined') {
-      throw new Error('Airwallex SDK not loaded.')
-    }
-
-    airwallex = window.Airwallex
-
-    if (!validateBilling()) {
-      paymentLoading.value = false
-      paymentError.value = 'Please fill in all required billing fields before proceeding to payment.'
-      return
-    }
-
-    // Step 1: Create payment intent first (before Airwallex UI)
-    const totalAmount = totalWithShipping.value
-    paymentSession = await createPaymentIntent(totalAmount)
-
-    if (!paymentSession || (!paymentSession.client_secret && !paymentSession.clientSecret)) {
-      throw new Error('Failed to create payment intent.')
-    }
-
-    const intentId = paymentSession.id || paymentSession.paymentIntentId
-    const clientSecret = paymentSession.client_secret || paymentSession.clientSecret
-
-    if (dropinElement) {
-      try { dropinElement.unmount() } catch (e) { /* ignore */ }
-      dropinElement = null
-    }
-
-    await nextTick()
-
-    // Step 2: Mount Airwallex drop-in with the payment intent
-    dropinElement = airwallex.createElement('dropin', {
-      intent: {
-        id: intentId,
-        client_secret: clientSecret
-      },
-      layout: 'tabs',
-      showSavePaymentMethod: false,
-      style: {
-        theme: 'light',
-        colors: {
-          primary: '#000000',
-          primaryText: '#ffffff',
-          background: '#ffffff',
-          error: '#dc3545'
-        }
-      }
-    })
-
-    dropinElement.mount('airwallex-dropin-container')
-
-    dropinElement.on('ready', () => {
-      paymentLoading.value = false
-    })
-
-    dropinElement.on('error', (event) => {
-      paymentError.value = event.detail?.error?.message || 'Payment initialization failed.'
-      paymentLoading.value = false
-    })
-
-  } catch (error) {
-    paymentError.value = error.message || 'Failed to initialize payment.'
-    paymentLoading.value = false
-  }
-}
-
-function onPaymentMethodChange() {
-  paymentError.value = ''
-  paymentLoading.value = false
-
-  if (selectedPayment.value !== 'airwallex' && dropinElement) {
-    try { dropinElement.unmount() } catch (e) { /* ignore */ }
-    dropinElement = null
-    const container = document.getElementById('airwallex-dropin-container')
-    if (container) container.innerHTML = ''
+  if (!redirectUrl) {
+    throw new Error('Could not start Airwallex hosted payment.')
   }
 
-  if (selectedPayment.value === 'airwallex') {
-    nextTick(() => { initAirwallexDropin() })
-  }
+  window.location.href = redirectUrl
 }
 
-async function processPayment() {
-  if (!validateBilling()) {
-    paymentError.value = 'Please fill in all required billing fields.'
+watch([
+  selectedAddressId,
+  selectedStateId,
+  selectedCityId,
+  selectedShipperId,
+  selectedShippingMethodId
+], () => {
+  recalculateTotals()
+})
+
+watch(selectedCountryId, async (countryId) => {
+  syncedTaxCountryId.value = 0
+  if (!countryId) {
+    await recalculateTotals()
     return
   }
+  if (!selectedAddressId.value) return
+  await locationStore.loadStates(countryId)
+  await recalculateTotals({ syncCountryTax: true })
+})
 
-  if (!acceptTerms.value) {
-    paymentError.value = 'Please accept the terms and conditions.'
-    return
-  }
-
-  isProcessing.value = true
-  paymentError.value = ''
-
-  if (selectedPayment.value === 'airwallex') {
-    await processAirwallexPayment()
-  }
-
-  isProcessing.value = false
-}
-
-async function processAirwallexPayment() {
-  try {
-    if (!dropinElement) {
-      throw new Error('Payment element not initialized.')
-    }
-
-    const result = await dropinElement.confirm()
-
-    if (result.status === 'success' || result.status === 'succeeded' || result.status === 'requires_capture') {
-      // Create order in ERP after successful payment
-      const orderResponse = await createOrder()
-      createdOrderId = orderResponse.id || orderResponse.orderId
-      finalizeOrder(createdOrderId, 'airwallex', result.id || result.paymentIntentId)
-    } else {
-      throw new Error(result.error?.message || 'Payment was not successful.')
-    }
-  } catch (error) {
-    paymentError.value = error.message || 'Payment failed. Please try again.'
-  }
-}
-
-
-function finalizeOrder(orderId, paymentMethod, transactionId) {
-  orderNumber.value = orderId || `JT-${Date.now().toString(36).toUpperCase()}`
-  orderPlaced.value = true
-  cartStore.clearCart()
-  window.scrollTo(0, 0)
-}
-
-onBeforeUnmount(() => {
-  if (dropinElement) {
-    try { dropinElement.unmount() } catch (e) { /* ignore */ }
+watch(selectedStateId, (stateId) => {
+  if (stateId) {
+    locationStore.loadCities(stateId)
   }
 })
 
-// Ensure locations are loaded when checkout is opened
 onMounted(() => {
-  if (!locationStore.loaded) {
-    locationStore.loadAllLocations()
+  if (route.query.payment_status || route.query.status) {
+    const query = new URLSearchParams(window.location.search).toString()
+    router.replace(`/payment-success${query ? `?${query}` : ''}`)
+    return
   }
+  if (!locationStore.loaded) locationStore.loadAllLocations()
+  loadAddresses()
+  loadShippingOptions()
 })
-  loadGiftBoxes()
 </script>
 
 <style scoped>
-.airwallex-payment-section {
-  padding: 0.5rem 0;
-}
-.airwallex-payment-section #airwallex-dropin-container {
-  min-height: 200px;
-}
-.alert-danger {
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
-  padding: 0.75rem 1.25rem;
+.placeholder {
+  min-height: 1rem;
 }
 </style>

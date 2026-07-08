@@ -40,6 +40,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useCurrencyStore } from '../stores/currencyStore'
 import { useWishlistStore } from '../stores/wishlistStore'
 import axios from 'axios'
+import { notifyAuthChanged } from '../utils/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -114,6 +115,7 @@ onMounted(async () => {
     currencyStore.reset()
     currencyStore.determineCurrency()
     wishlistStore.fetchWishlist()
+    notifyAuthChanged()
 
     // Redirect to dashboard after a short delay
     setTimeout(() => {

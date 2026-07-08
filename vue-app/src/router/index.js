@@ -11,10 +11,20 @@ import About from '../pages/About.vue'
 import Contact from '../pages/Contact.vue'
 import SignIn from '../pages/SignIn.vue'
 import Register from '../pages/Register.vue'
+import RegisterUser from '../pages/RegisterUser.vue'
+import RegisterB2B from '../pages/RegisterB2B.vue'
+import RegisterSuccess from '../pages/RegisterSuccess.vue'
+import ActivateAccount from '../pages/ActivateAccount.vue'
 import AuthCallback from '../pages/AuthCallback.vue'
 import Wishlist from '../pages/Wishlist.vue'
 import Dashboard from '../pages/Dashboard.vue'
 import Profile from '../pages/Profile.vue'
+import Orders from '../pages/Orders.vue'
+import OrderDetail from '../pages/OrderDetail.vue'
+import Invoices from '../pages/Invoices.vue'
+import InvoiceDetail from '../pages/InvoiceDetail.vue'
+import OrderSuccess from '../pages/OrderSuccess.vue'
+import PaymentSuccess from '../pages/PaymentSuccess.vue'
 
 const routes = [
   {
@@ -78,6 +88,26 @@ const routes = [
     component: Register
   },
   {
+    path: '/register/user',
+    name: 'RegisterUser',
+    component: RegisterUser
+  },
+  {
+    path: '/register/b2b',
+    name: 'RegisterB2B',
+    component: RegisterB2B
+  },
+  {
+    path: '/register/success',
+    name: 'RegisterSuccess',
+    component: RegisterSuccess
+  },
+  {
+    path: '/activate-account',
+    name: 'ActivateAccount',
+    component: ActivateAccount
+  },
+  {
     path: '/auth/callback',
     name: 'AuthCallback',
     component: AuthCallback
@@ -96,6 +126,36 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: Profile
+  },
+  {
+    path: '/orders',
+    name: 'Orders',
+    component: Orders
+  },
+  {
+    path: '/orders/:id',
+    name: 'OrderDetail',
+    component: OrderDetail
+  },
+  {
+    path: '/invoices',
+    name: 'Invoices',
+    component: Invoices
+  },
+  {
+    path: '/invoices/:id',
+    name: 'InvoiceDetail',
+    component: InvoiceDetail
+  },
+  {
+    path: '/order-success/:id',
+    name: 'OrderSuccess',
+    component: OrderSuccess
+  },
+  {
+    path: '/payment-success',
+    name: 'PaymentSuccess',
+    component: PaymentSuccess
   },
   {
     path: '/policies/:slug',

@@ -109,11 +109,53 @@
                                           Selected: <strong>{{ selectedVariant.variantName }}</strong>
                                           <span v-if="selectedVariant.additionalPrice > 0"> (+{{ currencyStore.formatPrice(selectedVariant.additionalPrice) }})</span>
                                       </small>
+                                      <small v-else-if="requiresVariantSelection" class="d-block mt-2 text-danger">
+                                          Please select a variant to continue.
+                                      </small>
+                                      <small v-if="variantSelectionError" class="d-block mt-2 text-danger">{{ variantSelectionError }}</small>
                                   </div>
                                   <p class="fw-light mb-1">
-                                      {{ product.description || 'This regulator has a rolled diaphragm and high flow rate with reduced pressure drop. It has an excellent degree of condensation.' }}
+                                      {{ product.shortDescription || product.longDescription || 'This regulator has a rolled diaphragm and high flow rate with reduced pressure drop. It has an excellent degree of condensation.' }}
                                   </p>
-                                  <strong class="TxtPro">Availability: <span class="productStock fw-normal">In Stock</span></strong>
+                                 <strong class="TxtPro">Availability: <span class="productStock fw-normal" :class="stockTextClass">{{ stockMessage }}</span></strong>
+                              </div>
+                              <div class="border-top pt-4 mt-4 mb-4">
+                                  <h6 class="fw-medium mb-3">Gift Add-ons</h6>
+                                  <div class="row g-3">
+                                      <div class="col-12 col-md-6">
+                                          <label class="f-label fw-normal mb-1 d-block">Gift Box</label>
+                                          <select class="form-control rounded-0" v-model="selectedGiftBoxId">
+                                              <option :value="null">No Gift Box</option>
+                                              <option v-for="box in giftBoxes" :key="box.id" :value="box.id">
+                                                  {{ box.name }} (+{{ currencyStore.formatPrice(box.priceUsd || 0) }})
+                                              </option>
+                                          </select>
+                                      </div>
+                                      <div class="col-12 col-md-6">
+                                          <label class="f-label fw-normal mb-1 d-block">Greeting / Gift Card</label>
+                                          <select class="form-control rounded-0" v-model="selectedGiftCardId">
+                                              <option :value="null">No Gift Card</option>
+                                              <option v-for="card in giftCards" :key="card.id" :value="card.id">
+                                                  {{ card.name }} (+{{ currencyStore.formatPrice(card.price || 0) }})
+                                              </option>
+                                          </select>
+                                      </div>
+                                      <div class="col-12">
+                                          <label class="f-label fw-normal mb-1 d-block" for="gift-note">Gift Note</label>
+                                          <textarea
+                                            id="gift-note"
+                                            class="form-control rounded-0"
+                                            rows="2"
+                                            v-model="giftNote"
+                                            maxlength="240"
+                                            placeholder="Optional message for recipient"
+                                          ></textarea>
+                                      </div>
+                                  </div>
+                                  <div class="d-flex justify-content-between align-items-center mt-3 p-2 bg-light">
+                                      <span class="small">Per-item subtotal preview (product + add-ons)</span>
+                                      <strong>{{ currencyStore.formatPrice(perItemPreviewTotal) }}</strong>
+                                  </div>
                               </div>
                               <div class="mb-6">
                                   <div class="butttonsWraper mb-8">
@@ -123,9 +165,9 @@
                                               <input type="text" class="form-control text-center fw-light px-6" min="1" v-model="quantity" readonly>
                                               <button class="btn btn-plus border-0" @click="quantity++"><i class="fa-regular fa-plus"></i></button>
                                           </div>
-                                          <a href="javascript:void(0);" class="btn btnTheme submitButton fw-medium text-uppercase" @click="addToCart">Add To Cart</a>
+                                          <a href="javascript:void(0);" class="btn btnTheme submitButton fw-medium text-uppercase" :class="{ disabled: !canPurchase }" @click="addToCart">Add To Cart</a>
                                       </div>
-                                      <a href="javascript:void(0);" class="btn btn-light submitButton btnII fw-medium text-uppercase" @click="buyItNow">BUY IT NOW</a>
+                                      <a href="javascript:void(0);" class="btn btn-light submitButton btnII fw-medium text-uppercase" :class="{ disabled: !canPurchase }" @click="buyItNow">BUY IT NOW</a>
                                   </div>
                                   <div class="d-flex btnsWrapper mb-11">
                                       <a href="javascript:void(0);" class="guide-chart-btn wishListBtn text-decoration-none mb-2 mb-sm-0 me-3 me-sm-7 fw-normal" @click="toggleWishlist">
@@ -176,7 +218,7 @@
                               </h2>
                               <div id="collapseDesc" class="accordion-collapse collapse show" aria-labelledby="headingDesc" data-bs-parent="#productAccordion">
                                   <div class="accordion-body">
-                                      <p>{{ product.description || 'Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake. Tart oat cake lollipop lollipop halvah chupa chups bonbon sugar plum dessert.' }}</p>
+                                      <p>{{ product.longDescription || product.shortDescription || 'Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake. Tart oat cake lollipop lollipop halvah chupa chups bonbon sugar plum dessert.' }}</p>
                                   </div>
                               </div>
                           </div>
@@ -271,6 +313,7 @@ import { useCurrencyStore } from '../stores/currencyStore'
 import { useSiteSettingsStore } from '../stores/siteSettingsStore'
 import { useCategoryStore } from '../stores/categoryStore'
 import { toSlug } from '../utils/slug'
+import { getActiveGiftBoxes, getActiveGiftCards } from '../services/giftService'
 import axios from 'axios'
 
 const route = useRoute()
@@ -292,8 +335,14 @@ const socialLinks = computed(() => ({
 const quantity = ref(1)
 const activeSlide = ref(0)
 const selectedVariantId = ref(null)
+const selectedGiftBoxId = ref(null)
+const selectedGiftCardId = ref(null)
+const giftNote = ref('')
+const giftBoxes = ref([])
+const giftCards = ref([])
 const isLoading = ref(false)
 const error = ref('')
+const variantSelectionError = ref('')
 
 const product = ref({
   id: '',
@@ -303,7 +352,16 @@ const product = ref({
   price: 0,
   thumbnailUrl: '',
   sku: '',
-  description: '',
+  shortDescription: '',
+  longDescription: '',
+  videoUrl: '',
+  tags: [],
+  customFields: {},
+  isActive: true,
+  trackInventory: true,
+  allowBackorder: false,
+  stockQuantity: 0,
+  supplierId: null,
   supplierName: '',
   variants: [],
   media: []
@@ -350,11 +408,44 @@ const selectedVariant = computed(() => {
   return product.value.variants.find(v => v.id === selectedVariantId.value) || null
 })
 
+const requiresVariantSelection = computed(() => (product.value.variants || []).length > 1)
+
 // Display price: base + variant additional
 const displayPrice = computed(() => {
   const base = product.value.price || 0
   const additional = selectedVariant.value?.additionalPrice || 0
   return base + additional
+})
+
+const selectedGiftBox = computed(() => giftBoxes.value.find(box => Number(box.id) === Number(selectedGiftBoxId.value)) || null)
+const selectedGiftCard = computed(() => giftCards.value.find(card => Number(card.id) === Number(selectedGiftCardId.value)) || null)
+const addonUnitPrice = computed(() => Number(selectedGiftBox.value?.priceUsd || 0) + Number(selectedGiftCard.value?.price || 0))
+const perItemPreviewTotal = computed(() => displayPrice.value + addonUnitPrice.value)
+const availableStock = computed(() => {
+  if (selectedVariant.value && Number.isFinite(selectedVariant.value.stockQuantity)) {
+    return Number(selectedVariant.value.stockQuantity || 0)
+  }
+  return Number(product.value.stockQuantity || 0)
+})
+const canPurchase = computed(() => {
+  if (product.value.trackInventory === false) return true
+  if (product.value.allowBackorder) return true
+  return availableStock.value > 0
+})
+const stockMessage = computed(() => {
+  if (product.value.trackInventory === false) return 'Made to order (inventory not tracked)'
+  if (product.value.allowBackorder) {
+    return availableStock.value > 0
+      ? `In stock (${availableStock.value} available), backorder supported`
+      : 'Backorder available (ships when restocked)'
+  }
+  if (availableStock.value > 0) return `In stock (${availableStock.value} available)`
+  return 'Out of stock'
+})
+const stockTextClass = computed(() => {
+  if (product.value.trackInventory === false) return 'text-primary'
+  if (product.value.allowBackorder) return 'text-warning'
+  return availableStock.value > 0 ? 'text-success' : 'text-danger'
 })
 
 // Product images for carousel — uses variant media if selected, else base media, fallback to thumbnailUrl
@@ -376,7 +467,8 @@ const productImages = computed(() => {
 })
 
 function selectVariant(variantId) {
-  selectedVariantId.value = selectedVariantId.value === variantId ? null : variantId
+  selectedVariantId.value = variantId
+  variantSelectionError.value = ''
   activeSlide.value = 0
   nextTick(() => {
     const carouselEl = document.getElementById('productCarousel')
@@ -446,25 +538,55 @@ async function fetchProduct() {
         name: p.name,
         category: p.categoryName || 'Jewelry',
         categoryId: p.categoryId || null,
-        price: p.basePriceUsd || 0,
+        price: Number(p.basePriceUsd) || 0,
         thumbnailUrl: p.thumbnailUrl || '',
         sku: p.sku || '',
-        description: p.shortDescription || p.description || '',
+        shortDescription: p.shortDescription || '',
+        longDescription: p.longDescription || '',
+        videoUrl: p.videoUrl || '',
+        tags: Array.isArray(p.tags) ? p.tags : [],
+        customFields: (() => {
+          if (p.customFields && typeof p.customFields === 'string') {
+            try {
+              return JSON.parse(p.customFields)
+            } catch {
+              return {}
+            }
+          }
+          return p.customFields && typeof p.customFields === 'object' ? p.customFields : {}
+        })(),
+        isActive: p.isActive !== false,
+        trackInventory: p.trackInventory !== false,
+        allowBackorder: !!p.allowBackorder,
+        stockQuantity: Number(p.stockQuantity ?? p.availableStock ?? p.inventoryQuantity ?? 0),
+        supplierId: p.supplierId || null,
         supplierName: p.supplierName || '',
         variants: (p.variants || []).map(v => ({
           id: v.id,
           variantName: v.variantName,
-          additionalPrice: v.additionalPrice || 0,
+          additionalPrice: Number(v.additionalPrice) || 0,
+          stockQuantity: Number(v.stockQuantity) || 0,
+          sku: v.sku || '',
+          attributes: Array.isArray(v.attributes) ? v.attributes : [],
           media: (v.media || []).map(m => ({
-            id: m.id, type: m.type, url: m.url, isPrimary: m.isPrimary, sortOrder: m.sortOrder
+            id: m.id,
+            type: m.type,
+            url: m.url,
+            isPrimary: m.isPrimary,
+            sortOrder: m.sortOrder
           }))
         })),
         media: (p.media || []).map(m => ({
-          id: m.id, type: m.type, url: m.url, isPrimary: m.isPrimary, sortOrder: m.sortOrder
+          id: m.id,
+          type: m.type,
+          url: m.url,
+          isPrimary: m.isPrimary,
+          sortOrder: m.sortOrder
         }))
       }
       // Auto-select single variant, reset for multiple
       selectedVariantId.value = (p.variants || []).length === 1 ? p.variants[0].id : null
+      variantSelectionError.value = ''
     }
   } catch (e) {
     console.warn('Failed to fetch product:', e.message)
@@ -476,17 +598,43 @@ async function fetchProduct() {
       price: 199.00,
       thumbnailUrl: '',
       sku: 'DEMO-001',
-      description: 'Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake.',
-      supplierName: 'Demo Supplier'
+      shortDescription: 'Cookie dragee croissant dessert. Powder marshmallow pie wafer dessert sweet roll tootsie roll cupcake.',
+      longDescription: '',
+      videoUrl: '',
+      tags: [],
+      customFields: {},
+      isActive: true,
+      trackInventory: true,
+      allowBackorder: false,
+      stockQuantity: 0,
+      supplierId: null,
+      supplierName: 'Demo Supplier',
+      variants: [],
+      media: []
     }
   } finally {
     isLoading.value = false
   }
 }
 
+async function loadGiftOptions() {
+  try {
+    giftBoxes.value = await getActiveGiftBoxes()
+  } catch {
+    giftBoxes.value = []
+  }
+
+  try {
+    giftCards.value = await getActiveGiftCards()
+  } catch {
+    giftCards.value = []
+  }
+}
+
 onMounted(() => {
   categoryStore.loadCategories()
   fetchProduct()
+  loadGiftOptions()
   initCarouselListener()
 })
 
@@ -507,7 +655,20 @@ watch(() => route.params.id, () => {
   fetchProduct()
 })
 
+function ensureVariantSelection() {
+  if (requiresVariantSelection.value && !selectedVariant.value) {
+    variantSelectionError.value = 'Please select a variant before adding this product.'
+    return false
+  }
+  return true
+}
+
 const addToCart = () => {
+  if (!canPurchase.value) return
+  if (!ensureVariantSelection()) {
+    return
+  }
+
   const variant = selectedVariant.value
   const itemToAdd = {
     id: product.value.id,
@@ -518,6 +679,16 @@ const addToCart = () => {
     sku: product.value.sku,
     variantId: variant?.id || null,
     variantName: variant?.variantName || null,
+    trackInventory: product.value.trackInventory,
+    allowBackorder: product.value.allowBackorder,
+    availableStock: availableStock.value,
+    giftBoxId: selectedGiftBox.value?.id || null,
+    giftBoxName: selectedGiftBox.value?.name || '',
+    giftBoxPriceUsd: Number(selectedGiftBox.value?.priceUsd || 0),
+    giftCardId: selectedGiftCard.value?.id || null,
+    giftCardName: selectedGiftCard.value?.name || '',
+    giftCardPrice: Number(selectedGiftCard.value?.price || 0),
+    giftNote: giftNote.value?.trim() || '',
     quantity: quantity.value
   }
   
@@ -528,7 +699,7 @@ const addToCart = () => {
     return ik === cartKey
   })
   if (existingItem) {
-    cartStore.updateQuantity(existingItem.id, existingItem.quantity + itemToAdd.quantity)
+    existingItem.quantity += itemToAdd.quantity
   } else {
     cartStore.items.push(itemToAdd)
   }
@@ -550,6 +721,11 @@ const toggleWishlist = async () => {
 }
 
 const buyItNow = () => {
+  if (!canPurchase.value) return
+  if (!ensureVariantSelection()) {
+    return
+  }
+
   const variant = selectedVariant.value
   const itemToAdd = {
     id: product.value.id,
@@ -560,6 +736,16 @@ const buyItNow = () => {
     sku: product.value.sku,
     variantId: variant?.id || null,
     variantName: variant?.variantName || null,
+    trackInventory: product.value.trackInventory,
+    allowBackorder: product.value.allowBackorder,
+    availableStock: availableStock.value,
+    giftBoxId: selectedGiftBox.value?.id || null,
+    giftBoxName: selectedGiftBox.value?.name || '',
+    giftBoxPriceUsd: Number(selectedGiftBox.value?.priceUsd || 0),
+    giftCardId: selectedGiftCard.value?.id || null,
+    giftCardName: selectedGiftCard.value?.name || '',
+    giftCardPrice: Number(selectedGiftCard.value?.price || 0),
+    giftNote: giftNote.value?.trim() || '',
     quantity: quantity.value
   }
 
@@ -569,7 +755,7 @@ const buyItNow = () => {
     return ik === cartKey
   })
   if (existingItem) {
-    cartStore.updateQuantity(existingItem.id, existingItem.quantity + itemToAdd.quantity)
+    existingItem.quantity += itemToAdd.quantity
   } else {
     cartStore.items.push(itemToAdd)
   }

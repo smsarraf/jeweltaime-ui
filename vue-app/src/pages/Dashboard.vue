@@ -47,6 +47,12 @@
                 <router-link to="/profile" class="list-group-item list-group-item-action d-flex align-items-center py-3">
                   <i class="fa-solid fa-user me-3"></i> My Profile
                 </router-link>
+                <router-link to="/orders" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                  <i class="fa-solid fa-box me-3"></i> My Orders
+                </router-link>
+                <router-link to="/invoices" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                  <i class="fa-regular fa-file-lines me-3"></i> My Invoices
+                </router-link>
                 <router-link to="/wishlist" class="list-group-item list-group-item-action d-flex align-items-center py-3">
                   <i class="fa-regular fa-heart me-3"></i> Wishlist
                 </router-link>
@@ -91,7 +97,7 @@
             <div class="card rounded-0 border">
               <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
                 <h5 class="fw-medium mb-0">Recent Orders</h5>
-                <router-link to="/profile" class="btn btn-outline-dark btn-sm rounded-0">View All</router-link>
+                <router-link to="/orders" class="btn btn-outline-dark btn-sm rounded-0">View All</router-link>
               </div>
               <div class="card-body p-0">
                 <div v-if="isLoadingOrders" class="text-center py-5">
@@ -122,7 +128,7 @@
                           <router-link :to="`/orders/${order.id}`" class="text-decoration-none fw-medium">#{{ order.id }}</router-link>
                         </td>
                         <td class="py-3 px-4">{{ formatDate(order.createdAt) }}</td>
-                        <td class="py-3 px-4">{{ currencyStore.formatPrice(order.total || 0) }}</td>
+                        <td class="py-3 px-4">{{ currencyStore.formatPrice(getOrderPricingSummary(order).finalTotal) }}</td>
                         <td class="py-3 px-4">
                           <span :class="statusBadgeClass(order.status)">{{ order.status }}</span>
                         </td>
@@ -180,18 +186,15 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCurrencyStore } from '../stores/currencyStore'
 import axios from 'axios'
+import { clearAuth } from '../utils/auth'
+import { useAuthSession } from '../composables/useAuthSession'
+import { getOrderPricingSummary } from '../utils/orderPricing'
 
 const router = useRouter()
 const currencyStore = useCurrencyStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
-const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
-const userData = computed(() => {
-  try {
-    const stored = localStorage.getItem('user')
-    return stored ? JSON.parse(stored) : null
-  } catch { return null }
-})
+const { isLoggedIn, user: userData } = useAuthSession()
 
 const userInitial = computed(() => {
   if (userData.value?.firstName) return userData.value.firstName.charAt(0).toUpperCase()
@@ -269,7 +272,8 @@ async function cancelOrder(orderId) {
   cancellingId.value = orderId
   try {
     const token = localStorage.getItem('authToken')
-    const response = await axios.put(`${API_BASE}/api/v1/orders/${orderId}/status?status=CANCELLED`, {}, {
+    const response = await axios.patch(`${API_BASE}/api/v1/orders/${orderId}/status`, null, {
+      params: { status: 'CANCELLED' },
       headers: { Authorization: `Bearer ${token}` }
     })
     if (response.data) {
@@ -297,9 +301,7 @@ const handleLogout = async () => {
   } catch (e) {
     // Silent fail — clear local state regardless
   }
-  localStorage.removeItem('authToken')
-  localStorage.removeItem('refreshToken')
-  localStorage.removeItem('user')
+  clearAuth()
   router.push('/')
 }
 

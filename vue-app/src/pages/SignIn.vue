@@ -62,7 +62,7 @@
 
               <p class="text-center mb-0">
                 Don't have an account?
-                <router-link to="/register" class="text-decoration-none fw-medium">Create one here</router-link>
+                <router-link to="/register/user" class="text-decoration-none fw-medium">Create one here</router-link>
               </p>
             </div>
           </div>
@@ -81,6 +81,7 @@ import { useCurrencyStore } from '../stores/currencyStore'
 import { useWishlistStore } from '../stores/wishlistStore'
 import { useLocationStore } from '../stores/locationStore'
 import axios from 'axios'
+import { notifyAuthChanged } from '../utils/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -148,6 +149,7 @@ const handleSignIn = async () => {
       currencyStore.determineCurrency()
       // Fetch wishlist from server after login
       wishlistStore.fetchWishlist()
+      notifyAuthChanged()
       setTimeout(() => {
         router.push(redirectTo)
       }, 1000)

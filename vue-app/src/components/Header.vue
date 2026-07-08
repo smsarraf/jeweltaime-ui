@@ -82,6 +82,8 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end rounded-0 mt-3 p-0 border">
                                     <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/dashboard"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</router-link></li>
+                                    <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/orders"><i class="fa-solid fa-box me-2"></i>My Orders</router-link></li>
+                                    <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/invoices"><i class="fa-regular fa-file-lines me-2"></i>My Invoices</router-link></li>
                                     <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/profile"><i class="fa-solid fa-user me-2"></i>My Profile</router-link></li>
                                     <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/wishlist"><i class="fa-regular fa-heart me-2"></i>Wishlist</router-link></li>
                                     <li><hr class="dropdown-divider my-0"></li>
@@ -190,7 +192,7 @@
         </div>
         <div class="offcanvas-body flex-grow-1 d-flex flex-column justify-content-between px-3 py-5 px-sm-8 py-sm-8">
             <div>
-                <div v-for="item in cartStore.items" :key="item.id" class="d-flex align-items-start justify-content-between mb-4">
+                <div v-for="item in cartStore.items" :key="cartStore.getItemKey(item)" class="d-flex align-items-start justify-content-between mb-4">
                     <div class="imgholder me-2">
                         <ImageWithSkeleton :src="item.image" :alt="item.name" aspect-ratio="1 / 1" />
                     </div>
@@ -198,7 +200,7 @@
                         <h4 class="cartHding fw-light mb-1">{{ item.name }}</h4>
                         <small class="subheading fw-normal">{{ item.quantity }} × <strong class="fw-normal">{{ currencyStore.formatPrice(item.price) }}</strong></small>
                     </div>
-                    <button @click="cartStore.removeFromCart(item.id)" class="btn btn-sm p-0 ms-2 btnclose border-0 bg-transparent">&times;</button>
+                    <button @click="cartStore.removeFromCart(item.id, item.variantId || null)" class="btn btn-sm p-0 ms-2 btnclose border-0 bg-transparent">&times;</button>
                 </div>
                 <p v-if="!cartStore.items.length" class="text-center text-muted">Your cart is empty.</p>
             </div>
@@ -261,7 +263,7 @@
 </template>
 
 <script setup>
-    import { ref, computed, onMounted } from 'vue'
+    import { computed, onMounted } from 'vue'
     import { useRouter } from 'vue-router'
     import { useCartStore } from '../stores/cartStore'
     import { useWishlistStore } from '../stores/wishlistStore'
@@ -269,6 +271,7 @@
     import { useCategoryStore } from '../stores/categoryStore'
     import ImageWithSkeleton from './ImageWithSkeleton.vue'
     import { clearAuth } from '../utils/auth'
+    import { useAuthSession } from '../composables/useAuthSession'
 
     const router = useRouter()
     const cartStore = useCartStore()
@@ -277,16 +280,7 @@
     const categoryStore = useCategoryStore()
     const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
-    const isLoggedIn = computed(() => !!localStorage.getItem('authToken'))
-
-    const userData = computed(() => {
-      try {
-        const stored = localStorage.getItem('user')
-        return stored ? JSON.parse(stored) : null
-      } catch {
-        return null
-      }
-    })
+    const { isLoggedIn, user: userData } = useAuthSession()
 
     const userName = computed(() => {
       if (userData.value) {

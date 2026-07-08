@@ -29,21 +29,34 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="item in cartStore.items" :key="item.id">
+                  <tr v-for="item in cartStore.items" :key="getCartItemKey(item)">
                     <td class="d-flex align-items-center ps-4 pt-4 pb-4">
-                      <button class="btn btn-sm btnicon p-0 me-6" @click="cartStore.removeFromCart(item.id)"><i class="fa-regular fa-circle-xmark"></i></button>
+                      <button class="btn btn-sm btnicon p-0 me-6" @click="removeItem(item)"><i class="fa-regular fa-circle-xmark"></i></button>
                       <img :src="item.image || 'https://placehold.co/80x80'" class="img-thumbnail border-0 p-0 me-4 rounded-0 tb-img" alt="Product Image" STYLE="height: 80px; width: 80px;">
-                      <span class="tb-heading d-block fw-light">{{ item.name }}</span>
+                      <div>
+                        <span class="tb-heading d-block fw-light">{{ item.name }}</span>
+                        <small class="d-block" :class="stockMessageClass(item)">{{ stockMessage(item) }}</small>
+                        <small v-if="item.giftBoxId || item.giftCardId || item.giftNote" class="d-block text-muted">
+                          <span v-if="item.giftBoxId">Gift Box: {{ item.giftBoxName || `#${item.giftBoxId}` }}</span>
+                          <span v-if="item.giftCardId" class="ms-2">Gift Card: {{ item.giftCardName || `#${item.giftCardId}` }}</span>
+                          <span v-if="item.giftNote" class="d-block">Note: {{ item.giftNote }}</span>
+                        </small>
+                      </div>
                     </td>
                     <td class="tb-price fw-normal">{{ currencyStore.formatPrice(item.price) }}</td>
                     <td>
                       <div class="input-group position-relative">
-                        <button class="btn btn-minus border-0" @click="updateQuantity(item.id, item.quantity - 1)"><i class="fa-solid fa-minus"></i></button>
+                        <button class="btn btn-minus border-0" @click="updateQuantity(item, item.quantity - 1)"><i class="fa-solid fa-minus"></i></button>
                         <input type="text" class="form-control text-center fw-light px-6" min="1" :value="item.quantity" readonly>
-                        <button class="btn btn-plus border-0" @click="updateQuantity(item.id, item.quantity + 1)"><i class="fa-regular fa-plus"></i></button>
+                        <button class="btn btn-plus border-0" @click="updateQuantity(item, item.quantity + 1)"><i class="fa-regular fa-plus"></i></button>
                       </div>
                     </td>
-                    <td class="tb-price fw-normal">{{ currencyStore.formatPrice(item.price * item.quantity) }}</td>
+                    <td class="tb-price fw-normal">
+                      {{ currencyStore.formatPrice(getItemLineTotal(item)) }}
+                      <small v-if="getItemAddonUnit(item) > 0" class="d-block text-muted">
+                        Includes add-ons: {{ currencyStore.formatPrice(getItemAddonUnit(item) * item.quantity) }}
+                      </small>
+                    </td>
                   </tr>
                 </tbody>
                 <tfoot>
@@ -73,6 +86,10 @@
                 <div class="d-flex justify-content-between mb-2">
                   <span class="subheading fw-normal">Subtotal</span>
                   <strong class="Hprice fw-normal">{{ currencyStore.formatPrice(cartStore.totalPrice) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2" v-if="cartStore.addonsTotal > 0">
+                  <span class="subheading fw-normal">Add-ons</span>
+                  <strong class="Hprice fw-normal">{{ currencyStore.formatPrice(cartStore.addonsTotal) }}</strong>
                 </div>
                 <hr class="mb-2">
                 <div class="pt-1 mb-3">
@@ -155,7 +172,7 @@ const shippingState = ref('')
 const shippingZip = ref('')
 
 const cartTotalWithShipping = computed(() => {
-  return Math.max(0, cartStore.totalPrice + shippingCost.value - discountAmount.value)
+  return Math.max(0, cartStore.totalPrice + cartStore.addonsTotal + shippingCost.value - discountAmount.value)
 })
 
 const applyCoupon = () => {
@@ -184,9 +201,31 @@ const updateTotals = () => {
   couponMessageType.value = 'success'
 }
 
-const updateQuantity = (id, newQuantity) => {
+const getCartItemKey = (item) => (item.variantId ? `${item.id}-v${item.variantId}` : String(item.id))
+
+const removeItem = (item) => {
+  cartStore.removeFromCart(item.id, item.variantId || null)
+}
+
+const getItemAddonUnit = (item) => Number(item.giftBoxPriceUsd || 0) + Number(item.giftCardPrice || 0)
+const getItemLineTotal = (item) => (Number(item.price || 0) + getItemAddonUnit(item)) * (item.quantity || 1)
+
+const stockMessage = (item) => {
+  if (item.trackInventory === false) return 'Made to order (inventory not tracked)'
+  if (item.allowBackorder) return 'Backorder allowed'
+  const qty = Number(item.availableStock || 0)
+  return qty > 0 ? `In stock (${qty})` : 'Out of stock'
+}
+
+const stockMessageClass = (item) => {
+  if (item.trackInventory === false) return 'text-primary'
+  if (item.allowBackorder) return 'text-warning'
+  return Number(item.availableStock || 0) > 0 ? 'text-success' : 'text-danger'
+}
+
+const updateQuantity = (item, newQuantity) => {
   if (newQuantity > 0) {
-    cartStore.updateQuantity(id, newQuantity)
+    item.quantity = newQuantity
   }
 }
 </script>
