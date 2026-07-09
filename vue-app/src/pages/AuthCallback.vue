@@ -97,18 +97,25 @@ onMounted(async () => {
       }))
     }
 
-    // Fetch full user profile from the API
-    if (userEmail) {
-      try {
-        const userRes = await axios.get(`${API_BASE}/api/v1/users/email/${userEmail}`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        })
-        if (userRes.data) {
-          localStorage.setItem('user', JSON.stringify(userRes.data))
-        }
-      } catch (e) {
-        // User fetch failed, the basic info we stored is sufficient
+    // Fetch full user profile with roles from the API
+    try {
+      const userRes = await axios.get(`${API_BASE}/api/auth/social/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+      if (userRes.data) {
+        const userData = userRes.data
+        // Map Spring Security authorities to a roles array
+        const roles = userData.authorities
+          ? userData.authorities.map(a => a.authority || a)
+          : userData.role
+            ? [userData.role.name || userData.role]
+            : []
+        localStorage.setItem('user', JSON.stringify(userData))
+        localStorage.setItem('roles', JSON.stringify(roles))
       }
+    } catch (e) {
+      // User fetch failed, the basic info we stored is sufficient
+      localStorage.setItem('roles', JSON.stringify([]))
     }
 
     // Initialize stores

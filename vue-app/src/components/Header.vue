@@ -13,6 +13,11 @@
                     <div class="col-6 d-none d-lg-block">
                         <ul class="list-unstyled d-flex flex-wrap gap-4 gap-xlwd-6 gap-xxl-8 mb-0 phtbListInline justify-content-end fw-normal">
                             <li>
+                                <router-link to="/signin?redirect=/b2b/products" class="text-decoration-none fw-medium">
+                                    <i class="fa-solid fa-truck me-1"></i>Bulk Order / B2B
+                                </router-link>
+                            </li>
+                            <li>
                                 <a href="javascript:void(0);">Special Offer</a>
                             </li>
                             <li>
@@ -82,8 +87,11 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end rounded-0 mt-3 p-0 border">
                                     <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/dashboard"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</router-link></li>
-                                    <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/orders"><i class="fa-solid fa-box me-2"></i>My Orders</router-link></li>
-                                    <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/invoices"><i class="fa-regular fa-file-lines me-2"></i>My Invoices</router-link></li>
+                                    <li v-if="isB2BUser"><router-link class="dropdown-item py-3 px-4 fw-light" to="/b2b/products"><i class="fa-solid fa-store me-2"></i>B2B Catalog</router-link></li>
+                                    <li v-if="isB2BUser"><router-link class="dropdown-item py-3 px-4 fw-light" to="/b2b/quotes"><i class="fa-solid fa-file-invoice me-2"></i>My Quotes</router-link></li>
+                                    <li v-if="isB2BUser"><router-link class="dropdown-item py-3 px-4 fw-light" to="/b2b/quote-cart"><i class="fa-solid fa-cart-plus me-2"></i>Quote Cart</router-link></li>
+                                    <li v-if="!isB2BUser"><router-link class="dropdown-item py-3 px-4 fw-light" to="/orders"><i class="fa-solid fa-box me-2"></i>My Orders</router-link></li>
+                                    <li v-if="!isB2BUser"><router-link class="dropdown-item py-3 px-4 fw-light" to="/invoices"><i class="fa-regular fa-file-lines me-2"></i>My Invoices</router-link></li>
                                     <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/profile"><i class="fa-solid fa-user me-2"></i>My Profile</router-link></li>
                                     <li><router-link class="dropdown-item py-3 px-4 fw-light" to="/wishlist"><i class="fa-regular fa-heart me-2"></i>Wishlist</router-link></li>
                                     <li><hr class="dropdown-divider my-0"></li>
@@ -287,6 +295,48 @@
         return `${userData.value.firstName || ''} ${userData.value.lastName || ''}`.trim() || userData.value.email
       }
       return 'Account'
+    })
+
+    const isB2BUser = computed(() => {
+      if (!userData.value) {
+        // Fallback to separately stored roles key
+        try {
+          const storedRoles = JSON.parse(localStorage.getItem('roles') || '[]')
+          return Array.isArray(storedRoles) && storedRoles.some(r => {
+            const roleName = typeof r === 'string' ? r : (r.name || r.authority || '')
+            return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+          })
+        } catch {
+          return false
+        }
+      }
+      // Check authorities array (Spring Security GrantedAuthority format)
+      const authorities = userData.value.authorities || []
+      if (Array.isArray(authorities) && authorities.some(r => {
+        const roleName = typeof r === 'string' ? r : (r.authority || r.name || '')
+        return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+      })) return true
+      // Check single role object (User.role)
+      if (userData.value.role) {
+        const roleName = typeof userData.value.role === 'string' ? userData.value.role : (userData.value.role.name || '')
+        return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+      }
+      // Check roles array (fallback)
+      const roles = userData.value.roles || []
+      if (Array.isArray(roles) && roles.some(r => {
+        const roleName = typeof r === 'string' ? r : (r.name || r.authority || '')
+        return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+      })) return true
+      // Final fallback - check separately stored roles from localStorage
+      try {
+        const storedRoles = JSON.parse(localStorage.getItem('roles') || '[]')
+        return Array.isArray(storedRoles) && storedRoles.some(r => {
+          const roleName = typeof r === 'string' ? r : (r.name || r.authority || '')
+          return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+        })
+      } catch {
+        return false
+      }
     })
 
     const handleLogout = () => {

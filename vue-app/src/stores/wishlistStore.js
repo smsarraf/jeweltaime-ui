@@ -93,7 +93,9 @@ export const useWishlistStore = defineStore('wishlist', {
         if (error.response?.status === 401) {
           // Token expired or invalid — fallback to local
           localStorage.removeItem('authToken')
+          localStorage.removeItem('refreshToken')
           localStorage.removeItem('user')
+          localStorage.removeItem('roles')
           this.loadLocalWishlist()
         }
         console.warn('Fetch wishlist error:', error.message)

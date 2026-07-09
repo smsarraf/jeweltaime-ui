@@ -47,12 +47,27 @@
                 <router-link to="/profile" class="list-group-item list-group-item-action d-flex align-items-center py-3">
                   <i class="fa-solid fa-user me-3"></i> My Profile
                 </router-link>
-                <router-link to="/orders" class="list-group-item list-group-item-action d-flex align-items-center py-3">
-                  <i class="fa-solid fa-box me-3"></i> My Orders
-                </router-link>
-                <router-link to="/invoices" class="list-group-item list-group-item-action d-flex align-items-center py-3">
-                  <i class="fa-regular fa-file-lines me-3"></i> My Invoices
-                </router-link>
+                <!-- B2B-specific navigation links -->
+                <template v-if="isB2BUser">
+                  <router-link to="/b2b/products" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                    <i class="fa-solid fa-store me-3"></i> B2B Catalog
+                  </router-link>
+                  <router-link to="/b2b/quotes" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                    <i class="fa-solid fa-file-invoice me-3"></i> My Quotes
+                  </router-link>
+                  <router-link to="/b2b/quote-cart" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                    <i class="fa-solid fa-cart-plus me-3"></i> Quote Cart
+                  </router-link>
+                </template>
+                <!-- Regular user navigation links -->
+                <template v-else>
+                  <router-link to="/orders" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                    <i class="fa-solid fa-box me-3"></i> My Orders
+                  </router-link>
+                  <router-link to="/invoices" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                    <i class="fa-regular fa-file-lines me-3"></i> My Invoices
+                  </router-link>
+                </template>
                 <router-link to="/wishlist" class="list-group-item list-group-item-action d-flex align-items-center py-3">
                   <i class="fa-regular fa-heart me-3"></i> Wishlist
                 </router-link>
@@ -196,6 +211,48 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 const { isLoggedIn, user: userData } = useAuthSession()
 
+const isB2BUser = computed(() => {
+  if (!userData.value) {
+    // Fallback to separately stored roles key
+    try {
+      const storedRoles = JSON.parse(localStorage.getItem('roles') || '[]')
+      return Array.isArray(storedRoles) && storedRoles.some(r => {
+        const roleName = typeof r === 'string' ? r : (r.name || r.authority || '')
+        return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+      })
+    } catch {
+      return false
+    }
+  }
+  // Check authorities array (Spring Security GrantedAuthority format)
+  const authorities = userData.value.authorities || []
+  if (Array.isArray(authorities) && authorities.some(r => {
+    const roleName = typeof r === 'string' ? r : (r.authority || r.name || '')
+    return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+  })) return true
+  // Check single role object (User.role)
+  if (userData.value.role) {
+    const roleName = typeof userData.value.role === 'string' ? userData.value.role : (userData.value.role.name || '')
+    return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+  }
+  // Check roles array (fallback)
+  const roles = userData.value.roles || []
+  if (Array.isArray(roles) && roles.some(r => {
+    const roleName = typeof r === 'string' ? r : (r.name || r.authority || '')
+    return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+  })) return true
+  // Final fallback - check separately stored roles from localStorage
+  try {
+    const storedRoles = JSON.parse(localStorage.getItem('roles') || '[]')
+    return Array.isArray(storedRoles) && storedRoles.some(r => {
+      const roleName = typeof r === 'string' ? r : (r.name || r.authority || '')
+      return roleName === 'B2B_USER' || roleName === 'ROLE_B2B_USER'
+    })
+  } catch {
+    return false
+  }
+})
+
 const userInitial = computed(() => {
   if (userData.value?.firstName) return userData.value.firstName.charAt(0).toUpperCase()
   return 'U'
@@ -277,7 +334,6 @@ async function cancelOrder(orderId) {
       headers: { Authorization: `Bearer ${token}` }
     })
     if (response.data) {
-      // Update the order in local state
       const idx = orders.value.findIndex(o => o.id === orderId)
       if (idx !== -1) {
         orders.value[idx] = response.data

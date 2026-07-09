@@ -25,6 +25,12 @@ import Invoices from '../pages/Invoices.vue'
 import InvoiceDetail from '../pages/InvoiceDetail.vue'
 import OrderSuccess from '../pages/OrderSuccess.vue'
 import PaymentSuccess from '../pages/PaymentSuccess.vue'
+import B2BProductList from '../pages/B2BProductList.vue'
+import B2BProductDetail from '../pages/B2BProductDetail.vue'
+import B2BQuoteCart from '../pages/B2BQuoteCart.vue'
+import B2BQuoteConfirmation from '../pages/B2BQuoteConfirmation.vue'
+import B2BMyQuotes from '../pages/B2BMyQuotes.vue'
+import B2BQuoteDetail from '../pages/B2BQuoteDetail.vue'
 
 const routes = [
   {
@@ -161,6 +167,43 @@ const routes = [
     path: '/policies/:slug',
     name: 'Policy',
     component: PolicyPage
+  },
+  // B2B Quote-to-Order Routes
+  {
+    path: '/b2b/products',
+    name: 'B2BProducts',
+    component: B2BProductList,
+    meta: { requiresAuth: true, roles: ['B2B_USER'] }
+  },
+  {
+    path: '/b2b/products/:id/:slug?',
+    name: 'B2BProductDetail',
+    component: B2BProductDetail,
+    meta: { requiresAuth: true, roles: ['B2B_USER'] }
+  },
+  {
+    path: '/b2b/quote-cart',
+    name: 'B2BQuoteCart',
+    component: B2BQuoteCart,
+    meta: { requiresAuth: true, roles: ['B2B_USER'] }
+  },
+  {
+    path: '/b2b/quote-confirmation',
+    name: 'B2BQuoteConfirmation',
+    component: B2BQuoteConfirmation,
+    meta: { requiresAuth: true, roles: ['B2B_USER'] }
+  },
+  {
+    path: '/b2b/quotes',
+    name: 'B2BMyQuotes',
+    component: B2BMyQuotes,
+    meta: { requiresAuth: true, roles: ['B2B_USER'] }
+  },
+  {
+    path: '/b2b/quotes/:id',
+    name: 'B2BQuoteDetail',
+    component: B2BQuoteDetail,
+    meta: { requiresAuth: true, roles: ['B2B_USER'] }
   }
 ]
 

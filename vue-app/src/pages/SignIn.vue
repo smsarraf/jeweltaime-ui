@@ -132,18 +132,59 @@ const handleSignIn = async () => {
       if (response.data.refresh_token) {
         localStorage.setItem('refreshToken', response.data.refresh_token)
       }
-      // Fetch user profile using the token
+      // Fetch user profile with roles
+      let userData = null
+      let roles = []
+      // First try the /api/auth/social/me endpoint
       try {
-        const userRes = await axios.get(`${API_BASE}/api/v1/users/email/${email.value}`, {
+        const userRes = await axios.get(`${API_BASE}/api/auth/social/me`, {
           headers: { Authorization: `Bearer ${response.data.access_token}` }
         })
-        if (userRes.data) {
-          localStorage.setItem('user', JSON.stringify(userRes.data))
+        // Response format: { success: true, data: { id, firstName, lastName, email, role: "B2B_USER" } }
+        const userPayload = userRes.data?.data || userRes.data
+        if (userPayload && (userPayload.id || userPayload.email)) {
+          userData = userPayload
+          // role is a plain string like "B2B_USER" in this response
+          if (userPayload.role && typeof userPayload.role === 'string') {
+            roles = [userPayload.role]
+          } else if (userPayload.authorities) {
+            roles = userPayload.authorities.map(a => a.authority || a)
+          } else if (userPayload.role && typeof userPayload.role === 'object') {
+            roles = [userPayload.role.name || userPayload.role]
+          }
         }
       } catch (e) {
-        // If user fetch fails, store basic info
-        localStorage.setItem('user', JSON.stringify({ email: email.value }))
+        // social/me didn't work - try email lookup and JWT parsing
       }
+      if (!userData) {
+        // Fallback: fetch user by email from ERP
+        try {
+          const userRes = await axios.get(`${API_BASE}/api/v1/users/email/${email.value}`, {
+            headers: { Authorization: `Bearer ${response.data.access_token}` }
+          })
+          if (userRes.data) {
+            userData = userRes.data
+          }
+        } catch (e2) {
+          // email lookup also failed
+        }
+        // Also try to extract roles from JWT token
+        try {
+          const payload = JSON.parse(atob(response.data.access_token.split('.')[1]))
+          if (payload.role || payload.roles || payload.authorities) {
+            const tokenRoles = payload.roles || payload.authorities || (payload.role ? [payload.role] : [])
+            roles = Array.isArray(tokenRoles) ? tokenRoles.map(r => typeof r === 'string' ? r : (r.authority || r.name || r)) : [tokenRoles]
+          }
+        } catch (jwtErr) {
+          // JWT parsing failed
+        }
+        // If we still don't have userData, create basic object
+        if (!userData) {
+          userData = { email: email.value }
+        }
+      }
+      localStorage.setItem('user', JSON.stringify(userData))
+      localStorage.setItem('roles', JSON.stringify(roles))
       // Determine currency based on user's country after login
       currencyStore.reset()
       currencyStore.determineCurrency()

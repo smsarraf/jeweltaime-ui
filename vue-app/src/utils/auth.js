@@ -70,9 +70,7 @@ export function setupAuthInterceptor() {
         if (!refreshToken) {
           isRefreshing = false
           // No refresh token - redirect to login
-          localStorage.removeItem('authToken')
-          localStorage.removeItem('refreshToken')
-          localStorage.removeItem('user')
+          clearAuth()
           window.location.href = '/signin'
           return Promise.reject(error)
         }
@@ -98,9 +96,7 @@ export function setupAuthInterceptor() {
         } catch (refreshError) {
           processQueue(refreshError, null)
           // Refresh failed - clear tokens and redirect to login
-          localStorage.removeItem('authToken')
-          localStorage.removeItem('refreshToken')
-          localStorage.removeItem('user')
+          clearAuth()
           window.location.href = '/signin'
           return Promise.reject(refreshError)
         } finally {
@@ -141,6 +137,7 @@ export function clearAuth() {
   localStorage.removeItem('authToken')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')
+  localStorage.removeItem('roles')
   notifyAuthChanged()
 }
 
