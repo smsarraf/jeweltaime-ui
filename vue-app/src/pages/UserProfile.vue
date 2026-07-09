@@ -56,11 +56,17 @@
 
 <script setup>
 import { useUserStore } from '@/stores/userStore'
+import { useModal } from '@/composables/useModal'
 
 const userStore = useUserStore()
+const { showModal } = useModal()
 
 const saveProfile = () => {
-  alert('Profile updated successfully!')
+  showModal({
+    title: 'Success',
+    message: 'Profile updated successfully!',
+    variant: 'success'
+  })
 }
 </script>
 

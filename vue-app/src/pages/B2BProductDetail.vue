@@ -136,11 +136,13 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuoteStore } from '../stores/quoteStore'
 import axios from 'axios'
+import { useModal } from '../composables/useModal'
 
 const route = useRoute()
 const router = useRouter()
 const quoteStore = useQuoteStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const { showModal } = useModal()
 
 const product = ref(null)
 const loading = ref(false)
@@ -195,7 +197,11 @@ function addToQuoteCart() {
   })
 
   quantity.value = 1
-  alert('Product added to quote cart!')
+  showModal({
+    title: 'Added',
+    message: 'Product added to quote cart!',
+    variant: 'success'
+  })
 }
 
 function getProductImage(media) {

@@ -4,6 +4,7 @@
     <router-view></router-view>
     <Footer />
     <CookieConsent />
+    <AppModal />
   </div>
 </template>
 
@@ -12,6 +13,7 @@ import { onMounted } from 'vue'
 import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
 import CookieConsent from './components/CookieConsent.vue'
+import AppModal from './components/AppModal.vue'
 import { useCurrencyStore } from './stores/currencyStore'
 import { useLocationStore } from './stores/locationStore'
 import { useWishlistStore } from './stores/wishlistStore'

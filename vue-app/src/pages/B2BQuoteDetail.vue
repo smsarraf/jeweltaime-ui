@@ -90,7 +90,7 @@
         </div>
 
         <!-- Summary Section -->
-        <div class="summary-section">
+        <div class="summary-section notes-card user-notes grey-notes-color">
           <h3>Summary</h3>
           <div class="summary-row">
             <span>Subtotal (Retail):</span>
@@ -218,9 +218,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { b2bQuoteService } from '../services/b2bQuoteService'
+import { useModal } from '../composables/useModal'
 
 const route = useRoute()
 const router = useRouter()
+const { showModal } = useModal()
 
 const quote = ref(null)
 const loading = ref(false)
@@ -273,9 +275,17 @@ async function handleAccept() {
     const response = await b2bQuoteService.acceptQuote(quote.value.id)
     quote.value = response
     showAcceptModal.value = false
-    alert('Quote accepted! Order is being created.')
+    showModal({
+      title: 'Success',
+      message: 'Quote accepted! Order is being created.',
+      variant: 'success'
+    })
   } catch (err) {
-    alert(err.message || 'Failed to accept quote')
+    showModal({
+      title: 'Error',
+      message: err.message || 'Failed to accept quote',
+      variant: 'danger'
+    })
   } finally {
     accepting.value = false
   }
@@ -324,6 +334,10 @@ function formatDate(dateStr) {
   padding: 0.75rem;
   border-radius: 6px;
   color: #856404;
+}
+
+.grey-notes-color{
+  box-shadow: 0 2px 4px slategrey !important;
 }
 
 .items-section, .summary-section, .notes-card {

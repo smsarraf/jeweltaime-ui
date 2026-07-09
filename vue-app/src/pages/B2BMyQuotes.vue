@@ -156,8 +156,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { b2bQuoteService } from '../services/b2bQuoteService'
+import { useModal } from '../composables/useModal'
 
 const router = useRouter()
+const { showModal, confirmModal } = useModal()
 
 const quotes = ref([])
 const loading = ref(false)
@@ -221,13 +223,28 @@ function getStatusLabel(status) {
 }
 
 async function acceptQuote(quote) {
-  if (!confirm(`Accept quote ${quote.quoteNumber} for ${formatPrice(quote.totalAmount)}? This will create an order.`)) return
+  const confirmed = await confirmModal({
+    title: 'Accept Quote',
+    message: `Accept quote ${quote.quoteNumber} for ${formatPrice(quote.totalAmount)}? This will create an order.`,
+    confirmText: 'Yes',
+    cancelText: 'No',
+    variant: 'success'
+  })
+  if (!confirmed) return
   try {
     await b2bQuoteService.acceptQuote(quote.id)
     await fetchQuotes()
-    alert('Quote accepted! Order is being created.')
+    showModal({
+      title: 'Success',
+      message: 'Quote accepted! Order is being created.',
+      variant: 'success'
+    })
   } catch (err) {
-    alert(err.message || 'Failed to accept quote')
+    showModal({
+      title: 'Error',
+      message: err.message || 'Failed to accept quote',
+      variant: 'danger'
+    })
   }
 }
 

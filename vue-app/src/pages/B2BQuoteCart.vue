@@ -165,10 +165,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuoteStore } from '../stores/quoteStore'
 import { b2bQuoteService } from '../services/b2bQuoteService'
+import { useModal } from '../composables/useModal'
 
 const router = useRouter()
 const store = useQuoteStore()
 const isSubmitting = ref(false)
+const { showModal } = useModal()
 
 // Load user profile for shipping address
 onMounted(() => {
@@ -215,12 +217,20 @@ function removeItem(item) {
 // Submit quote request
 async function submitQuoteRequest() {
   if (store.items.length === 0) {
-    alert('Please add items to your quote cart.')
+    showModal({
+      title: 'Empty Cart',
+      message: 'Please add items to your quote cart.',
+      variant: 'warning'
+    })
     return
   }
 
   if (!store.shippingAddressText.trim()) {
-    alert('Please enter a shipping address.')
+    showModal({
+      title: 'Shipping Address Required',
+      message: 'Please enter a shipping address.',
+      variant: 'warning'
+    })
     return
   }
 

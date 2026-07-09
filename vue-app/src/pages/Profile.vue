@@ -318,10 +318,12 @@ import { useLocationStore } from '../stores/locationStore'
 import axios from 'axios'
 import { clearAuth } from '../utils/auth'
 import { useAuthSession } from '../composables/useAuthSession'
+import { useModal } from '../composables/useModal'
 
 const router = useRouter()
 const locationStore = useLocationStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const { confirmModal } = useModal()
 
 const { isLoggedIn, user: userData } = useAuthSession()
 
@@ -630,7 +632,14 @@ async function saveAddress() {
 }
 
 async function deleteAddress(addrId) {
-  if (!confirm('Are you sure you want to delete this address?')) return
+  const confirmed = await confirmModal({
+    title: 'Delete Address',
+    message: 'Are you sure you want to delete this address?',
+    confirmText: 'Yes',
+    cancelText: 'No',
+    variant: 'danger'
+  })
+  if (!confirmed) return
   try {
     const token = localStorage.getItem('authToken')
     const response = await axios.delete(`${API_BASE}/api/shipping-addresses/${addrId}`, {

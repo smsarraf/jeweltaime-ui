@@ -302,11 +302,13 @@ import { useRouter } from 'vue-router'
 import { useQuoteStore } from '../stores/quoteStore'
 import { useCategoryStore } from '../stores/categoryStore'
 import axios from 'axios'
+import { useModal } from '../composables/useModal'
 
 const router = useRouter()
 const quoteStore = useQuoteStore()
 const categoryStore = useCategoryStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const { showModal } = useModal()
 
 const viewMode = ref('grid')
 
@@ -396,12 +398,19 @@ function closeModal() { selectedProduct.value = null; variantQty.value = {} }
 function addModalToQuote(product, qty, variant) {
   const up = product.hasB2bPricing && product.b2bUnitPrice ? product.b2bUnitPrice : product.basePriceUsd
   quoteStore.addToQuote({ productId: product.id, productName: product.name, productSku: product.sku, price: up, quantity: qty, variantId: variant?.id || null, variantName: variant?.variantName || null, notes: '' })
-  alert('Product added to quote cart!'); closeModal()
+  showModal({ title: 'Added', message: 'Product added to quote cart!', variant: 'success' }); closeModal()
 }
 
 function addAllVariantsToQuote() {
   if (!selectedProduct.value) return
-  if (totalSelectedQty.value < (selectedProduct.value.b2bMinQuantity || 1)) { alert(`Total must be at least ${selectedProduct.value.b2bMinQuantity || 1} units.`); return }
+  if (totalSelectedQty.value < (selectedProduct.value.b2bMinQuantity || 1)) {
+    showModal({
+      title: 'Minimum Quantity',
+      message: `Total must be at least ${selectedProduct.value.b2bMinQuantity || 1} units.`,
+      variant: 'warning'
+    })
+    return
+  }
   const prod = selectedProduct.value; const added = []
   prod.variants.forEach(v => {
     const q = Number(variantQty.value[v.id] || 0)
@@ -411,7 +420,7 @@ function addAllVariantsToQuote() {
       added.push(v.variantName)
     }
   })
-  alert(`Added ${totalSelectedQty.value} items (${added.join(', ')}) to quote cart!`); closeModal()
+  showModal({ title: 'Added', message: `Added ${totalSelectedQty.value} items (${added.join(', ')}) to quote cart!`, variant: 'success' }); closeModal()
 }
 
 function addToQuoteCart(product) {
@@ -419,7 +428,7 @@ function addToQuoteCart(product) {
   const up = product.hasB2bPricing && product.b2bUnitPrice ? product.b2bUnitPrice : product.basePriceUsd
   quoteStore.addToQuote({ productId: product.id, productName: product.name, productSku: product.sku, price: up, quantity: q, variantId: null, variantName: null, notes: '' })
   productQuantities.value[product.id] = product.b2bMinQuantity || 1
-  alert('Product added to quote cart!')
+  showModal({ title: 'Added', message: 'Product added to quote cart!', variant: 'success' })
 }
 
 const visibleProducts = computed(() => { if (!products.value) return []; return products.value.filter(p => p.b2bAvailable === true) })

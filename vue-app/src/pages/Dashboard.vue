@@ -204,10 +204,12 @@ import axios from 'axios'
 import { clearAuth } from '../utils/auth'
 import { useAuthSession } from '../composables/useAuthSession'
 import { getOrderPricingSummary } from '../utils/orderPricing'
+import { useModal } from '../composables/useModal'
 
 const router = useRouter()
 const currencyStore = useCurrencyStore()
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const { showModal, confirmModal } = useModal()
 
 const { isLoggedIn, user: userData } = useAuthSession()
 
@@ -325,7 +327,14 @@ async function fetchOrders() {
 }
 
 async function cancelOrder(orderId) {
-  if (!confirm('Are you sure you want to cancel this order?')) return
+  const confirmed = await confirmModal({
+    title: 'Cancel Order',
+    message: 'Are you sure you want to cancel this order?',
+    confirmText: 'Yes',
+    cancelText: 'No',
+    variant: 'danger'
+  })
+  if (!confirmed) return
   cancellingId.value = orderId
   try {
     const token = localStorage.getItem('authToken')
@@ -340,7 +349,11 @@ async function cancelOrder(orderId) {
       }
     }
   } catch (error) {
-    alert(error.response?.data?.error || error.response?.data?.message || 'Failed to cancel order.')
+    showModal({
+      title: 'Error',
+      message: error.response?.data?.error || error.response?.data?.message || 'Failed to cancel order.',
+      variant: 'danger'
+    })
   } finally {
     cancellingId.value = null
   }
