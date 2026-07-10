@@ -18,8 +18,8 @@
               <div class="row">
                   <div class="col-12 col-md-6 col-lg-4 mb-5 mb-md-0">
                       <header class="headingHead pt-xl-11 pe-xl-11">
-                          <h1 class="hhHeading HDii fw-normal mb-6">About Our Online Store</h1>
-                          <p class="phgra mb-4 mb-md-9">With all his cruel ferocity and coldness there was an under of something in Tars Tarkas which he seemed ever battling to subdue.</p>
+                          <h1 class="hhHeading HDii fw-normal mb-6">About Our Online Jewellery Store</h1>
+                          <p class="phgra mb-4 mb-md-9">{{ siteSettings.longDescription || 'At JewelT\'Aime, we believe every piece of jewellery tells a story. Our curated collection blends timeless elegance with modern craftsmanship, delivered with unwavering quality and customer satisfaction at every step.' }}</p>
                           <router-link to="/contact" class="btn btnThemeOutlined fw-normal px-7 py-2">Contact Us</router-link>
                       </header>
                   </div>
@@ -30,11 +30,11 @@
                       <ul class="list-unstyled lbList d-flex flex-column gap-9 mb-0 pt-xl-11 ps-2">
                           <li>
                               <h2 class="abtHD fw-normal">Our Mission</h2>
-                              <p>By in entirely securing suitable graceful at families improved. Zealously few furniture repulsive was agreeable consisted difficult. Collected breakfast estimable questions in to favourite it. Known he place worth words it as to.</p>
+                              <p>To bring you exquisite jewellery that celebrates life's precious moments. Every piece is thoughtfully sourced and crafted to ensure exceptional quality, timeless design, and complete customer delight — because you deserve nothing less than the finest.</p>
                           </li>
                           <li>
                               <h2 class="abtHD fw-normal">Our Vision</h2>
-                              <p>We were supposed to head to California this weekend but last minute had to cancel and I’m so bummed I was so ready for the beach!! These pictures were from last weekend when the weather.</p>
+                              <p>To become the world's most trusted online destination for fine jewellery — where artistry meets authenticity, where every customer feels valued, and where quality with satisfaction isn't just a promise, it's our foundation.</p>
                           </li>
                       </ul>
                   </div>
@@ -66,7 +66,7 @@
       <section class="multicolumnsBlock w-100 position-relative overflow-hidden py-6 py-md-8 py-lg-15 text-center">
           <div class="container">
               <header class="headingHead mb-11">
-                  <h2 class="hhHeading fw-normal">Qulaity Products - We Promise!</h2>
+                  <h2 class="hhHeading fw-normal">Quality Products - We Promise!</h2>
               </header>
               <div class="row justify-content-center row-gap-6">
                   <div class="col-12 col-md-6 col-lg-4">
@@ -74,8 +74,8 @@
                           <i class="icnWrap solid fw-medium d-flex align-items-center justify-content-center rounded-circle mx-auto mb-4">
                               1
                           </i>
-                          <h3 class="mccHeadaing fw-normal">It’s Always the<br> Right Size</h3>
-                          <p>Value proposition incubator user experience advisor. Virality hackathon pitch ownership paradigm.</p>
+                          <h3 class="mccHeadaing fw-normal">It's Always the<br> Right Size</h3>
+                          <p>Every piece is precision-crafted to ensure the perfect fit. From rings to bracelets, our sizing guarantees comfort and elegance.</p>
                       </article>
                   </div>
                   <div class="col-12 col-md-6 col-lg-4">
@@ -84,7 +84,7 @@
                               2
                           </i>
                           <h3 class="mccHeadaing fw-normal">Nature Quality<br> Timeless Design</h3>
-                          <p>Focus freemium ecosystem responsive web design scrum project. Equity market user experience level.</p>
+                          <p>We source only the finest materials — ethically mined gemstones and premium metals — paired with designs that transcend trends.</p>
                       </article>
                   </div>
                   <div class="col-12 col-md-6 col-lg-4">
@@ -92,8 +92,8 @@
                           <i class="icnWrap solid fw-medium d-flex align-items-center justify-content-center rounded-circle mx-auto mb-4">
                               3
                           </i>
-                          <h3 class="mccHeadaing fw-normal">Made in Austin,<br> Risk-free</h3>
-                          <p>Burn rate conversion ramen iteration validation startup. Crowdfunding iteration success research.</p>
+                          <h3 class="mccHeadaing fw-normal">Quality & Satisfaction<br> Guaranteed</h3>
+                          <p>Every order comes with our satisfaction promise. Not happy? 30-day hassle-free returns, because your trust is our greatest reward.</p>
                       </article>
                   </div>
               </div>
@@ -106,6 +106,7 @@
           <div class="container">
               <header class="headingHead mb-8 text-center">
                   <h2 class="hhHeading fw-normal">The Leader Board Of Our Company</h2>
+                  <p class="mt-3 text-muted">Our leadership team brings together diverse backgrounds and decades of experience from across the globe — united by a shared passion for quality jewellery and customer satisfaction.</p>
               </header>
               <div class="row justify-content-center row-gap-6">
                   <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
@@ -133,8 +134,37 @@
                               </div>
                           </div>
                           <div class="px-3 px-lg-6">
-                              <h3 class="lcHeading fw-normal mb-1">Nimrod Barshad</h3>
-                              <h4 class="lcSubheading fw-light mb-0">Founder/CEO</h4>
+                              <h3 class="lcHeading fw-normal mb-1">Tanveer Sadhani</h3>
+                              <h4 class="lcSubheading fw-light mb-0">Founder | CEO — Antwerp</h4>
+                          </div>
+                      </article>
+                  </div><div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                      <article class="leadColumn">
+                          <div class="imgHolder text-center position-relative mb-5 overflow-hidden">
+                              <img src="https://placehold.co/320x360" class="img-fluid w-100" alt="image description">
+                              <div class="captiveWrap position-absolute p-6">
+                                  <ul class="list-unstyled socialNetworks d-flex flex-wrap lcSocialNetworks mb-0">
+                                      <li>
+                                          <a href="javascript:void(0);" class="text-decoration-none">
+                                              <i class="icomoon-twitter"><span class="visually-hidden">twitter</span></i>
+                                          </a>
+                                      </li>
+                                      <li>
+                                          <a href="javascript:void(0);" class="text-decoration-none">
+                                              <i class="icomoon-facebook"><span class="visually-hidden">facebook</span></i>
+                                          </a>
+                                      </li>
+                                      <li>
+                                          <a href="javascript:void(0);" class="text-decoration-none">
+                                              <i class="icomoon-linkedin"><span class="visually-hidden">linkedin</span></i>
+                                          </a>
+                                      </li>
+                                  </ul>
+                              </div>
+                          </div>
+                          <div class="px-3 px-lg-6">
+                              <h3 class="lcHeading fw-normal mb-1">Naitik Shah</h3>
+                              <h4 class="lcSubheading fw-light mb-0">Founder | Global Operations Director | COO — Hong Kong</h4>
                           </div>
                       </article>
                   </div>
@@ -163,68 +193,8 @@
                               </div>
                           </div>
                           <div class="px-3 px-lg-6">
-                              <h3 class="lcHeading fw-normal mb-1">Claude K. Amadeo</h3>
-                              <h4 class="lcSubheading fw-light mb-0">Sales Director</h4>
-                          </div>
-                      </article>
-                  </div>
-                  <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                      <article class="leadColumn">
-                          <div class="imgHolder text-center position-relative mb-5 overflow-hidden">
-                              <img src="https://placehold.co/320x360" class="img-fluid w-100" alt="image description">
-                              <div class="captiveWrap position-absolute p-6">
-                                  <ul class="list-unstyled socialNetworks d-flex flex-wrap lcSocialNetworks mb-0">
-                                      <li>
-                                          <a href="javascript:void(0);" class="text-decoration-none">
-                                              <i class="icomoon-twitter"><span class="visually-hidden">twitter</span></i>
-                                          </a>
-                                      </li>
-                                      <li>
-                                          <a href="javascript:void(0);" class="text-decoration-none">
-                                              <i class="icomoon-facebook"><span class="visually-hidden">facebook</span></i>
-                                          </a>
-                                      </li>
-                                      <li>
-                                          <a href="javascript:void(0);" class="text-decoration-none">
-                                              <i class="icomoon-linkedin"><span class="visually-hidden">linkedin</span></i>
-                                          </a>
-                                      </li>
-                                  </ul>
-                              </div>
-                          </div>
-                          <div class="px-3 px-lg-6">
-                              <h3 class="lcHeading fw-normal mb-1">Linda M. Dugan</h3>
-                              <h4 class="lcSubheading fw-light mb-0">Creative Director</h4>
-                          </div>
-                      </article>
-                  </div>
-                  <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                      <article class="leadColumn">
-                          <div class="imgHolder text-center position-relative mb-5 overflow-hidden">
-                              <img src="https://placehold.co/320x360" class="img-fluid w-100" alt="image description">
-                              <div class="captiveWrap position-absolute p-6">
-                                  <ul class="list-unstyled socialNetworks d-flex flex-wrap lcSocialNetworks mb-0">
-                                      <li>
-                                          <a href="javascript:void(0);" class="text-decoration-none">
-                                              <i class="icomoon-twitter"><span class="visually-hidden">twitter</span></i>
-                                          </a>
-                                      </li>
-                                      <li>
-                                          <a href="javascript:void(0);" class="text-decoration-none">
-                                              <i class="icomoon-facebook"><span class="visually-hidden">facebook</span></i>
-                                          </a>
-                                      </li>
-                                      <li>
-                                          <a href="javascript:void(0);" class="text-decoration-none">
-                                              <i class="icomoon-linkedin"><span class="visually-hidden">linkedin</span></i>
-                                          </a>
-                                      </li>
-                                  </ul>
-                              </div>
-                          </div>
-                          <div class="px-3 px-lg-6">
-                              <h3 class="lcHeading fw-normal mb-1">Mark Pocket</h3>
-                              <h4 class="lcSubheading fw-light mb-0">Mark Pocket</h4>
+                              <h3 class="lcHeading fw-normal mb-1">Siddharth Saraf</h3>
+                              <h4 class="lcSubheading fw-light mb-0">Founder & CTO — Hong Kong</h4>
                           </div>
                       </article>
                   </div>
@@ -346,14 +316,14 @@
                           <img src="/images/ico-01.svg" width="37" height="30" alt="icon">
                       </i>
                       <h3 class="fbbHeading fw-normal mb-0">Free Shipping</h3>
-                      <h4 class="fbbSubheading fw-light mb-0">For all orders over $100</h4>
+                      <h4 class="fbbSubheading fw-light mb-0">{{ siteSettings.freeShippingText || 'For all orders over $100' }}</h4>
                   </li>
                   <li>
                       <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
                           <img src="/images/ico-02.svg" width="37" height="33" alt="icon">
                       </i>
                       <h3 class="fbbHeading fw-normal mb-0">30 Days Return</h3>
-                      <h4 class="fbbSubheading fw-light mb-0">For an Exchange Product</h4>
+                      <h4 class="fbbSubheading fw-light mb-0">{{ siteSettings.returnText || 'For an Exchange Product' }}</h4>
                   </li>
                   <li>
                       <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
@@ -376,4 +346,7 @@
 </template>
 
 <script setup>
+import { useSiteSettingsStore } from '../stores/siteSettingsStore'
+
+const siteSettings = useSiteSettingsStore()
 </script>
