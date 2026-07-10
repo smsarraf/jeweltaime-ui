@@ -38,7 +38,7 @@
                       </i>
                       <strong class="fw-medium bcdHeading d-block mb-1">OUR STORE</strong>
                       <p v-if="siteSettings.storeInfo.address">{{ siteSettings.storeInfo.address }}</p>
-                      <p v-else>7021 Washington Sq.<br>South New York, NY 10012</p>
+                      <p v-else>7021 Washington Sq.<br/>South New York, NY 10012</p>
                   </div>
                   <div class="col-12 col-md-4">
                       <i class="icnWrap d-flex align-items-center justify-content-center mb-2">
@@ -65,8 +65,7 @@
 							</span>
                       </i>
                       <strong class="fw-medium bcdHeading d-block mb-1">BUSINESS HOURS</strong>
-                      <p v-if="siteSettings.freeShippingText">Monday - Sunday:<br>09:00 am - 20:00 pm</p>
-                      <p v-else>Monday - Sunday:<br>09:00 am - 20:00 pm</p>
+                      <p>{{ siteSettings.storeInfo.hours || 'Monday - Sunday: \n 09:00 am - 20:00 pm' }}</p>
                   </div>
               </address>
           </div>

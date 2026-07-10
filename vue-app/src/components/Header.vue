@@ -6,7 +6,7 @@
                     <div class="col-12 col-lg-6">
                         <ul class="list-unstyled d-flex flex-wrap gap-3 gap-xlwd-5 justify-content-center justify-content-lg-start mb-0 phtbListInline">
                             <li class="fw-normal text-white">
-                                Need help? Call us: <a href="javascript:void(0);">(+800) 1234 5678</a>
+                                Need help? Call us: <a :href="`tel:${siteSettings.contactInfo ? siteSettings.contactInfo.replace(/[^0-9]/g, '') : '180055553935'}`">{{ siteSettings.contactInfo || '(+800) 1234 5678' }}</a>
                             </li>
                         </ul>
                     </div>
@@ -61,7 +61,7 @@
                     <div class="col-6 col-md-5 col-lg-3 col-xl-5 col-xlwd-6">
                         <div class="logo text-center mx-auto">
                             <router-link to="/">
-                                <img src="/images/logo.png" class="img-fluid" alt="JewelT'Aime">
+                                <img :src="siteSettings.logo || '/images/logo.png'" class="img-fluid" alt="JewelT'Aime">
                             </router-link>
                         </div>
                     </div>
@@ -226,7 +226,7 @@
                     <router-link to="/cart" class="btn btns btn-outline-dark fw-medium" @click="closeCartOffcanvas">View Cart</router-link>
                     <router-link to="/checkout" class="btn btns btn-dark fw-medium" @click="closeCartOffcanvas">Checkout</router-link>
                 </div>
-                <p class="spTxt fw-light text-center mb-0">Free Shipping on All <a href="javascript:void(0);" class="fw-normal">Orders Over $75</a></p>
+                <p class="spTxt fw-light text-center mb-0">{{ siteSettings.freeShippingText || 'Free Shipping on All Orders Over $75' }}</p>
             </div>
         </div>
     </div>
@@ -287,6 +287,7 @@
     import { useWishlistStore } from '../stores/wishlistStore'
     import { useCurrencyStore } from '../stores/currencyStore'
     import { useCategoryStore } from '../stores/categoryStore'
+    import { useSiteSettingsStore } from '../stores/siteSettingsStore'
     import ImageWithSkeleton from './ImageWithSkeleton.vue'
     import { clearAuth } from '../utils/auth'
     import { useAuthSession } from '../composables/useAuthSession'
@@ -296,6 +297,7 @@
     const wishlistStore = useWishlistStore()
     const currencyStore = useCurrencyStore()
     const categoryStore = useCategoryStore()
+    const siteSettings = useSiteSettingsStore()
     const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
     const { isLoggedIn, user: userData } = useAuthSession()

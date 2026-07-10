@@ -19,7 +19,7 @@
                   <div class="col-12 col-md-6 col-lg-4 mb-5 mb-md-0">
                       <header class="headingHead pt-xl-11 pe-xl-11">
                           <h1 class="hhHeading HDii fw-normal mb-6">About Our Online Jewellery Store</h1>
-                          <p class="phgra mb-4 mb-md-9">At JewelT'Aime, we believe every piece of jewellery tells a story. Our curated collection blends timeless elegance with modern craftsmanship, delivered with unwavering quality and customer satisfaction at every step.</p>
+                          <p class="phgra mb-4 mb-md-9">{{ siteSettings.longDescription || 'At JewelT\'Aime, we believe every piece of jewellery tells a story. Our curated collection blends timeless elegance with modern craftsmanship, delivered with unwavering quality and customer satisfaction at every step.' }}</p>
                           <router-link to="/contact" class="btn btnThemeOutlined fw-normal px-7 py-2">Contact Us</router-link>
                       </header>
                   </div>
@@ -134,8 +134,37 @@
                               </div>
                           </div>
                           <div class="px-3 px-lg-6">
+                              <h3 class="lcHeading fw-normal mb-1">Tanveer Sadhani</h3>
+                              <h4 class="lcSubheading fw-light mb-0">Founder | CEO — Antwerp</h4>
+                          </div>
+                      </article>
+                  </div><div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                      <article class="leadColumn">
+                          <div class="imgHolder text-center position-relative mb-5 overflow-hidden">
+                              <img src="https://placehold.co/320x360" class="img-fluid w-100" alt="image description">
+                              <div class="captiveWrap position-absolute p-6">
+                                  <ul class="list-unstyled socialNetworks d-flex flex-wrap lcSocialNetworks mb-0">
+                                      <li>
+                                          <a href="javascript:void(0);" class="text-decoration-none">
+                                              <i class="icomoon-twitter"><span class="visually-hidden">twitter</span></i>
+                                          </a>
+                                      </li>
+                                      <li>
+                                          <a href="javascript:void(0);" class="text-decoration-none">
+                                              <i class="icomoon-facebook"><span class="visually-hidden">facebook</span></i>
+                                          </a>
+                                      </li>
+                                      <li>
+                                          <a href="javascript:void(0);" class="text-decoration-none">
+                                              <i class="icomoon-linkedin"><span class="visually-hidden">linkedin</span></i>
+                                          </a>
+                                      </li>
+                                  </ul>
+                              </div>
+                          </div>
+                          <div class="px-3 px-lg-6">
                               <h3 class="lcHeading fw-normal mb-1">Naitik Shah</h3>
-                              <h4 class="lcSubheading fw-light mb-0">Global Operations Director — Hong Kong</h4>
+                              <h4 class="lcSubheading fw-light mb-0">Founder | Global Operations Director | COO — Hong Kong</h4>
                           </div>
                       </article>
                   </div>
@@ -287,14 +316,14 @@
                           <img src="/images/ico-01.svg" width="37" height="30" alt="icon">
                       </i>
                       <h3 class="fbbHeading fw-normal mb-0">Free Shipping</h3>
-                      <h4 class="fbbSubheading fw-light mb-0">For all orders over $100</h4>
+                      <h4 class="fbbSubheading fw-light mb-0">{{ siteSettings.freeShippingText || 'For all orders over $100' }}</h4>
                   </li>
                   <li>
                       <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
                           <img src="/images/ico-02.svg" width="37" height="33" alt="icon">
                       </i>
                       <h3 class="fbbHeading fw-normal mb-0">30 Days Return</h3>
-                      <h4 class="fbbSubheading fw-light mb-0">For an Exchange Product</h4>
+                      <h4 class="fbbSubheading fw-light mb-0">{{ siteSettings.returnText || 'For an Exchange Product' }}</h4>
                   </li>
                   <li>
                       <i class="icnWrap d-flex align-items-center justify-content-center mx-auto mb-1">
@@ -317,4 +346,7 @@
 </template>
 
 <script setup>
+import { useSiteSettingsStore } from '../stores/siteSettingsStore'
+
+const siteSettings = useSiteSettingsStore()
 </script>
