@@ -12,7 +12,7 @@
                     </div>
                     <div class="col-6 d-none d-lg-block">
                         <ul class="list-unstyled d-flex flex-wrap gap-4 gap-xlwd-6 gap-xxl-8 mb-0 phtbListInline justify-content-end fw-normal">
-                            <li>
+                            <li v-if="!isLoggedIn">
                                 <router-link to="/signin?redirect=/b2b/products" class="text-decoration-none fw-medium">
                                     <i class="fa-solid fa-truck me-1"></i>Bulk Order / B2B
                                 </router-link>
@@ -165,6 +165,11 @@
                                     <li class="nav-item">
                                         <router-link class="nav-link text-uppercase fw-medium" to="/contact">Contact Us</router-link>
                                     </li>
+                                    <li class="nav-item" v-if="!isLoggedIn">
+                                        <router-link class="nav-link text-uppercase fw-medium text-warning" to="/signin?redirect=/b2b/products">
+                                            <i class="fa-solid fa-truck me-1"></i>Bulk Order
+                                        </router-link>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -255,6 +260,11 @@
                         </li>
                         <li class="py-2 px-4">
                             <router-link to="/blog" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">Blog</router-link>
+                        </li>
+                        <li class="py-2 px-4" v-if="!isLoggedIn">
+                            <router-link to="/signin?redirect=/b2b/products" class="text-decoration-none fw-medium d-block text-warning" @click="closeSidebarMenu">
+                                <i class="fa-solid fa-truck me-1"></i>Bulk Order
+                            </router-link>
                         </li>
                     </ul>
                 </div>
