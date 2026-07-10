@@ -1,0 +1,154 @@
+# JewelTime UI - Project Rules & Context
+
+## Project Overview
+JewelTime UI is an e-commerce jewelry store website. It consists of:
+- **Static HTML pages** - Marketing/brochure pages (home, about, blog, shop, cart, checkout, etc.)
+- **SCSS/CSS** - Custom styles with Bootstrap integration
+- **Vue 3 App** - Full-featured SPA for the storefront (Vue 3 + Vite + Pinia + Vue Router + Bootstrap 5)
+- **Express.js Server** - Backend API with routes for auth, orders, wishlist, coupons, locations, policies, shipping addresses
+
+---
+
+## Project Structure
+
+### Root Level
+- `home.html`, `about-us.html`, `blog-grid.html`, `blog-single.html` - Static marketing pages
+- `cart-page.html`, `checkout-page.html` - Static cart/checkout pages
+- `shop-right-sidebar.html`, `shop-accordion.html` - Static product listing pages
+- `contact-us.html`, `faq.html` - Static info pages
+- `style.css` - Compiled stylesheet
+- `css/` - Vendor CSS (bootstrap, plugins, colors, responsive)
+- `js/` - Frontend JavaScript (bootstrap, custom, popper)
+- `scss/` - SCSS source files (base, responsive, custom variables)
+- `fonts/` - Custom fonts (Jost family, icomoon icons)
+- `images/` - Image assets
+
+### `server/` - Express.js Backend (Legacy)
+- `index.js` - Server entry point (legacy, used for local dev)
+- `routes/` - API route handlers (legacy)
+- `.env` - Environment variables
+
+### ERP Backend (Primary) - `http://localhost:8081`
+- **Auth**: POST `/api/v1/auth/login`, `/api/v1/auth/register`, `/api/v1/auth/refresh-token`
+- **Products**: GET/POST `/api/v1/products`, `/api/v1/products/{id}`, `/api/v1/products/search`, `/api/v1/products/category/{categoryId}`
+- **Categories**: GET/POST `/api/v1/categories`, `/api/v1/categories/root`, `/api/v1/categories/{id}/subcategories`, `/api/v1/categories/{id}/all-subcategories`
+- **Orders**: GET/POST `/api/v1/orders`, `/api/v1/orders/{id}`, `/api/v1/orders/user/{userId}`, `/api/v1/orders/{id}/status`
+- **Users**: GET `/api/v1/users`, `/api/v1/users/{id}`, `/api/v1/users/email/{email}`
+- **Partners/Suppliers**: GET/POST `/api/v1/partners`, `/api/v1/partners/{id}`, `/api/v1/partners/type/{type}`
+- **Inventory**: POST `/api/v1/inventory/create`, `/api/v1/inventory/add-stock`, `/api/v1/inventory/reduce-stock`, `/api/v1/inventory/adjust-stock`, `/api/v1/inventory/transfer-stock`
+- **Payments**: GET/POST `/api/v1/payments`, `/api/v1/payments/{id}`
+- **Notifications**: GET/POST `/api/v1/notifications`
+
+### `vue-app/` - Vue 3 Frontend Application
+- **Tech Stack**: Vue 3 (Composition API) + Vite + Pinia + Vue Router + Bootstrap 5 + Axios
+- `src/App.vue` - Root component
+- `src/main.js` - App entry point
+- `src/router/index.js` - Vue Router configuration
+- `src/pages/` - Page components
+  - `Cart.vue`, `Checkout.vue`, `ProductDetail.vue`
+  - `SignIn.vue`, `Register.vue`, `Profile.vue`, `Dashboard.vue`
+  - `Wishlist.vue`, `PolicyPage.vue`
+- `src/components/` - Reusable components
+  - `Header.vue`, `Footer.vue`, `ProductCard.vue`
+  - `CookieConsent.vue`, `Captcha.vue`
+- `src/stores/` - Pinia stores
+  - `locationStore.js`, `wishlistStore.js`
+- `src/assets/` - Static assets
+
+---
+
+## Coding Conventions
+
+### General
+- Use **English** for all code, comments, commit messages, and documentation
+- Follow **semantic HTML5** for static pages
+- Use **BEM-like** or descriptive CSS class naming (e.g., `.col-12`, `.header`, `.footer`)
+- Responsive design via Bootstrap grid and custom media queries
+
+### Vue App
+- Use **Vue 3 Composition API** with `<script setup>` syntax
+- State management via **Pinia stores**
+- Routing via **Vue Router** with lazy-loaded routes
+- HTTP requests via **Axios**
+- Bootstrap 5 for UI components and layout
+- Components follow PascalCase naming (e.g., `ProductCard.vue`, `CookieConsent.vue`)
+- Store files follow camelCase naming (e.g., `locationStore.js`, `wishlistStore.js`)
+
+### Server (Express.js)
+- RESTful API routes
+- Environment variables via `.env` file (`dotenv` package)
+- Route handlers organized by domain (`routes/` directory)
+- Business logic in `services/` directory
+- CORS enabled for cross-origin requests
+- Error handling via try/catch with proper HTTP status codes
+
+### SCSS/CSS
+- Custom SCSS in `scss/` directory
+- Variables in `_customVariables.scss`
+- Bootstrap overrides and custom animations
+- Compiled output to `style.css` and `css/` directory
+
+### Package Management
+- Root `package.json` - Server dependencies (root level)
+- `server/package.json` - Server dependencies
+- `vue-app/package.json` - Vue app dependencies
+- Use `npm` for package management
+
+---
+
+## Commit Message Guidelines
+
+### Format
+```
+<type>(<scope>): <short summary>
+
+[optional body]
+```
+
+### Types
+- **feat** - New feature
+- **fix** - Bug fix
+- **refactor** - Code change that neither fixes a bug nor adds a feature
+- **style** - Changes that do not affect the meaning of the code (formatting, etc.)
+- **docs** - Documentation only changes
+- **perf** - Performance improvement
+- **test** - Adding or correcting tests
+- **chore** - Changes to build process, tools, or dependencies
+- **revert** - Reverts a previous commit
+
+### Scopes
+- **server** - Backend API changes
+- **vue-app** - Vue frontend changes
+- **static** - Static HTML/CSS pages
+- **scss** - SCSS/CSS style changes
+- **config** - Configuration files
+- **docs** - Documentation
+- **deps** - Dependency updates
+
+### Examples
+```
+feat(vue-app): add product filtering by category
+fix(server): handle empty cart checkout error
+refactor(static): consolidate header navigation into reusable include
+style(scss): update brand color variables to match logo
+chore(deps): upgrade axios to v1.17
+docs: update README with setup instructions
+```
+
+### Best Practices
+- Use **imperative mood** ("add" not "added" or "adds")
+- **Capitalize** the first word after the type/scope
+- Keep the summary line under **72 characters**
+- Reference **issue/PR numbers** in the body when applicable
+- Separate subject from body with a **blank line**
+- Explain **what** and **why**, not **how**
+
+---
+
+## Task Execution Steps
+1. Understand which part of the project is being modified (server, vue-app, static, config)
+2. Read relevant files to understand existing conventions
+3. Make focused, incremental changes
+4. Test changes when applicable
+5. Use appropriate linting/formatting for the file type
+6. Commit with a descriptive, conventional commit message

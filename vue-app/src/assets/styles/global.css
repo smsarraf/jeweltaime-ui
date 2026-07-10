@@ -1,0 +1,193 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #222;
+  background-color: #fff;
+  line-height: 1.6;
+}
+
+a {
+  color: #222;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #666;
+}
+
+button {
+  font-family: inherit;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -10px;
+  margin-left: -10px;
+}
+
+.col-2 {
+  flex: 0 0 16.666667%;
+  padding: 0 10px;
+}
+
+.col-3 {
+  flex: 0 0 25%;
+  padding: 0 10px;
+}
+
+.col-4 {
+  flex: 0 0 33.333333%;
+  padding: 0 10px;
+}
+
+.col-6 {
+  flex: 0 0 50%;
+  padding: 0 10px;
+}
+
+.col-md-3 {
+  flex: 0 0 25%;
+  padding: 0 10px;
+}
+
+.col-md-4 {
+  flex: 0 0 33.333333%;
+  padding: 0 10px;
+}
+
+.col-md-5 {
+  flex: 0 0 41.666667%;
+  padding: 0 10px;
+}
+
+.col-md-6 {
+  flex: 0 0 50%;
+  padding: 0 10px;
+}
+
+.col-md-7 {
+  flex: 0 0 58.333333%;
+  padding: 0 10px;
+}
+
+.col-md-8 {
+  flex: 0 0 66.666667%;
+  padding: 0 10px;
+}
+
+.col-md-9 {
+  flex: 0 0 75%;
+  padding: 0 10px;
+}
+
+.col-lg-3 {
+  flex: 0 0 25%;
+  padding: 0 10px;
+}
+
+.col-lg-4 {
+  flex: 0 0 33.333333%;
+  padding: 0 10px;
+}
+
+.col-lg-6 {
+  flex: 0 0 50%;
+  padding: 0 10px;
+}
+
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #222;
+  color: #fff;
+  border: 2px solid #222;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #fff;
+  color: #222;
+}
+
+.btn-primary {
+  background-color: #222;
+  color: #fff;
+  border-color: #222;
+}
+
+.btn-primary:hover {
+  background-color: #444;
+  border-color: #444;
+}
+
+@media (max-width: 992px) {
+  .col-lg-3 {
+    flex: 0 0 50%;
+  }
+
+  .col-lg-4 {
+    flex: 0 0 50%;
+  }
+
+  .col-lg-6 {
+    flex: 0 0 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .col-md-3 {
+    flex: 0 0 50%;
+  }
+
+  .col-md-4 {
+    flex: 0 0 100%;
+  }
+
+  .col-md-5 {
+    flex: 0 0 100%;
+  }
+
+  .col-md-6 {
+    flex: 0 0 100%;
+  }
+
+  .col-md-7 {
+    flex: 0 0 100%;
+  }
+
+  .col-md-8 {
+    flex: 0 0 100%;
+  }
+
+  .col-md-9 {
+    flex: 0 0 100%;
+  }
+}
