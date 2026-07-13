@@ -39,37 +39,48 @@
               <div v-else class="productsDetailsWrapper WrapII row">
                   <div class="col-12 col-md-6 col-xlwd-6">
                       <div class="images">
-                          <!-- Bootstrap Carousel with auto-scroll -->
-                          <div id="productCarousel" class="carousel slide mb-4" data-bs-ride="carousel" data-bs-interval="3000">
-                              <!-- Indicators -->
-                              <div class="carousel-indicators">
-                                  <button v-for="(img, index) in productImages" :key="'ind-' + index"
-                                      type="button"
-                                      data-bs-target="#productCarousel"
-                                      :data-bs-slide-to="index"
-                                      :class="{ active: index === activeSlide }"
-                                      :aria-current="index === activeSlide ? 'true' : undefined"
-                                      :aria-label="'Slide ' + (index + 1)"
-                                      @click="activeSlide = index">
-                                  </button>
-                              </div>
-                              <!-- Slides -->
-                              <div class="carousel-inner">
-                                  <div v-for="(img, index) in productImages" :key="'slide-' + index"
-                                      class="carousel-item" :class="{ active: index === activeSlide }">
-                                      <img :src="img" class="d-block w-100 img-fluid" :alt="product.name + ' - Image ' + (index + 1)">
-                                  </div>
-                              </div>
-                              <!-- Controls -->
-                              <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
-                                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                  <span class="visually-hidden">Previous</span>
-                              </button>
-                              <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
-                                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                  <span class="visually-hidden">Next</span>
-                              </button>
-                          </div>
+                           <!-- Bootstrap Carousel with auto-scroll -->
+                           <div id="productCarousel" class="carousel slide mb-4" data-bs-ride="carousel" data-bs-interval="3000">
+                               <!-- Indicators -->
+                               <div class="carousel-indicators">
+                                   <button v-for="(slide, index) in carouselSlides" :key="'ind-' + index"
+                                       type="button"
+                                       data-bs-target="#productCarousel"
+                                       :data-bs-slide-to="index"
+                                       :class="{ active: index === activeSlide }"
+                                       :aria-current="index === activeSlide ? 'true' : undefined"
+                                       :aria-label="'Slide ' + (index + 1)"
+                                       @click="activeSlide = index">
+                                   </button>
+                               </div>
+                               <!-- Slides -->
+                               <div class="carousel-inner">
+                                   <div v-for="(slide, index) in carouselSlides" :key="'slide-' + index"
+                                       class="carousel-item" :class="{ active: index === activeSlide }">
+                                       <img v-if="slide.type === 'image'" :src="slide.url" class="d-block w-100 img-fluid" :alt="product.name + ' - Image ' + (index + 1)">
+                                       <div v-else-if="slide.type === 'video'" class="video-slide position-relative w-100" style="padding-top: 56.25%;">
+                                           <video
+                                               class="position-absolute top-0 start-0 w-100 h-100"
+                                               controls
+                                               controlslist="nodownload"
+                                               :poster="productImages[0]"
+                                               preload="metadata">
+                                               <source :src="slide.url" type="video/mp4">
+                                               Your browser does not support the video tag.
+                                           </video>
+                                       </div>
+                                   </div>
+                               </div>
+                               <!-- Controls -->
+                               <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                                   <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                   <span class="visually-hidden">Previous</span>
+                               </button>
+                               <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                                   <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                   <span class="visually-hidden">Next</span>
+                               </button>
+                           </div>
                       </div>
                   </div>
                   <div class="col-12 col-md-6 col-xlwd-5">
@@ -85,35 +96,85 @@
                                           <li class="active"><i class="icomoon-star"></i></li>
                                           <li><i class="icomoon-star"></i></li>
                                       </ul>
-                                      <span class="reviewHD fw-normal">(25 Customer reviews)</span>
+<!--                                      TODO:: <span class="reviewHD fw-normal">(25 Customer reviews)</span>-->
                                   </div>
-                                  <h3 class="HPrice fw-normal mb-4">{{ currencyStore.formatPrice(displayPrice) }}</h3>
-                                  <!-- Variant Selector (only shown when multiple variants exist) -->
-                                  <div v-if="product.variants && product.variants.length > 1" class="mb-4">
-                                      <strong class="d-block mb-2 fw-normal">Variants:</strong>
-                                      <div class="d-flex flex-wrap gap-2">
-                                          <button v-for="variant in product.variants" :key="variant.id"
-                                              type="button"
-                                              class="btn position-relative px-3 py-2"
-                                              :class="selectedVariantId === variant.id ? 'btn-dark' : 'btn-outline-dark'"
-                                              @click="selectVariant(variant.id)">
-                                              {{ variant.variantName }}
-                                              <span v-if="variant.additionalPrice > 0"
-                                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                                  style="font-size: 0.65rem;">
-                                                  +{{ currencyStore.formatPrice(variant.additionalPrice) }}
-                                              </span>
-                                          </button>
-                                      </div>
-                                      <small v-if="selectedVariant" class="d-block mt-2 text-muted">
-                                          Selected: <strong>{{ selectedVariant.variantName }}</strong>
-                                          <span v-if="selectedVariant.additionalPrice > 0"> (+{{ currencyStore.formatPrice(selectedVariant.additionalPrice) }})</span>
-                                      </small>
-                                      <small v-else-if="requiresVariantSelection" class="d-block mt-2 text-danger">
-                                          Please select a variant to continue.
-                                      </small>
-                                      <small v-if="variantSelectionError" class="d-block mt-2 text-danger">{{ variantSelectionError }}</small>
-                                  </div>
+                                   <h3 class="HPrice fw-normal mb-4">{{ currencyStore.formatPrice(displayPrice) }}</h3>
+                                    <!-- Variant Selector -->
+                                    <div v-if="product.variants && product.variants.length > 0" class="variant-section mb-4">
+                                        <!-- Multiple variants: show selector buttons -->
+                                        <div v-if="product.variants.length > 1">
+                                            <strong class="d-block mb-2 fw-normal text-uppercase small text-muted">Select Variant</strong>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <button v-for="variant in product.variants" :key="variant.id"
+                                                    type="button"
+                                                    class="btn position-relative px-3 py-2 variant-btn"
+                                                    :class="selectedVariantId === variant.id ? 'btn-dark' : 'btn-outline-dark'"
+                                                    @click="selectVariant(variant.id)">
+                                                    {{ variant.variantName }}
+                                                    <span v-if="variant.additionalPrice > 0"
+                                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                                        style="font-size: 0.65rem;">
+                                                        +{{ currencyStore.formatPrice(variant.additionalPrice) }}
+                                                    </span>
+                                                </button>
+                                            </div>
+                                            <small v-if="selectedVariant" class="d-block mt-2 text-muted">
+                                                Selected: <strong>{{ selectedVariant.variantName }}</strong>
+                                                <span v-if="selectedVariant.additionalPrice > 0"> (+{{ currencyStore.formatPrice(selectedVariant.additionalPrice) }})</span>
+                                            </small>
+                                            <small v-else-if="requiresVariantSelection" class="d-block mt-2 text-danger">
+                                                Please select a variant to continue.
+                                            </small>
+                                            <small v-if="variantSelectionError" class="d-block mt-2 text-danger">{{ variantSelectionError }}</small>
+                                        </div>
+
+                                        <!-- Single variant: show name label -->
+                                        <div v-if="product.variants.length === 1" class="mb-2">
+                                            <span class="badge bg-dark text-white px-3 py-2" style=" letter-spacing: 0.5px;">
+                                                {{ product.variants[0].variantName }}
+                                                <span v-if="product.variants[0].additionalPrice > 0"> (+{{ currencyStore.formatPrice(product.variants[0].additionalPrice) }})</span>
+                                            </span>
+                                        </div>
+
+                                        <!-- Variant Specifications Table (always shown when attributes exist) -->
+                                        <div v-if="selectedVariant && selectedVariant.attributes && selectedVariant.attributes.length > 0"
+                                            class="variant-specs mt-3">
+                                            <h6 class="specs-heading text-uppercase fw-medium mb-3 pb-2 border-bottom">
+                                                <i class="fa-solid fa-list-check me-2"></i>Specifications
+                                            </h6>
+                                            <table class="table table-borderless specs-table mb-0">
+                                                <tbody>
+                                                    <tr v-for="attr in selectedVariant.attributes" :key="attr.id">
+                                                        <td class="spec-label fw-medium text-uppercase ps-0 fw-small">
+                                                            {{ attr.attributeName }}
+                                                        </td>
+                                                        <td class="spec-value fw-small pe-0">
+                                                            {{ attr.attributeValue }}
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <!-- No variants but product has base attributes in customFields -->
+                                    <div v-else-if="baseAttributes.length > 0" class="variant-section mb-4">
+                                      <br/>
+                                        <h6 class="specs-heading text-uppercase fw-semibold mb-3 pb-2 border-bottom">
+                                            <i class="fa-solid fa-list-check me-2"></i>Specifications
+                                        </h6>
+                                        <table class="table table-borderless specs-table mb-0">
+                                            <tbody>
+                                                <tr v-for="attr in baseAttributes" :key="attr.key">
+                                                    <td class="spec-label fw-medium text-uppercase ps-0" style="width: 40%;  color: #555;">
+                                                        {{ attr.key }}
+                                                    </td>
+                                                    <td class="spec-value fw-semibold pe-0" style="font-size: 0.9rem; color: #222;">
+                                                        {{ attr.value }}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                   <p class="fw-light mb-1">
                                       {{ product.shortDescription || product.longDescription || 'This regulator has a rolled diaphragm and high flow rate with reduced pressure drop. It has an excellent degree of condensation.' }}
                                   </p>
@@ -173,7 +234,7 @@
                                       <a href="javascript:void(0);" class="guide-chart-btn wishListBtn text-decoration-none mb-2 mb-sm-0 me-3 me-sm-7 fw-normal" @click="toggleWishlist">
                                           <i :class="isWishlisted ? 'icomoon-heart' : 'icomoon-heart-o'"></i> {{ isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist' }}
                                       </a>
-                                      <a href="javascript:void(0);" class="guide-chart-btn sizeBtn fw-normal text-decoration-none">
+                                      <a v-if="hasSizeGuide" href="javascript:void(0);" class="guide-chart-btn sizeBtn fw-normal text-decoration-none" @click="openSizeGuide">
                                           <i class="icomoon-th-grid"></i> Size Guide
                                       </a>
                                   </div>
@@ -272,6 +333,9 @@
           </div>
       </aside>
 
+      <!-- Size Guide Modal -->
+      <SizeGuideModal :visible="sizeGuideVisible" :guide="selectedSizeGuide" @close="closeSizeGuide" />
+
       <!-- Features Block matching shop-right-sidebar.html -->
       <aside class="featuresBlock text-center w-100 position-relative py-9">
           <div class="container">
@@ -321,6 +385,8 @@ import { useCategoryStore } from '../stores/categoryStore'
 import { toSlug } from '../utils/slug'
 import { getActiveGiftBoxes, getActiveGiftCards } from '../services/giftService'
 import { subscribeToNewsletter, buildSubscribePayload } from '../services/newsletterService'
+import { getActiveSizeGuidesByCategory } from '../services/sizeGuideService'
+import SizeGuideModal from '../components/SizeGuideModal.vue'
 import axios from 'axios'
 
 const route = useRoute()
@@ -350,6 +416,11 @@ const giftCards = ref([])
 const isLoading = ref(false)
 const error = ref('')
 const variantSelectionError = ref('')
+
+// Size Guide
+const sizeGuides = ref([])
+const sizeGuideVisible = ref(false)
+const selectedSizeGuide = ref(null)
 
 // Newsletter subscription
 const newsletterEmail = ref('')
@@ -423,6 +494,18 @@ const selectedVariant = computed(() => {
 
 const requiresVariantSelection = computed(() => (product.value.variants || []).length > 1)
 
+// Extract base attributes from customFields for products without variants
+const baseAttributes = computed(() => {
+  const fields = product.value.customFields
+  if (!fields || typeof fields !== 'object' || Object.keys(fields).length === 0) return []
+  return Object.entries(fields)
+    .filter(([_, v]) => v !== null && v !== undefined && v !== '')
+    .map(([key, value]) => ({
+      key: key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim(),
+      value: String(value)
+    }))
+})
+
 // Display price: base + variant additional
 const displayPrice = computed(() => {
   const base = product.value.price || 0
@@ -477,6 +560,23 @@ const productImages = computed(() => {
       .map(m => m.url || fallback)
   }
   return [fallback, fallback, fallback, fallback]
+})
+
+// Carousel slides: includes video slide + image slides
+const carouselSlides = computed(() => {
+  const slides = []
+  
+  // Add video slide if video URL is available
+  if (product.value.videoUrl) {
+    slides.push({ type: 'video', url: product.value.videoUrl })
+  }
+  
+  // Add image slides
+  productImages.value.forEach(url => {
+    slides.push({ type: 'image', url })
+  })
+  
+  return slides
 })
 
 function selectVariant(variantId) {
@@ -648,6 +748,7 @@ onMounted(() => {
   categoryStore.loadCategories()
   fetchProduct()
   loadGiftOptions()
+  loadSizeGuides()
   initCarouselListener()
 })
 
@@ -666,6 +767,7 @@ watch(() => isLoading.value, (newVal) => {
 watch(() => route.params.id, () => {
   removeCarouselListener()
   fetchProduct()
+  loadSizeGuides()
 })
 
 async function onNewsletterSubmit() {
@@ -751,6 +853,34 @@ const addToCart = () => {
   }
 }
 
+// Size Guide — computed
+const hasSizeGuide = computed(() => sizeGuides.value.length > 0)
+
+async function loadSizeGuides() {
+  const categoryId = product.value.categoryId
+  if (!categoryId) {
+    sizeGuides.value = []
+    return
+  }
+  try {
+    sizeGuides.value = await getActiveSizeGuidesByCategory(categoryId)
+  } catch {
+    sizeGuides.value = []
+  }
+}
+
+function openSizeGuide() {
+  if (sizeGuides.value.length > 0) {
+    selectedSizeGuide.value = sizeGuides.value[0]
+    sizeGuideVisible.value = true
+  }
+}
+
+function closeSizeGuide() {
+  sizeGuideVisible.value = false
+  selectedSizeGuide.value = null
+}
+
 const toggleWishlist = async () => {
   if (!wishlistStore.isLoggedIn()) {
     const currentPath = route.fullPath
@@ -803,3 +933,49 @@ const buyItNow = () => {
   router.push('/checkout')
 }
 </script>
+
+<style scoped>
+.variant-section {
+  font-family: inherit;
+}
+
+.specs-heading {
+  
+  letter-spacing: 1px;
+  color: #333;
+}
+
+.specs-table {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.specs-table tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.specs-table tr:last-child {
+  border-bottom: none;
+}
+
+.specs-table td {
+  padding: 10px 14px;
+  vertical-align: middle;
+}
+
+.specs-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.variant-btn {
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.variant-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+</style>

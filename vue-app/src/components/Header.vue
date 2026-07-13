@@ -13,7 +13,7 @@
                     <div class="col-6 d-none d-lg-block">
                         <ul class="list-unstyled d-flex flex-wrap gap-4 gap-xlwd-6 gap-xxl-8 mb-0 phtbListInline justify-content-end fw-normal">
                             <li v-if="!isLoggedIn">
-                                <router-link to="/signin?redirect=/b2b/products" class="text-decoration-none fw-medium">
+                                <router-link to="/signin?redirect=/b2b/products" class="text-decoration-none fw-medium bulk-order-blink">
                                     <i class="fa-solid fa-truck me-1"></i>Bulk Order / B2B
                                 </router-link>
                             </li>
@@ -166,7 +166,7 @@
                                         <router-link class="nav-link text-uppercase fw-medium" to="/contact">Contact Us</router-link>
                                     </li>
                                     <li class="nav-item" v-if="!isLoggedIn">
-                                        <router-link class="nav-link text-uppercase fw-medium text-warning" to="/signin?redirect=/b2b/products">
+                                        <router-link class="nav-link text-uppercase fw-medium bulk-order-blink" to="/signin?redirect=/b2b/products">
                                             <i class="fa-solid fa-truck me-1"></i>Bulk Order
                                         </router-link>
                                     </li>
@@ -262,7 +262,7 @@
                             <router-link to="/blog" class="text-decoration-none fw-medium d-block" @click="closeSidebarMenu">Blog</router-link>
                         </li>
                         <li class="py-2 px-4" v-if="!isLoggedIn">
-                            <router-link to="/signin?redirect=/b2b/products" class="text-decoration-none fw-medium d-block text-warning" @click="closeSidebarMenu">
+                            <router-link to="/signin?redirect=/b2b/products" class="text-decoration-none fw-medium d-block bulk-order-blink" @click="closeSidebarMenu">
                                 <i class="fa-solid fa-truck me-1"></i>Bulk Order
                             </router-link>
                         </li>
@@ -386,6 +386,28 @@
 </script>
 
 <style>
+    /* Bulk Order blinking silver animation */
+    @keyframes bulkOrderBlink {
+        0%, 100% {
+            color: #c0c0c0;
+            text-shadow: 0 0 4px rgba(192, 192, 192, 0.3);
+        }
+        50% {
+            color: #e8e8e8;
+            text-shadow: 0 0 12px rgba(192, 192, 192, 0.8), 0 0 24px rgba(255, 255, 255, 0.4);
+        }
+    }
+
+    .bulk-order-blink {
+        animation: bulkOrderBlink 1.8s ease-in-out infinite;
+        color: #c0c0c0 !important;
+    }
+
+    .bulk-order-blink i {
+        animation: bulkOrderBlink 1.8s ease-in-out infinite;
+        color: #c0c0c0 !important;
+    }
+
     #mainNavigation .mainNavigationCollapse .mega-menu {
       min-width: 700px !important;
       background: #fff;
