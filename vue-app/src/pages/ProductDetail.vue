@@ -253,10 +253,16 @@
                   <div class="col-12 col-md-10 offset-md-1 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3">
                       <div class="px-xl-6 px-xxl-16">
                           <h3 class="sabHeading fw-light mb-4">End of Summer!<br> <span class="fw-medium">Up to 20% off</span> on all items.</h3>
-                          <form action="#" class="subscribeForm" @submit.prevent>
+                          <form action="#" class="subscribeForm" @submit.prevent="onNewsletterSubmit">
+                              <div v-if="newsletterMessage" class="alert" :class="newsletterMessageType" role="alert">
+                                <small>{{ newsletterMessage }}</small>
+                              </div>
                               <div class="d-flex flex-column flex-sm-row mb-4">
-                                  <input type="email" class="form-control border-0" placeholder="Email address">
-                                  <button type="submit" class="btn btnTheme border-0 text-uppercase">Signup</button>
+                                  <input v-model="newsletterEmail" type="email" class="form-control border-0" placeholder="Email address" required>
+                                  <button type="submit" class="btn btnTheme border-0 text-uppercase" :disabled="newsletterSubmitting">
+                                    <span v-if="newsletterSubmitting"><span class="spinner-border spinner-border-sm me-1" role="status"></span>Subscribing...</span>
+                                    <span v-else>Signup</span>
+                                  </button>
                               </div>
                               <label class="d-block fw-normal">Sign up to our Newsletter and get the discount code.</label>
                           </form>
@@ -314,6 +320,7 @@ import { useSiteSettingsStore } from '../stores/siteSettingsStore'
 import { useCategoryStore } from '../stores/categoryStore'
 import { toSlug } from '../utils/slug'
 import { getActiveGiftBoxes, getActiveGiftCards } from '../services/giftService'
+import { subscribeToNewsletter, buildSubscribePayload } from '../services/newsletterService'
 import axios from 'axios'
 
 const route = useRoute()
@@ -323,7 +330,7 @@ const wishlistStore = useWishlistStore()
 const currencyStore = useCurrencyStore()
 const siteSettings = useSiteSettingsStore()
 const categoryStore = useCategoryStore()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const socialLinks = computed(() => ({
   facebook: siteSettings.facebookLink,
@@ -343,6 +350,12 @@ const giftCards = ref([])
 const isLoading = ref(false)
 const error = ref('')
 const variantSelectionError = ref('')
+
+// Newsletter subscription
+const newsletterEmail = ref('')
+const newsletterSubmitting = ref(false)
+const newsletterMessage = ref('')
+const newsletterMessageType = ref('')
 
 const product = ref({
   id: '',
@@ -436,8 +449,8 @@ const stockMessage = computed(() => {
   if (product.value.trackInventory === false) return 'Made to order (inventory not tracked)'
   if (product.value.allowBackorder) {
     return availableStock.value > 0
-      ? `In stock (${availableStock.value} available), backorder supported`
-      : 'Backorder available (ships when restocked)'
+      ? `In stock (${availableStock.value} available)`
+      : 'Pre-Order'
   }
   if (availableStock.value > 0) return `In stock (${availableStock.value} available)`
   return 'Out of stock'
@@ -654,6 +667,33 @@ watch(() => route.params.id, () => {
   removeCarouselListener()
   fetchProduct()
 })
+
+async function onNewsletterSubmit() {
+  const email = newsletterEmail.value.trim()
+  if (!email) return
+
+  newsletterMessage.value = ''
+  newsletterSubmitting.value = true
+
+  try {
+    const payload = buildSubscribePayload({ email, name: '' })
+    await subscribeToNewsletter(payload)
+    newsletterMessage.value = 'Thank you for subscribing to our newsletter!'
+    newsletterMessageType.value = 'alert-success'
+    newsletterEmail.value = ''
+  } catch (error) {
+    const backendMsg = error?.response?.data?.message || error?.response?.data?.error
+    if (backendMsg && backendMsg.toLowerCase().includes('already')) {
+      newsletterMessage.value = 'This email is already subscribed to our newsletter.'
+      newsletterMessageType.value = 'alert-info'
+    } else {
+      newsletterMessage.value = 'Subscription failed. Please try again later.'
+      newsletterMessageType.value = 'alert-danger'
+    }
+  } finally {
+    newsletterSubmitting.value = false
+  }
+}
 
 function ensureVariantSelection() {
   if (requiresVariantSelection.value && !selectedVariant.value) {

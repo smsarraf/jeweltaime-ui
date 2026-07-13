@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const CACHE_KEY = 'jeweltaime_site_settings'
 
 export const useSiteSettingsStore = defineStore('siteSettings', {

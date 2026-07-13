@@ -83,8 +83,8 @@ const giftCardServicePrice = 5  // Line 444
     "name": "Premium Gift Box",
     "description": "Elegant packaging",
     "priceUsd": 12.99,
-    "imageUrl": "http://localhost:8081/uploads/...",
-    "videoUrl": "http://localhost:8081/uploads/...",
+    "imageUrl": "http://localhost:3000/uploads/...",
+    "videoUrl": "http://localhost:3000/uploads/...",
     "isActive": true
   },
   {
@@ -105,8 +105,8 @@ const giftCardServicePrice = 5  // Line 444
   "id": 1,
   "name": "Gift Card",
   "priceUsd": 5.00,
-  "imageUrl": "http://localhost:8081/uploads/...",
-  "videoUrl": "http://localhost:8081/uploads/...",
+  "imageUrl": "http://localhost:3000/uploads/...",
+  "videoUrl": "http://localhost:3000/uploads/...",
   "isActive": true
 }
 ```

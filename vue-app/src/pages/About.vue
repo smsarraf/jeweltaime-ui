@@ -134,8 +134,8 @@
                               </div>
                           </div>
                           <div class="px-3 px-lg-6">
-                              <h3 class="lcHeading fw-normal mb-1">Tanveer Sadhani</h3>
-                              <h4 class="lcSubheading fw-light mb-0">Founder | CEO — Antwerp</h4>
+                              <h3 class="lcHeading fw-normal mb-1">Monali Shah</h3>
+                              <h4 class="lcSubheading fw-light mb-0">Founder </h4>
                           </div>
                       </article>
                   </div><div class="col-12 col-sm-6 col-lg-4 col-xl-3">
@@ -163,8 +163,8 @@
                               </div>
                           </div>
                           <div class="px-3 px-lg-6">
-                              <h3 class="lcHeading fw-normal mb-1">Naitik Shah</h3>
-                              <h4 class="lcSubheading fw-light mb-0">Founder | Global Operations Director | COO — Hong Kong</h4>
+                              <h3 class="lcHeading fw-normal mb-1">Jinal Shah</h3>
+                              <h4 class="lcSubheading fw-light mb-0">Founder </h4>
                           </div>
                       </article>
                   </div>
@@ -193,8 +193,8 @@
                               </div>
                           </div>
                           <div class="px-3 px-lg-6">
-                              <h3 class="lcHeading fw-normal mb-1">Siddharth Saraf</h3>
-                              <h4 class="lcSubheading fw-light mb-0">Founder & CTO — Hong Kong</h4>
+                              <h3 class="lcHeading fw-normal mb-1">Rashmi Saraf</h3>
+                              <h4 class="lcSubheading fw-light mb-0">Founder </h4>
                           </div>
                       </article>
                   </div>
@@ -296,11 +296,17 @@
                   <div class="col-12 col-md-10 offset-md-1 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3">
                       <div class="px-xl-6 px-xxl-16">
                           <h3 class="sabHeading fw-normal mb-3">Subscribe Newsletter</h3>
-                          <form action="#" class="subscribeForm">
+                          <form action="#" class="subscribeForm" @submit.prevent="onNewsletterSubmit">
                               <label for="signup-email" class="d-block mb-6">Sign up to our Newsletter and get the discount code.</label>
+                              <div v-if="newsletterMessage" class="alert" :class="newsletterMessageType" role="alert">
+                                <small>{{ newsletterMessage }}</small>
+                              </div>
                               <div class="d-flex flex-column flex-sm-row gap-2">
-                                  <input id="signup-email" type="email" class="form-control bg-light" placeholder="Email address">
-                                  <button type="submit" class="btn btnTheme">SUBSCRIBE</button>
+                                  <input id="signup-email" type="email" class="form-control bg-light" placeholder="Email address" v-model="newsletterEmail" required>
+                                  <button type="submit" class="btn btnTheme" :disabled="newsletterSubmitting">
+                                    <span v-if="newsletterSubmitting"><span class="spinner-border spinner-border-sm me-1" role="status"></span>Subscribing...</span>
+                                    <span v-else>SUBSCRIBE</span>
+                                  </button>
                               </div>
                           </form>
                       </div>
@@ -346,7 +352,41 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useSiteSettingsStore } from '../stores/siteSettingsStore'
+import { subscribeToNewsletter, buildSubscribePayload } from '../services/newsletterService'
 
 const siteSettings = useSiteSettingsStore()
+
+const newsletterEmail = ref('')
+const newsletterSubmitting = ref(false)
+const newsletterMessage = ref('')
+const newsletterMessageType = ref('')
+
+async function onNewsletterSubmit() {
+  const email = newsletterEmail.value.trim()
+  if (!email) return
+
+  newsletterMessage.value = ''
+  newsletterSubmitting.value = true
+
+  try {
+    const payload = buildSubscribePayload({ email, name: '' })
+    await subscribeToNewsletter(payload)
+    newsletterMessage.value = 'Thank you for subscribing to our newsletter!'
+    newsletterMessageType.value = 'alert-success'
+    newsletterEmail.value = ''
+  } catch (error) {
+    const backendMsg = error?.response?.data?.message || error?.response?.data?.error
+    if (backendMsg && backendMsg.toLowerCase().includes('already')) {
+      newsletterMessage.value = 'This email is already subscribed to our newsletter.'
+      newsletterMessageType.value = 'alert-info'
+    } else {
+      newsletterMessage.value = 'Subscription failed. Please try again later.'
+      newsletterMessageType.value = 'alert-danger'
+    }
+  } finally {
+    newsletterSubmitting.value = false
+  }
+}
 </script>

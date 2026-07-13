@@ -47,7 +47,7 @@
 <script setup>
 import { computed } from 'vue'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const googleAuthUrl = computed(() => `${API_BASE}/api/auth/social/google`)
 const facebookAuthUrl = computed(() => `${API_BASE}/api/auth/social/facebook`)

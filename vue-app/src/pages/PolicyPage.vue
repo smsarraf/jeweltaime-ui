@@ -49,7 +49,7 @@ const content = ref('')
 const loading = ref(true)
 const error = ref(false)
 
-const ERP_API = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const ERP_API = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const LEGACY_API = import.meta.env.VITE_LEGACY_API_URL || 'http://localhost:3001'
 
 // Convert kebab-case slugs (legacy) to UPPER_SNAKE_CASE (ERP API format)

@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 export const AUTH_CHANGED_EVENT = 'auth-changed'
 
 // Track if we're currently refreshing to avoid infinite loops

@@ -153,6 +153,20 @@
     </div>
 
     <div class="form-group mb-4">
+      <div class="form-check mb-3">
+        <input
+          id="reg-newsletter"
+          type="checkbox"
+          class="form-check-input"
+          v-model="subscribeNewsletter"
+        >
+        <label class="form-check-label fw-light" for="reg-newsletter">
+          Subscribe to our newsletter and receive exclusive offers, new arrivals, and jewellery care tips.
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group mb-4">
       <button type="submit" class="btn btn-dark fw-medium text-uppercase w-100 py-3" :disabled="isSubmitting" :aria-busy="isSubmitting">
         <span v-if="isSubmitting"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...</span>
         <span v-else>Register</span>
@@ -166,6 +180,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { mapRegistrationApiError, registerAccount } from '../services/registrationService'
 import { validateRegistrationForm } from '../services/registrationValidation'
 import { useLocationStore } from '../stores/locationStore'
+import { subscribeToNewsletter, buildSubscribePayload } from '../services/newsletterService'
 
 const props = defineProps({
   mode: {
@@ -192,6 +207,7 @@ const form = reactive({
     cityId: null
   }
 })
+const subscribeNewsletter = ref(false)
 const isSubmitting = ref(false)
 const apiError = ref('')
 const errors = ref({})
@@ -259,6 +275,23 @@ async function onSubmit() {
   isSubmitting.value = true
   try {
     const response = await registerAccount(toDto())
+
+    // Subscribe to newsletter if the user opted in
+    if (subscribeNewsletter.value) {
+      try {
+        const subscriberType = props.mode === 'B2B_USER' ? 'B2B_USER' : 'USER'
+        await subscribeToNewsletter({
+          email: form.email.trim(),
+          name: form.fullName.trim() || form.email.trim(),
+          source: 'WEBSITE',
+          subscriberType
+        })
+      } catch (newsletterError) {
+        // Newsletter subscription is non-blocking - log but don't show error
+        console.warn('Newsletter subscription after registration failed:', newsletterError)
+      }
+    }
+
     emit('success', {
       mode: props.mode,
       response

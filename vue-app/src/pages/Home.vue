@@ -147,7 +147,7 @@ import ProductCard from '../components/ProductCard.vue'
 import { useCategoryStore } from '../stores/categoryStore'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const categoryStore = useCategoryStore()
 
 const banners = ref([])

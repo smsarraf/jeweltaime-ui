@@ -307,7 +307,7 @@ import { useModal } from '../composables/useModal'
 const router = useRouter()
 const quoteStore = useQuoteStore()
 const categoryStore = useCategoryStore()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const { showModal } = useModal()
 
 const viewMode = ref('grid')

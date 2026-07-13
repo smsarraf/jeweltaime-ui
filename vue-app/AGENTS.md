@@ -6,7 +6,7 @@ JewelTime UI is a comprehensive e-commerce jewelry store application consisting 
 - **Static HTML pages** - Marketing/brochure pages (home, about, blog, shop, cart, checkout, etc.)
 - **Vue 3 Frontend (vue-app/)** - Full-featured SPA for the storefront
 - **Express.js Backend** - Legacy API server (server/)
-- **ERP Backend (Primary)** - Headless CMS and commerce API at `http://localhost:8081`
+- **ERP Backend (Primary)** - Headless CMS and commerce API at `http://localhost:3000`
 
 ## Vue App Architecture
 
@@ -66,9 +66,9 @@ vue-app/
 ### Required Environment Variables
 Create `.env` from `.env.example`:
 ```env
-VITE_API_BASE_URL=http://localhost:8081/api/v1
+VITE_API_BASE_URL=http://localhost:3000/api/v1
 VITE_APP_TITLE=JewelTime
-VITE_UPLOAD_BASE_URL=http://localhost:8081
+VITE_UPLOAD_BASE_URL=http://localhost:3000
 ```
 
 ### Available Scripts
@@ -84,11 +84,11 @@ npm run preview  # Preview production build
 
 ### Base URL
 ```
-http://localhost:8081/api/v1
+http://localhost:3000/api/v1
 ```
 
 ### Swagger Documentation
-Full interactive API docs: `http://localhost:8081/swagger-ui/index.html`
+Full interactive API docs: `http://localhost:3000/swagger-ui/index.html`
 
 ### API Categories
 
@@ -375,7 +375,7 @@ npm run dev  # Starts dev server at http://localhost:5173
 ```
 
 ### 3. Making API Changes
-1. Check Swagger docs at `http://localhost:8081/swagger-ui`
+1. Check Swagger docs at `http://localhost:3000/swagger-ui`
 2. Update/create Pinia stores to match API
 3. Update/create API utility functions
 4. Use stores in components
@@ -487,7 +487,7 @@ async function fetchProducts(params) {
 ## CMS Integration Notes
 
 ### Headless CMS Features
-The ERP backend at `http://localhost:8081` provides full CMS capabilities:
+The ERP backend at `http://localhost:3000` provides full CMS capabilities:
 - **Product Management**: CRUD operations, variants, media, stock levels
 - **Category Hierarchy**: Nested categories with parent-child relationships
 - **Banners/Carousels**: Date-ranged banner management with priority ordering
@@ -505,7 +505,7 @@ The ERP backend at `http://localhost:8081` provides full CMS capabilities:
 ### Image/File Handling
 - Upload endpoint: `POST /upload?subFolder=general`
 - Upload variant media: `POST /upload/variant/{variantId}`
-- Public access: `http://localhost:8081/uploads/...`
+- Public access: `http://localhost:3000/uploads/...`
 - Store returned URLs in product media fields
 
 ---
@@ -525,7 +525,7 @@ The ERP backend at `http://localhost:8081` provides full CMS capabilities:
 
 ## Resources
 
-- **API Documentation**: `http://localhost:8081/swagger-ui/index.html`
+- **API Documentation**: `http://localhost:3000/swagger-ui/index.html`
 - **OpenAPI Spec**: `vue-app/api-docs.json`
 - **Vue 3 Docs**: https://vuejs.org/guide/introduction.html
 - **Pinia Docs**: https://pinia.vuejs.org/

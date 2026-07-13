@@ -298,7 +298,7 @@
     const currencyStore = useCurrencyStore()
     const categoryStore = useCategoryStore()
     const siteSettings = useSiteSettingsStore()
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
     const { isLoggedIn, user: userData } = useAuthSession()
 
