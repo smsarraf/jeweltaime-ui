@@ -38,8 +38,8 @@ GET /api/v1/gift-boxes/active
     "name": "Premium Gift Box",
     "description": "Elegant premium packaging with tissue paper",
     "priceUsd": 12.99,
-    "imageUrl": "http://localhost:8081/uploads/gift-boxes/premium.jpg",
-    "videoUrl": "http://localhost:8081/uploads/gift-boxes/premium-demo.mp4",
+    "imageUrl": "http://localhost:3000/uploads/gift-boxes/premium.jpg",
+    "videoUrl": "http://localhost:3000/uploads/gift-boxes/premium-demo.mp4",
     "isActive": true,
     "createdAt": "2024-01-15T10:00:00Z"
   },
@@ -48,7 +48,7 @@ GET /api/v1/gift-boxes/active
     "name": "Standard Gift Box",
     "description": "Standard white box with basic packaging",
     "priceUsd": 5.99,
-    "imageUrl": "http://localhost:8081/uploads/gift-boxes/standard.jpg",
+    "imageUrl": "http://localhost:3000/uploads/gift-boxes/standard.jpg",
     "videoUrl": null,
     "isActive": true,
     "createdAt": "2024-01-15T10:00:00Z"
@@ -68,8 +68,8 @@ GET /api/v1/gift-cards/active
   "name": "Gift Card",
   "description": "Digital or physical gift card",
   "priceUsd": 5.00,
-  "imageUrl": "http://localhost:8081/uploads/gift-cards/card.jpg",
-  "videoUrl": "http://localhost:8081/uploads/gift-cards/how-to-use.mp4",
+  "imageUrl": "http://localhost:3000/uploads/gift-cards/card.jpg",
+  "videoUrl": "http://localhost:3000/uploads/gift-cards/how-to-use.mp4",
   "isActive": true,
   "createdAt": "2024-01-15T10:00:00Z"
 }
@@ -181,7 +181,7 @@ To change, update the constant and ensure it matches backend pricing.
 ### Media URLs
 - All URLs support JPEG, PNG, GIF, WebP for images
 - Video formats: MP4, WebM, OGG
-- URLs are constructed from: `http://localhost:8081/uploads/...`
+- URLs are constructed from: `http://localhost:3000/uploads/...`
 
 ## Error Handling
 
@@ -217,10 +217,10 @@ To change, update the constant and ensure it matches backend pricing.
 ### Sample cURL Commands
 ```bash
 # Get active gift boxes
-curl http://localhost:8081/api/v1/gift-boxes/active
+curl http://localhost:3000/api/v1/gift-boxes/active
 
 # Get active gift cards
-curl http://localhost:8081/api/v1/gift-cards/active
+curl http://localhost:3000/api/v1/gift-cards/active
 ```
 
 ## Troubleshooting

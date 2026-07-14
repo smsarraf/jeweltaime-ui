@@ -141,7 +141,7 @@ import { useModal } from '../composables/useModal'
 const route = useRoute()
 const router = useRouter()
 const quoteStore = useQuoteStore()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const { showModal } = useModal()
 
 const product = ref(null)

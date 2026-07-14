@@ -46,7 +46,7 @@ const router = useRouter()
 const route = useRoute()
 const currencyStore = useCurrencyStore()
 const wishlistStore = useWishlistStore()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const isProcessing = ref(true)
 const error = ref(false)

@@ -322,7 +322,7 @@ import { useModal } from '../composables/useModal'
 
 const router = useRouter()
 const locationStore = useLocationStore()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const { confirmModal } = useModal()
 
 const { isLoggedIn, user: userData } = useAuthSession()

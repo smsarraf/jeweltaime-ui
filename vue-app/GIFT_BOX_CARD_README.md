@@ -169,7 +169,7 @@ const giftCardServicePrice = 5  // Change as needed
 ### API Base URL
 Uses environment variable:
 ```javascript
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 ```
 
 ## 🎨 Customization Options

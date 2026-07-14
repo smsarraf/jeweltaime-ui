@@ -2,7 +2,7 @@ const runtimeApiBase = (typeof import.meta !== 'undefined' && import.meta.env &&
   ? import.meta.env.VITE_API_URL
   : null
 
-export const API_BASE = runtimeApiBase || 'http://localhost:8081'
+export const API_BASE = runtimeApiBase || 'http://localhost:3000'
 
 export function authHeaders() {
   const token = localStorage.getItem('authToken')

@@ -212,7 +212,10 @@ const getItemLineTotal = (item) => (Number(item.price || 0) + getItemAddonUnit(i
 
 const stockMessage = (item) => {
   if (item.trackInventory === false) return 'Made to order (inventory not tracked)'
-  if (item.allowBackorder) return 'Backorder allowed'
+  if (item.allowBackorder) {
+    const qty = Number(item.availableStock || 0)
+    return qty > 0 ? `In stock (${qty})` : 'Pre-Order'
+  }
   const qty = Number(item.availableStock || 0)
   return qty > 0 ? `In stock (${qty})` : 'Out of stock'
 }

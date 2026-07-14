@@ -88,7 +88,7 @@ const route = useRoute()
 const currencyStore = useCurrencyStore()
 const wishlistStore = useWishlistStore()
 const locationStore = useLocationStore()
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const email = ref('')
 const password = ref('')

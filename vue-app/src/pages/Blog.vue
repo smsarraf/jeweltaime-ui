@@ -86,7 +86,7 @@ import { ref, onMounted } from 'vue'
 import ImageWithSkeleton from '../components/ImageWithSkeleton.vue'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const blogPosts = ref([])
 const loading = ref(true)

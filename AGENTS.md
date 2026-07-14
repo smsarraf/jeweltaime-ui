@@ -3,7 +3,7 @@
 ## Scope and Big Picture
 - This repo has **three parts**: static HTML/CSS pages at root (`home.html`, `shop-right-sidebar.html`), a legacy Express server in `server/`, and the active Vue 3 SPA in `vue-app/`.
 - The Vue app is the main product surface. Start there unless a task explicitly targets legacy static pages or OAuth/dev middleware.
-- Runtime flow is: Vue UI (`vue-app/src`) -> Axios client (`vue-app/src/utils/auth.js`) -> ERP/API backend (`VITE_API_URL`, default `http://localhost:8081/api/v1`) and selected local Express routes.
+- Runtime flow is: Vue UI (`vue-app/src`) -> Axios client (`vue-app/src/utils/auth.js`) -> ERP/API backend (`VITE_API_URL`, default `http://localhost:3000/api/v1`) and selected local Express routes.
 - The server (`server/index.js`) mainly provides auth/social routes, Airwallex endpoints, and API proxy-style utilities under `server/routes/` + `server/services/`.
 
 ## What To Read First
