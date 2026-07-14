@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- ========================
+       MAIN STATIC PAGES
+       ======================== -->
+  <url>
+    <loc>https://jeweltaime.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jeweltaime.com/products</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jeweltaime.com/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jeweltaime.com/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jeweltaime.com/blog</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jeweltaime.com/policies/terms-and-conditions</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jeweltaime.com/policies/privacy-policy</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+
+  <!-- ========================
+       DYNAMIC PAGES
+       ======================== -->
+  <!--
+    The following URLs are dynamic and should be generated programmatically
+    via the ERP backend API (http://localhost:3000/api/v1) at build time
+    or through a server-rendered sitemap endpoint:
+
+    PRODUCT DETAILS — GET /api/v1/products
+      <url>
+        <loc>https://jeweltaime.com/products/{id}/{slug}</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+      </url>
+
+    CATEGORY PAGES — GET /api/v1/categories
+      <url>
+        <loc>https://jeweltaime.com/category/{slug}</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+      </url>
+
+    BLOG POSTS — GET /api/v1/blog (or equivalent)
+      <url>
+        <loc>https://jeweltaime.com/blog/{slug}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+      </url>
+
+    POLICY PAGES — e.g., privacy-policy, terms-of-service, returns, shipping
+      <url>
+        <loc>https://jeweltaime.com/policies/{slug}</loc>
+        <changefreq>yearly</changefreq>
+        <priority>0.4</priority>
+      </url>
+
+    Tip: Use a sitemap index file (sitemap-index.xml) pointing to this
+    static sitemap and a dynamically-generated sitemap for product/category/
+    blog/policy URLs. Example index:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <sitemap>
+        <loc>https://jeweltaime.com/sitemap.xml</loc>
+      </sitemap>
+      <sitemap>
+        <loc>https://jeweltaime.com/sitemap-dynamic.xml</loc>
+      </sitemap>
+    </sitemapindex>
+  -->
+
+</urlset>
