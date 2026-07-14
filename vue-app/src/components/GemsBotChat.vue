@@ -298,7 +298,8 @@ function scrollToBottom() {
 }
 
 function send(overrideText) {
-  const text = (overrideText || messageText.value).trim()
+  const raw = typeof overrideText === 'string' ? overrideText : messageText.value
+  const text = raw.trim()
   if (!text || store.loading) return
   messageText.value = ''
   store.sendUserMessage(text)

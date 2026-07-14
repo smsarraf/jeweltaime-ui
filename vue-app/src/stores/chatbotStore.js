@@ -125,6 +125,8 @@ export const useChatbotStore = defineStore('chatbot', {
       if (!text || !text.trim()) return
       const trimmed = text.trim()
       this.error = null
+      // Set loading immediately to prevent duplicate sends
+      this.loading = true
 
       // Add user message to UI immediately
       const userMsg = {
@@ -145,7 +147,6 @@ export const useChatbotStore = defineStore('chatbot', {
         }
       }
 
-      this.loading = true
       try {
         const data = await sendMessage(payload)
         this.sessionId = data.sessionId
@@ -191,11 +192,23 @@ export const useChatbotStore = defineStore('chatbot', {
           this.error = 'Session expired. Please log in again.'
           this._addStatusMessage('⚠️ Session expired. Please log in again.')
         } else if (err.response?.status === 404) {
-          this.error = 'Session not found. Starting a new conversation.'
-          this._addStatusMessage('This conversation has expired. Start a new one?')
+          this.error = 'Service not available yet.'
+          this._addStatusMessage('⚠️ Chat service is not available yet. Please try again later.')
+        } else if (err.response?.status >= 500) {
+          this.error = 'Server error.'
+          this._addStatusMessage('⚠️ Something went wrong on our end. Please try again later.')
+        } else if (!err.response) {
+          // Network error or server unreachable
+          this.error = 'Cannot reach chat service.'
+          this._addStatusMessage('⚠️ Unable to connect to the chat service. Please check your connection and try again.')
         } else {
-          this.error = 'Connection lost. Please try again.'
-          this._addStatusMessage('⚠️ Connection lost. Retrying...')
+          this.error = 'Something went wrong.'
+          this._addStatusMessage('⚠️ Something went wrong. Please try again.')
+        }
+        // Remove the user message that failed to send
+        const lastMsg = this.messages[this.messages.length - 1]
+        if (lastMsg && lastMsg.sender === 'USER' && lastMsg.messageText === trimmed) {
+          this.messages.pop()
         }
       } finally {
         this.loading = false
@@ -242,15 +255,23 @@ export const useChatbotStore = defineStore('chatbot', {
           }
           if (data.messages && data.messages.length > 0) {
             for (const msg of data.messages) {
-              this.messages.push({
-                id: msg.id,
-                sender: msg.sender,
-                messageText: msg.messageText,
-                intent: msg.intent,
-                createdAt: msg.createdAt
-              })
-              if (!this.isOpen) {
-                this.unreadCount++
+              // Skip if message already exists (by id or content+sender match)
+              const isDuplicate = this.messages.some(
+                m => m.id === msg.id ||
+                (m.sender === msg.sender && m.messageText === msg.messageText &&
+                 Math.abs(new Date(m.createdAt) - new Date(msg.createdAt)) < 2000)
+              )
+              if (!isDuplicate) {
+                this.messages.push({
+                  id: msg.id,
+                  sender: msg.sender,
+                  messageText: msg.messageText,
+                  intent: msg.intent,
+                  createdAt: msg.createdAt
+                })
+                if (!this.isOpen) {
+                  this.unreadCount++
+                }
               }
             }
             this._updateLastMessageId()

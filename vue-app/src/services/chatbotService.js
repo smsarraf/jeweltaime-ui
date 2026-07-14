@@ -1,7 +1,6 @@
 import axios from 'axios'
-import { isAuthenticated, getToken } from '../utils/auth.js'
+import { API_BASE, authHeaders } from './apiConfig.js'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const CHATBOT_BASE = `${API_BASE}/api/v1/chatbot`
 
 /**
@@ -10,11 +9,9 @@ const CHATBOT_BASE = `${API_BASE}/api/v1/chatbot`
  * @returns {Promise<Object>} response data
  */
 export async function sendMessage(payload) {
-  const headers = {}
-  if (isAuthenticated()) {
-    headers.Authorization = `Bearer ${getToken()}`
-  }
-  const response = await axios.post(`${CHATBOT_BASE}/message`, payload, { headers })
+  const response = await axios.post(`${CHATBOT_BASE}/message`, payload, {
+    headers: authHeaders()
+  })
   return response.data
 }
 
@@ -25,15 +22,11 @@ export async function sendMessage(payload) {
  * @returns {Promise<Object>} response data
  */
 export async function pollMessages(sessionId, lastMessageId) {
-  const headers = {}
-  if (isAuthenticated()) {
-    headers.Authorization = `Bearer ${getToken()}`
-  }
   const response = await axios.get(
     `${CHATBOT_BASE}/sessions/${sessionId}/poll`,
     {
       params: { afterMessageId: lastMessageId },
-      headers,
+      headers: authHeaders(),
       timeout: 30000
     }
   )
@@ -45,7 +38,9 @@ export async function pollMessages(sessionId, lastMessageId) {
  * @returns {Promise<Object>} response data
  */
 export async function getSessions() {
-  const response = await axios.get(`${CHATBOT_BASE}/sessions`)
+  const response = await axios.get(`${CHATBOT_BASE}/sessions`, {
+    headers: authHeaders()
+  })
   return response.data
 }
 
@@ -55,6 +50,8 @@ export async function getSessions() {
  * @returns {Promise<Object>} response data
  */
 export async function getSession(sessionId) {
-  const response = await axios.get(`${CHATBOT_BASE}/sessions/${sessionId}`)
+  const response = await axios.get(`${CHATBOT_BASE}/sessions/${sessionId}`, {
+    headers: authHeaders()
+  })
   return response.data
 }
