@@ -16,7 +16,7 @@
 
     <!-- Chat Panel -->
     <transition name="gemsbot-panel">
-      <div v-if="store.isOpen" class="gemsbot-panel" @keydown.escape="store.closeChat()">
+      <div v-if="store.isOpen" class="gemsbot-panel" :class="{ 'gemsbot-maximized': isMaximized }" @keydown.escape="store.closeChat()">
         <!-- Header -->
         <div class="gemsbot-header">
           <div class="gemsbot-header-info">
@@ -30,6 +30,14 @@
             </div>
           </div>
           <div class="gemsbot-header-actions">
+            <button
+              class="gemsbot-header-btn"
+              @click="toggleMaximize"
+              :aria-label="isMaximized ? 'Restore chat' : 'Maximize chat'"
+              :title="isMaximized ? 'Restore' : 'Maximize'"
+            >
+              {{ isMaximized ? '❐' : '□' }}
+            </button>
             <button
               class="gemsbot-header-btn"
               @click="store.closeChat()"
@@ -220,6 +228,12 @@ const guestNameInput = ref('')
 const guestEmailInput = ref('')
 const guestEmailRef = ref(null)
 const showScrollBtn = ref(false)
+const isMaximized = ref(false)
+
+function toggleMaximize() {
+  isMaximized.value = !isMaximized.value
+  nextTick(scrollToBottom)
+}
 
 // Quick action chips
 const quickChips = [
@@ -443,6 +457,16 @@ function extractProductCards(text) {
   position: absolute;
   bottom: 0;
   right: 0;
+}
+
+/* Panel maximized */
+.gemsbot-maximized {
+  width: 90vw;
+  height: 85vh;
+  max-width: 900px;
+  bottom: 24px;
+  right: 24px;
+  border-radius: 16px;
 }
 
 /* Panel transition */

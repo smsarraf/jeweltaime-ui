@@ -744,9 +744,9 @@ async function loadGiftOptions() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   categoryStore.loadCategories()
-  fetchProduct()
+  await fetchProduct()
   loadGiftOptions()
   loadSizeGuides()
   initCarouselListener()
@@ -764,9 +764,9 @@ watch(() => isLoading.value, (newVal) => {
   }
 })
 
-watch(() => route.params.id, () => {
+watch(() => route.params.id, async () => {
   removeCarouselListener()
-  fetchProduct()
+  await fetchProduct()
   loadSizeGuides()
 })
 

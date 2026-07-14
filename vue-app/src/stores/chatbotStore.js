@@ -188,6 +188,11 @@ export const useChatbotStore = defineStore('chatbot', {
         }
       } catch (err) {
         console.error('GemsBot send error:', err)
+        // Remove the user message that failed to send
+        const lastMsg = this.messages[this.messages.length - 1]
+        if (lastMsg && lastMsg.sender === 'USER' && lastMsg.messageText === trimmed) {
+          this.messages.pop()
+        }
         if (err.response?.status === 401) {
           this.error = 'Session expired. Please log in again.'
           this._addStatusMessage('⚠️ Session expired. Please log in again.')
@@ -204,11 +209,6 @@ export const useChatbotStore = defineStore('chatbot', {
         } else {
           this.error = 'Something went wrong.'
           this._addStatusMessage('⚠️ Something went wrong. Please try again.')
-        }
-        // Remove the user message that failed to send
-        const lastMsg = this.messages[this.messages.length - 1]
-        if (lastMsg && lastMsg.sender === 'USER' && lastMsg.messageText === trimmed) {
-          this.messages.pop()
         }
       } finally {
         this.loading = false
@@ -316,9 +316,14 @@ export const useChatbotStore = defineStore('chatbot', {
     },
 
     /**
-     * Add a centered status message
+     * Add a centered status message (deduplicates identical consecutive messages)
      */
     _addStatusMessage(text) {
+      // Don't add if the last message is the same status text
+      const last = this.messages[this.messages.length - 1]
+      if (last && last.sender === 'STATUS' && last.messageText === text) {
+        return
+      }
       this.messages.push({
         id: `status-${Date.now()}`,
         sender: 'STATUS',

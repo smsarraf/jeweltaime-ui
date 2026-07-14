@@ -166,8 +166,8 @@
                                         <router-link class="nav-link text-uppercase fw-medium" to="/contact">Contact Us</router-link>
                                     </li>
                                     <li class="nav-item" v-if="!isLoggedIn">
-                                        <router-link class="nav-link text-uppercase fw-medium bulk-order-blink" to="/signin?redirect=/b2b/products">
-                                            <i class="fa-solid fa-truck me-1"></i>Bulk Order
+                                        <router-link class="nav-link text-uppercase fw-medium" to="/signin?redirect=/b2b/products">
+                                            <i class="fa-solid me-1"></i>Bulk Order
                                         </router-link>
                                     </li>
                                 </ul>
