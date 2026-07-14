@@ -31,6 +31,17 @@
           <div class="col-12 col-lg-8">
             <div class="border p-4 mb-4">
               <h3 class="h5 mb-3">1. Address</h3>
+              <!-- Guest user fields -->
+              <div v-if="!isLoggedIn" class="row g-3 mb-3">
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">Email Address *</label>
+                  <input type="email" class="form-control rounded-0" v-model="guestEmail" placeholder="your@email.com">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">Full Name *</label>
+                  <input type="text" class="form-control rounded-0" v-model="guestFullName" placeholder="Your full name">
+                </div>
+              </div>
               <div v-if="addressesLoading" class="row g-2">
                 <div v-for="i in 2" :key="`addr-skeleton-${i}`" class="col-12"><div class="placeholder-glow border p-3"><span class="placeholder col-12"></span></div></div>
               </div>
@@ -193,7 +204,7 @@ import { useCartStore } from '../stores/cartStore'
 import { useCurrencyStore } from '../stores/currencyStore'
 import { useLocationStore } from '../stores/locationStore'
 import axios from 'axios'
-import { API_BASE, getCurrentUserId } from '../services/apiConfig'
+import { API_BASE, getCurrentUserId, isAuthenticated } from '../services/apiConfig'
 import { getUserAddresses } from '../services/addressService'
 import { calculateShippingRates, getActiveShippers, getShipperMethods, previewShippingCost, getCountryTaxRate } from '../services/shippingService'
 
@@ -230,6 +241,9 @@ const voucherSuccess = ref(false)
 const voucherMessage = ref('')
 const discountAmount = ref(0)
 const taxAmount = ref(0)
+const isLoggedIn = ref(false)
+const guestEmail = ref('')
+const guestFullName = ref('')
 
 const PAYMENT_TERM_ID = 'IMMEDIATE'
 const PAYMENT_GATEWAY_ID = 1
@@ -304,6 +318,9 @@ const canSubmit = computed(() => {
   if (shippingMethods.value.length > 0 && !selectedShippingMethodId.value) return false
   if (!shippingAddressText.value) return false
   if (totalsLoading.value || !!totalsError.value) return false
+  if (!isLoggedIn.value) {
+    if (!guestEmail.value.trim() || !guestFullName.value.trim()) return false
+  }
   return cartStore.items.length > 0
 })
 
@@ -330,8 +347,12 @@ function normalizeCheckoutError(error) {
 async function loadAddresses() {
   addressesLoading.value = true
   addressesError.value = ''
+  const userId = getCurrentUserId()
+  if (!userId) {
+    addressesLoading.value = false
+    return
+  }
   try {
-    const userId = getCurrentUserId()
     savedAddresses.value = await getUserAddresses(userId)
     const def = savedAddresses.value.find(a => a.isDefault)
     selectedAddressId.value = def?.id || null
@@ -688,16 +709,9 @@ async function retryTotals() {
 
 function buildOrderPayload() {
   const userId = getCurrentUserId()
-  return {
-    customerId: userId || 1,
-    userAddressId: selectedAddressId.value || undefined,
-    shippingAddress: selectedAddressId.value ? undefined : {
-      street: manualAddress.street,
-      city: String(manualAddress.cityId || ''),
-      state: String(manualAddress.stateId || ''),
-      zipCode: manualAddress.zipCode,
-      country: String(manualAddress.countryId || '')
-    },
+  const isAuth = isAuthenticated() && !!userId
+
+  const base = {
     countryId: selectedCountryId.value,
     stateId: selectedStateId.value || undefined,
     cityId: selectedCityId.value || undefined,
@@ -708,6 +722,7 @@ function buildOrderPayload() {
     shipperId: Number(selectedShipperId.value),
     shippingMatrixId: selectedShippingMethodId.value ? Number(selectedShippingMethodId.value) : undefined,
     orderWeightKg: Number(orderWeightKg.value || 0),
+    source: 'WEBSITE',
     notes: '',
     items: cartStore.items.map(item => ({
       productId: Number(item.id),
@@ -716,6 +731,36 @@ function buildOrderPayload() {
       giftCardId: item.giftCardId || undefined,
       giftNote: item.giftNote || undefined
     }))
+  }
+
+  if (isAuth) {
+    return {
+      ...base,
+      customerId: userId,
+      userAddressId: selectedAddressId.value || undefined,
+      shippingAddress: selectedAddressId.value ? undefined : {
+        street: manualAddress.street,
+        city: String(manualAddress.cityId || ''),
+        state: String(manualAddress.stateId || ''),
+        zipCode: manualAddress.zipCode,
+        country: String(manualAddress.countryId || '')
+      }
+    }
+  }
+
+  return {
+    ...base,
+    guestInfo: {
+      email: guestEmail.value.trim(),
+      fullName: guestFullName.value.trim()
+    },
+    shippingAddress: {
+      street: manualAddress.street,
+      city: String(manualAddress.cityId || ''),
+      state: String(manualAddress.stateId || ''),
+      zipCode: manualAddress.zipCode,
+      country: String(manualAddress.countryId || '')
+    }
   }
 }
 
@@ -796,6 +841,7 @@ watch(selectedStateId, (stateId) => {
 })
 
 onMounted(() => {
+  isLoggedIn.value = isAuthenticated()
   if (route.query.payment_status || route.query.status) {
     const query = new URLSearchParams(window.location.search).toString()
     router.replace(`/payment-success${query ? `?${query}` : ''}`)

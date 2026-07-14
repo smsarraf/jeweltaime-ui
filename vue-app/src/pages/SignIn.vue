@@ -58,8 +58,6 @@
                 </div>
               </form>
 
-              <SocialLoginButtons />
-
               <p class="text-center mb-0">
                 Don't have an account?
                 <router-link to="/register/user" class="text-decoration-none fw-medium">Create one here</router-link>
@@ -75,7 +73,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import Captcha from '../components/Captcha.vue'
-import SocialLoginButtons from '../components/SocialLoginButtons.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCurrencyStore } from '../stores/currencyStore'
 import { useWishlistStore } from '../stores/wishlistStore'

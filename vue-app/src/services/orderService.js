@@ -1,10 +1,22 @@
 import axios from 'axios'
-import { API_BASE, authHeaders } from './apiConfig'
+import { API_BASE, authHeaders, isAuthenticated } from './apiConfig'
 
+/**
+ * Creates an order via POST /api/v1/orders.
+ *
+ * Logged-in flow:
+ *   - payload.customerId is set (from getCurrentUserId)
+ *   - Authorization header with Bearer token is attached
+ *   - userAddressId is used for saved addresses
+ *
+ * Guest flow:
+ *   - payload.guestInfo: { email, fullName } is set
+ *   - payload.shippingAddress (manual) is used
+ *   - No Authorization header (public endpoint)
+ */
 export async function createOrder(payload) {
-  const res = await axios.post(`${API_BASE}/api/v1/orders`, payload, {
-    headers: authHeaders()
-  })
+  const headers = isAuthenticated() ? authHeaders() : {}
+  const res = await axios.post(`${API_BASE}/api/v1/orders`, payload, { headers })
   return res.data || {}
 }
 

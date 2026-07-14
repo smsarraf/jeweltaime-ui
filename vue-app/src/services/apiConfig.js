@@ -17,3 +17,7 @@ export function getCurrentUserId() {
     return null
   }
 }
+
+export function isAuthenticated() {
+  return !!localStorage.getItem('authToken')
+}
