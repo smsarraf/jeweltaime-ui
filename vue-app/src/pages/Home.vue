@@ -85,18 +85,18 @@
           <h2 class="position-relative fw-normal hhHeading patternActive d-flex justify-content-center align-items-center gap-4 mb-4">Featured Products</h2>
         </header>
         <ul class="list-unstyled cbFiltersList gap-2 gap-md-5 d-flex isoFiltersList flex-wrap justify-content-center">
-          <li class="active">
-            <a href="javascript:void(0);">New Arrivals</a>
+          <li :class="{ active: activeFilter === 'newArrivals' }">
+            <a href="javascript:void(0);" @click="setFilter('newArrivals')">New Arrivals</a>
           </li>
-          <li class="">
-            <a href="javascript:void(0);" data-filter=".popular">Most Popular</a>
+          <li :class="{ active: activeFilter === 'mostPopular' }">
+            <a href="javascript:void(0);" @click="setFilter('mostPopular')">Most Popular</a>
           </li>
-          <li class="">
-            <a href="javascript:void(0);" data-filter=".bestSeller">Best Seller</a>
+          <li :class="{ active: activeFilter === 'bestSeller' }">
+            <a href="javascript:void(0);" @click="setFilter('bestSeller')">Best Seller</a>
           </li>
         </ul>
         <div class="row d-block isoContentHolder">
-          <div class="col-12 col-sm-6 col-xl-3 isoCol bestSeller popular mb-5" v-for="product in featuredProducts" :key="product.id">
+          <div class="col-12 col-sm-6 col-xl-3 isoCol mb-5" v-for="product in featuredProducts" :key="product.id">
             <ProductCard :product="product" />
           </div>
         </div>
@@ -150,19 +150,38 @@ import axios from 'axios'
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const categoryStore = useCategoryStore()
 
+const activeFilter = ref('newArrivals')
 const banners = ref([])
 const popularCategories = ref([])
 const featuredProducts = ref([])
+const allLoadedProducts = ref([])
+
+function setFilter(filter) {
+  activeFilter.value = filter
+  if (allLoadedProducts.value.length > 0) {
+    if (filter === 'newArrivals') {
+      featuredProducts.value = allLoadedProducts.value.slice(0, 4)
+    } else if (filter === 'mostPopular') {
+      featuredProducts.value = [...allLoadedProducts.value].sort((a, b) => (b.basePriceUsd || 0) - (a.basePriceUsd || 0)).slice(0, 4)
+    } else if (filter === 'bestSeller') {
+      featuredProducts.value = [...allLoadedProducts.value].sort((a, b) => (a.name || '').localeCompare(b.name || '')).slice(0, 4)
+    }
+  }
+}
 
 function formatProduct(product) {
+  // ERP response uses `media` array — extract first image URL for ProductCard compatibility
+  const mediaList = product.media || []
+  const firstImage = mediaList.length > 0 ? mediaList[0].url || mediaList[0].imageUrl || '' : ''
+  const thumbnail = product.thumbnailUrl || firstImage || ''
   return {
     id: product.id,
     name: product.name,
     slug: product.sku || String(product.id),
     category: product.categoryName || 'Jewelry',
     price: product.basePriceUsd || 0,
-    thumbnail: product.thumbnailUrl || '',
-    image: product.thumbnailUrl || 'https://placehold.co/305x305',
+    thumbnail: thumbnail,
+    image: thumbnail || 'https://placehold.co/305x305',
     sku: product.sku
   }
 }

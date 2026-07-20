@@ -1,8 +1,27 @@
 import { defineStore } from 'pinia'
 
+const CART_STORAGE_KEY = 'jeweltaime-cart'
+
+function loadCart() {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveCart(items) {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+  } catch {
+    // localStorage full or unavailable — silently ignore
+  }
+}
+
 export const useCartStore = defineStore('cart', {
   state: () => ({
-    items: []
+    items: loadCart()
   }),
   getters: {
     totalItems: (state) => state.items.reduce((sum, item) => sum + (item.quantity || 1), 0),
@@ -23,6 +42,9 @@ export const useCartStore = defineStore('cart', {
   actions: {
     getItemKey(product) {
       return product.variantId ? `${product.id}-v${product.variantId}` : String(product.id)
+    },
+    _persist() {
+      saveCart(this.items)
     },
     addToCart(product) {
       const key = this.getItemKey(product)
@@ -66,15 +88,18 @@ export const useCartStore = defineStore('cart', {
           giftNote: product.giftNote || ''
         })
       }
+      this._persist()
     },
     removeFromCart(productId, variantId = null) {
       const targetKey = variantId ? `${productId}-v${variantId}` : String(productId)
       this.items = this.items.filter(item => this.getItemKey(item) !== targetKey)
+      this._persist()
     },
     updateQuantity(productId, quantity) {
       const item = this.items.find(item => item.id === productId)
       if (item) {
         item.quantity = Math.max(1, quantity)
+        this._persist()
       }
     },
     updateItemAddons(itemKey, addons = {}) {
@@ -87,9 +112,11 @@ export const useCartStore = defineStore('cart', {
       if ('giftCardName' in addons) item.giftCardName = addons.giftCardName || ''
       if ('giftCardPrice' in addons) item.giftCardPrice = Number(addons.giftCardPrice || 0)
       if ('giftNote' in addons) item.giftNote = addons.giftNote || ''
+      this._persist()
     },
     clearCart() {
       this.items = []
+      this._persist()
     }
   }
 })

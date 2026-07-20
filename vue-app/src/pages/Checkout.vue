@@ -96,6 +96,45 @@
             </div>
 
             <div class="border p-4 mb-4">
+              <h3 class="h5 mb-3">1b. Billing Address</h3>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="billingSameAsShipping" v-model="billingSameAsShipping">
+                <label class="form-check-label" for="billingSameAsShipping">Same as shipping address</label>
+              </div>
+              <div v-if="!billingSameAsShipping" class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">Country *</label>
+                  <select class="form-control rounded-0" v-model="billingAddress.countryId" @change="onBillingCountryChange">
+                    <option value="">Select Country</option>
+                    <option v-for="c in locationStore.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">State</label>
+                  <select class="form-control rounded-0" v-model="billingAddress.stateId" @change="onBillingStateChange" :disabled="!billingAddress.countryId">
+                    <option value="">Select State</option>
+                    <option v-for="s in locationStore.getStates(billingAddress.countryId)" :key="s.id" :value="s.id">{{ s.name }}</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">City</label>
+                  <select class="form-control rounded-0" v-model="billingAddress.cityId" :disabled="!billingAddress.stateId">
+                    <option value="">Select City</option>
+                    <option v-for="ct in locationStore.getCities(billingAddress.stateId)" :key="ct.id" :value="ct.id">{{ ct.name }}</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="fLabel d-block mb-1">Postcode / ZIP *</label>
+                  <input type="text" class="form-control rounded-0" v-model="billingAddress.zipCode">
+                </div>
+                <div class="col-12">
+                  <label class="fLabel d-block mb-1">Street Address *</label>
+                  <input type="text" class="form-control rounded-0" v-model="billingAddress.street">
+                </div>
+              </div>
+            </div>
+
+            <div class="border p-4 mb-4">
               <h3 class="h5 mb-3">2. Shipping Method</h3>
               <div v-if="shippersLoading" class="placeholder-glow"><span class="placeholder col-12"></span></div>
               <div v-else-if="shippersError" class="alert alert-warning rounded-0">
@@ -130,6 +169,23 @@
             <div class="border p-4">
               <h3 class="h5 mb-4">3. Order Summary</h3>
 
+              <div :class="['totals-container', { 'totals-container--refreshing': totalsLoading }]">
+
+              <div v-if="totalsLoading" class="skeleton-totals">
+                <div class="skeleton-row" v-for="n in 5" :key="'sk-'+n">
+                  <span class="skeleton-bar skeleton-bar--label"></span>
+                  <span class="skeleton-bar skeleton-bar--value"></span>
+                </div>
+                <div class="skeleton-row skeleton-row--total">
+                  <span class="skeleton-bar skeleton-bar--label"></span>
+                  <span class="skeleton-bar skeleton-bar--value"></span>
+                </div>
+                <div class="skeleton-row">
+                  <span class="skeleton-bar skeleton-bar--label"></span>
+                  <span class="skeleton-bar skeleton-bar--value"></span>
+                </div>
+              </div>
+              <template v-else>
               <div v-for="item in cartStore.items" :key="cartStore.getItemKey(item)" class="d-flex justify-content-between mb-3">
                 <div class="pe-2">
                   <div class="small">{{ item.name }} × {{ item.quantity }}</div>
@@ -142,29 +198,24 @@
               </div>
 
               <hr>
-              <div aria-live="polite" :aria-busy="totalsLoading ? 'true' : 'false'" class="mb-2">
-                <template v-if="totalsLoading">
-                  <div class="placeholder-glow mb-2"><span class="placeholder col-12"></span></div>
-                  <div class="placeholder-glow mb-2"><span class="placeholder col-10"></span></div>
-                  <div class="placeholder-glow mb-2"><span class="placeholder col-11"></span></div>
-                </template>
-                <template v-else>
-                  <div class="d-flex justify-content-between mb-2"><span>Items subtotal</span><span>{{ currencyStore.formatPrice(itemsSubtotal) }}</span></div>
-                  <div class="d-flex justify-content-between mb-2"><span>Add-ons subtotal</span><span>{{ currencyStore.formatPrice(addonsSubtotal) }}</span></div>
-                  <div class="d-flex justify-content-between mb-2"><span>Shipping</span><span>{{ currencyStore.formatPrice(shippingCost) }}</span></div>
-                  <div class="d-flex justify-content-between mb-2"><span>Tax (%)</span><span>{{ displayTaxPercentage }}%</span></div>
-                  <div class="d-flex justify-content-between mb-2"><span>Tax Amount</span><span>{{ currencyStore.formatPrice(taxAmount) }}</span></div>
-                  <div class="d-flex justify-content-between mb-2">
-                    <span>Discount</span>
-                    <span class="text-success">-{{ currencyStore.formatPrice(discountAmount) }}</span>
-                  </div>
-                  <div class="d-flex justify-content-between mb-2"><strong>Final payable total</strong><strong>{{ currencyStore.formatPrice(payableTotal) }}</strong></div>
-                </template>
+              <div v-if="!totalsLoading" aria-live="polite" class="mb-2">
+                <div class="d-flex justify-content-between mb-2"><span>Items subtotal</span><span>{{ currencyStore.formatPrice(itemsSubtotal) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Add-ons subtotal</span><span>{{ currencyStore.formatPrice(addonsSubtotal) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><span>{{ currencyStore.formatPrice(shippingCost) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Tax (%)</span><span>{{ displayTaxPercentage }}%</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Tax Amount</span><span>{{ currencyStore.formatPrice(taxAmount) }}</span></div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Discount</span>
+                  <span class="text-success">-{{ currencyStore.formatPrice(discountAmount) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2"><strong>Final payable total</strong><strong>{{ currencyStore.formatPrice(payableTotal) }}</strong></div>
               </div>
-              <small v-if="totalsHint" class="d-block text-muted mb-2">{{ totalsHint }}</small>
-              <div v-if="totalsError" class="alert alert-warning rounded-0 py-2">
+              <small v-if="totalsHint && !totalsLoading" class="d-block text-muted mb-2">{{ totalsHint }}</small>
+              <div v-if="totalsError && !totalsLoading" class="alert alert-warning rounded-0 py-2">
                 {{ totalsError }}
                 <button class="btn btn-link p-0 align-baseline ms-1" @click="retryTotals">Retry</button>
+              </div>
+              </template>
               </div>
               <hr>
               <div class="border p-2 mb-3 bg-light">
@@ -261,6 +312,15 @@ const manualAddress = reactive({
   zipCode: ''
 })
 
+const billingSameAsShipping = ref(true)
+const billingAddress = reactive({
+  street: '',
+  cityId: '',
+  stateId: '',
+  countryId: '',
+  zipCode: ''
+})
+
 const selectedAddress = computed(() => savedAddresses.value.find(a => a.id === selectedAddressId.value) || null)
 function resolveLocationId(value, options = []) {
   if (value === null || value === undefined || value === '') return 0
@@ -294,6 +354,28 @@ const shippingAddressText = computed(() => {
   }
   return `${manualAddress.street}, ${manualAddress.cityId}, ${manualAddress.stateId}, ${manualAddress.countryId} ${manualAddress.zipCode}`.trim()
 })
+
+function buildBillingAddress() {
+  if (billingSameAsShipping.value) {
+    if (selectedAddress.value) {
+      return `${selectedAddress.value.street || ''}, ${selectedAddress.value.city || ''}, ${selectedAddress.value.state || ''}, ${selectedAddress.value.country || ''} ${selectedAddress.value.zipCode || ''}`.replace(/\s+,/g, ',').trim()
+    }
+    return shippingAddressText.value
+  }
+  return `${billingAddress.street}, ${billingAddress.cityId}, ${billingAddress.stateId}, ${billingAddress.countryId} ${billingAddress.zipCode}`.trim()
+}
+
+async function onBillingCountryChange() {
+  billingAddress.stateId = ''
+  billingAddress.cityId = ''
+  if (billingAddress.countryId) {
+    await locationStore.loadStates(Number(billingAddress.countryId))
+  }
+}
+
+function onBillingStateChange() {
+  billingAddress.cityId = ''
+}
 
 const itemsSubtotal = computed(() => cartStore.totalPrice)
 const addonsSubtotal = computed(() => cartStore.addonsTotal)
@@ -711,6 +793,11 @@ function buildOrderPayload() {
   const userId = getCurrentUserId()
   const isAuth = isAuthenticated() && !!userId
 
+  const billingAddressText = buildBillingAddress()
+  const billingNote = billingSameAsShipping.value
+    ? ''
+    : `Billing address: ${billingAddressText}`
+
   const base = {
     countryId: selectedCountryId.value,
     stateId: selectedStateId.value || undefined,
@@ -723,7 +810,7 @@ function buildOrderPayload() {
     shippingMatrixId: selectedShippingMethodId.value ? Number(selectedShippingMethodId.value) : undefined,
     orderWeightKg: Number(orderWeightKg.value || 0),
     source: 'WEBSITE',
-    notes: '',
+    notes: billingNote,
     items: cartStore.items.map(item => ({
       productId: Number(item.id),
       quantity: Number(item.quantity || 1),
@@ -744,6 +831,10 @@ function buildOrderPayload() {
         state: String(manualAddress.stateId || ''),
         zipCode: manualAddress.zipCode,
         country: String(manualAddress.countryId || '')
+      },
+      metadata: {
+        billingAddress: billingAddressText,
+        billingSameAsShipping: billingSameAsShipping.value
       }
     }
   }
@@ -760,6 +851,10 @@ function buildOrderPayload() {
       state: String(manualAddress.stateId || ''),
       zipCode: manualAddress.zipCode,
       country: String(manualAddress.countryId || '')
+    },
+    metadata: {
+      billingAddress: billingAddressText,
+      billingSameAsShipping: billingSameAsShipping.value
     }
   }
 }
@@ -856,5 +951,44 @@ onMounted(() => {
 <style scoped>
 .placeholder {
   min-height: 1rem;
+}
+
+.skeleton-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.skeleton-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skeleton-row--total {
+  border-top: 1px solid #dee2e6;
+  padding-top: 12px;
+}
+
+.skeleton-bar {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-bar--label {
+  width: 42%;
+}
+
+.skeleton-bar--value {
+  width: 28%;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 </style>

@@ -8,7 +8,8 @@ export const useCategoryStore = defineStore('category', {
     rootCategories: [],
     flatCategories: {},
     isLoading: false,
-    loaded: false
+    loaded: false,
+    _loadPromise: null   // track in-flight promise so concurrent callers can await the same result
   }),
   getters: {
     getRootCategories: (state) => state.rootCategories,
@@ -35,58 +36,62 @@ export const useCategoryStore = defineStore('category', {
       this.loaded = true
     },
     async loadCategories() {
-      // Already loading — wait for it
-      if (this.isLoading) return
+      // If a load is already in-flight, return the same promise so every caller awaits the result
+      if (this._loadPromise) return this._loadPromise
 
       this.isLoading = true
+      this._loadPromise = (async () => {
+        try {
+          const rootRes = await axios.get(`${API_BASE}/api/v1/categories/root`, { timeout: 8000 })
+          if (!rootRes.data || !Array.isArray(rootRes.data)) {
+            throw new Error('Invalid categories response')
+          }
 
-      try {
-        const rootRes = await axios.get(`${API_BASE}/api/v1/categories/root`, { timeout: 8000 })
-        if (!rootRes.data || !Array.isArray(rootRes.data)) {
-          throw new Error('Invalid categories response')
-        }
-
-        const categoriesWithChildren = await Promise.all(
-          rootRes.data.map(async (cat) => {
-            try {
-              const subRes = await axios.get(`${API_BASE}/api/v1/categories/${cat.id}/all-subcategories`, { timeout: 5000 })
-              return {
-                id: cat.id,
-                name: cat.name,
-                slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
-                thumbnailUrl: cat.thumbnailUrl || '',
-                bannerUrl: cat.bannerUrl || '',
-                children: (subRes.data?.childCats || []).map(child => ({
-                  id: child.id,
-                  name: child.name,
-                  slug: child.slug || child.name.toLowerCase().replace(/\s+/g, '-'),
-                  thumbnailUrl: child.thumbnailUrl || '',
-                  bannerUrl: child.bannerUrl || ''
-                }))
+          const categoriesWithChildren = await Promise.all(
+            rootRes.data.map(async (cat) => {
+              try {
+                const subRes = await axios.get(`${API_BASE}/api/v1/categories/${cat.id}/all-subcategories`, { timeout: 5000 })
+                return {
+                  id: cat.id,
+                  name: cat.name,
+                  slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
+                  thumbnailUrl: cat.thumbnailUrl || '',
+                  bannerUrl: cat.bannerUrl || '',
+                  children: (subRes.data?.childCats || []).map(child => ({
+                    id: child.id,
+                    name: child.name,
+                    slug: child.slug || child.name.toLowerCase().replace(/\s+/g, '-'),
+                    thumbnailUrl: child.thumbnailUrl || '',
+                    bannerUrl: child.bannerUrl || ''
+                  }))
+                }
+              } catch {
+                return {
+                  id: cat.id,
+                  name: cat.name,
+                  slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
+                  thumbnailUrl: cat.thumbnailUrl || '',
+                  bannerUrl: cat.bannerUrl || '',
+                  children: []
+                }
               }
-            } catch {
-              return {
-                id: cat.id,
-                name: cat.name,
-                slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
-                thumbnailUrl: cat.thumbnailUrl || '',
-                bannerUrl: cat.bannerUrl || '',
-                children: []
-              }
-            }
-          })
-        )
+            })
+          )
 
-        this._setData(categoriesWithChildren)
-      } catch (e) {
-        console.warn('Failed to fetch categories:', e.message)
-        // Fallback hardcoded data if API fails
-        if (!this.loaded || this.rootCategories.length === 0) {
-          this._setData(this._fallbackCategories())
+          this._setData(categoriesWithChildren)
+        } catch (e) {
+          console.warn('Failed to fetch categories:', e.message)
+          // Fallback hardcoded data if API fails
+          if (!this.loaded || this.rootCategories.length === 0) {
+            this._setData(this._fallbackCategories())
+          }
+        } finally {
+          this.isLoading = false
+          this._loadPromise = null
         }
-      } finally {
-        this.isLoading = false
-      }
+      })()
+
+      return this._loadPromise
     },
     _fallbackCategories() {
       return [
