@@ -182,18 +182,44 @@
     <!-- Search Menu Wrapper -->
     <div class="searchrow offcanvas offcanvas-top" tabindex="-1" id="searchCol" aria-labelledby="searchcol" style="height: 100vh;">
         <div class="offcanvas-header justify-content-end">
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" @click="clearSearch"></button>
         </div>
         <div class="offcanvas-body d-flex flex-column align-items-start justify-content-md-start px-4 pt-2">
             <h5 class="srchHD fw-light mb-3">What are you looking for?</h5>
-            <form class="w-100" role="search">
+            <form class="w-100" role="search" @submit.prevent="performSearch">
                 <div class="input-group">
-                    <input type="search" class="form-control border-0" placeholder="Search for products" aria-label="Search">
+                    <input type="search" class="form-control border-0" placeholder="Search for products" aria-label="Search" v-model="searchQuery" @input="onSearchInput">
                     <button class="btn" type="submit">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
                 </div>
             </form>
+            <!-- Search Results -->
+            <div v-if="searchLoading" class="w-100 mt-4 text-center">
+                <div class="spinner-border spinner-border-sm text-dark" role="status">
+                    <span class="visually-hidden">Searching...</span>
+                </div>
+                <p class="mt-2 text-muted small">Searching...</p>
+            </div>
+            <div v-else-if="searchResults.length > 0" class="w-100 mt-4">
+                <p class="small text-muted mb-3">{{ searchResults.length }} result(s) found</p>
+                <div class="d-flex flex-column gap-3">
+                    <router-link v-for="product in searchResults" :key="product.id"
+                        :to="`/products/${product.id}/${toSearchSlug(product.name)}`"
+                        class="d-flex align-items-center text-decoration-none p-2 search-result-item"
+                        @click="closeSearchOffcanvas">
+                        <ImageWithSkeleton :src="product.thumbnailUrl || 'https://placehold.co/60x60'" :alt="product.name"
+                            class="me-3" style="width: 48px; height: 48px; flex-shrink: 0;" />
+                        <div>
+                            <div class="fw-medium text-dark">{{ product.name }}</div>
+                            <div class="small text-muted">{{ currencyStore.formatPrice(product.basePriceUsd) }}</div>
+                        </div>
+                    </router-link>
+                </div>
+            </div>
+            <div v-else-if="searchPerformed" class="w-100 mt-4">
+                <p class="text-muted">No products found matching "{{ lastSearchTerm }}"</p>
+            </div>
         </div>
     </div>
 
@@ -281,7 +307,7 @@
 </template>
 
 <script setup>
-    import { computed, onMounted } from 'vue'
+    import { computed, onMounted, ref } from 'vue'
     import { useRouter } from 'vue-router'
     import { useCartStore } from '../stores/cartStore'
     import { useWishlistStore } from '../stores/wishlistStore'
@@ -291,6 +317,7 @@
     import ImageWithSkeleton from './ImageWithSkeleton.vue'
     import { clearAuth } from '../utils/auth'
     import { useAuthSession } from '../composables/useAuthSession'
+    import axios from 'axios'
 
     const router = useRouter()
     const cartStore = useCartStore()
@@ -299,6 +326,67 @@
     const categoryStore = useCategoryStore()
     const siteSettings = useSiteSettingsStore()
     const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+    // --- Search functionality ---
+    const searchQuery = ref('')
+    const searchResults = ref([])
+    const searchLoading = ref(false)
+    const searchPerformed = ref(false)
+    const lastSearchTerm = ref('')
+    let searchDebounceTimer = null
+
+    function toSearchSlug(name) {
+      if (!name) return ''
+      return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    }
+
+    function onSearchInput() {
+      clearTimeout(searchDebounceTimer)
+      searchDebounceTimer = setTimeout(() => {
+        if (searchQuery.value.trim().length >= 2) {
+          performSearch()
+        }
+      }, 350)
+    }
+
+    async function performSearch() {
+      const term = searchQuery.value.trim()
+      if (!term) {
+        searchResults.value = []
+        searchPerformed.value = false
+        return
+      }
+      searchLoading.value = true
+      searchPerformed.value = true
+      lastSearchTerm.value = term
+      try {
+        const res = await axios.get(`${API_BASE}/api/v1/products/search`, {
+          params: { keyword: term }
+        })
+        // API returns array of products or paginated response
+        const data = Array.isArray(res.data) ? res.data : (res.data?.content || [])
+        searchResults.value = data.slice(0, 10)
+      } catch {
+        searchResults.value = []
+      } finally {
+        searchLoading.value = false
+      }
+    }
+
+    function clearSearch() {
+      searchQuery.value = ''
+      searchResults.value = []
+      searchPerformed.value = false
+    }
+
+    function closeSearchOffcanvas() {
+      clearSearch()
+      const el = document.getElementById('searchCol')
+      if (el && typeof window.bootstrap !== 'undefined') {
+        const offcanvas = window.bootstrap.Offcanvas.getInstance(el)
+        if (offcanvas) offcanvas.hide()
+      }
+    }
 
     const { isLoggedIn, user: userData } = useAuthSession()
 
@@ -386,6 +474,185 @@
 </script>
 
 <style>
+    /* ==============================================
+       Mobile Native-App Header
+       ============================================== */
+    @media (max-width: 767.98px) {
+      /* Make header sticky for native app feel */
+      #pageHeader {
+        position: sticky;
+        top: 0;
+        z-index: 1040;
+        background: #fff;
+        /* Give it a subtle shadow on scroll (handled by intersection observer, basic shadow here) */
+      }
+
+      /* Hide desktop top bar on mobile */
+      #pageHeader .phTopBar {
+        display: none !important;
+      }
+
+      /* Hide desktop navigation bar on mobile (we use sidebar drawer) */
+      #pageHeader .phNavWrapper {
+        display: none !important;
+      }
+
+      /* Compact mobile header wrapper */
+      #pageHeader .phWrapper {
+        padding-top: env(safe-area-inset-top, 10px) !important;
+        padding-bottom: 8px !important;
+        min-height: 50px;
+      }
+
+      /* Hide desktop-only header actions */
+      .phActionsList .d-none.d-md-block {
+        display: none !important;
+      }
+
+      /* Style the mobile hamburger as iOS-style back/home indicator */
+      #pageHeader .navbar-toggler {
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+      }
+
+      #pageHeader .navbar-toggler-icon {
+        width: 22px;
+        height: 2px;
+      }
+
+      /* Compact logo for mobile */
+      #pageHeader .logo img {
+        max-height: 32px !important;
+        width: auto;
+      }
+
+      /* Mobile action icons spacing */
+      .phActionsList {
+        gap: 12px !important;
+      }
+
+      .phActionsList .mbr {
+        font-size: 20px;
+      }
+    }
+
+    /* ==============================================
+       Mobile Sidebar Menu (App-Style Drawer)
+       ============================================== */
+    @media (max-width: 767.98px) {
+      .sidebarMenu {
+        max-width: 85vw;
+      }
+
+      .sidebarMenu .offcanvas-header {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+        background: #f9f9f9;
+        border-bottom: 1px solid #eee;
+      }
+
+      .sidebarMenu .offcanvas-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      /* Native iOS-style list items */
+      .sidebarMenu .mainmenu li,
+      .sidebarMenu .catemenu li {
+        border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
+      }
+
+      .sidebarMenu .mainmenu li a,
+      .sidebarMenu .catemenu li a {
+        font-size: 0.95rem;
+        padding: 8px 0 !important;
+        transition: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .sidebarMenu .mainmenu li:active,
+      .sidebarMenu .catemenu li:active {
+        background: rgba(0, 0, 0, 0.03);
+      }
+
+      /* Tab styling for Menu/Categories */
+      .sidebarMenu .nav-tabs {
+        border-bottom: 1px solid #eee;
+      }
+
+      .sidebarMenu .nav-tabs .nav-item a {
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        color: #999;
+        padding-bottom: 8px;
+        position: relative;
+      }
+
+      .sidebarMenu .nav-tabs .nav-item a.active {
+        color: #000;
+        font-weight: 600;
+      }
+
+      .sidebarMenu .nav-tabs .nav-item a.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #000;
+        border-radius: 1px;
+      }
+    }
+
+    /* ==============================================
+       Mobile Search Offcanvas (Native-Style)
+       ============================================== */
+    @media (max-width: 767.98px) {
+      .searchrow .offcanvas-body {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 20px) !important;
+      }
+
+      .searchrow .srchHD {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem !important;
+      }
+
+      .searchrow .input-group {
+        border-bottom: 1.5px solid #000;
+        border-radius: 0;
+      }
+
+      .searchrow .form-control {
+        font-size: 1.1rem;
+        padding: 12px 0;
+        border-radius: 0 !important;
+      }
+
+      .searchrow .form-control:focus {
+        box-shadow: none;
+        outline: none;
+      }
+
+      .searchrow .btn {
+        font-size: 1.1rem;
+        padding: 12px 8px;
+      }
+    }
+
+    /* ==============================================
+       Mobile Cart Offcanvas
+       ============================================== */
+    @media (max-width: 767.98px) {
+      #filtersProduct {
+        max-width: 92vw;
+      }
+
+      #filtersProduct .offcanvas-header {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+      }
+    }
+
     /* Bulk Order blinking silver animation */
     @keyframes bulkOrderBlink {
         0%, 100% {

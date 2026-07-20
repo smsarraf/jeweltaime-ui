@@ -88,16 +88,22 @@
                           <div class="productInfodetails py-sm-2 px-sm-1">
                               <div class="productInfoheader mb-6">
                                   <h2 class="PrdutHd fw-normal mb-1">{{ product.name }}</h2>
-                                  <div class="d-flex gap-2 align-items-center mb-2">
-                                      <ul class="d-flex flex-wrap ratingStar list-unstyled mb-0">
-                                          <li class="active"><i class="icomoon-star"></i></li>
-                                          <li class="active"><i class="icomoon-star"></i></li>
-                                          <li class="active"><i class="icomoon-star"></i></li>
-                                          <li class="active"><i class="icomoon-star"></i></li>
-                                          <li><i class="icomoon-star"></i></li>
-                                      </ul>
-<!--                                      TODO:: <span class="reviewHD fw-normal">(25 Customer reviews)</span>-->
-                                  </div>
+                                   <div class="d-flex gap-2 align-items-center mb-2">
+                                       <ul class="d-flex flex-wrap ratingStar list-unstyled mb-0" v-if="productReviewStats.total > 0">
+                                           <li v-for="star in 5" :key="star">
+                                               <i :class="star <= Math.round(productReviewStats.average) ? 'fa-solid fa-star text-warning' : 'fa-regular fa-star text-muted'"></i>
+                                           </li>
+                                       </ul>
+                                       <ul v-else class="d-flex flex-wrap ratingStar list-unstyled mb-0">
+                                           <li v-for="star in 5" :key="star"><i class="fa-regular fa-star text-muted"></i></li>
+                                       </ul>
+                                       <span class="reviewHD fw-normal" v-if="productReviewStats.total > 0">
+                                           <a href="javascript:void(0);" @click="scrollToReviews" class="text-decoration-none">
+                                               ({{ productReviewStats.total }} Customer {{ productReviewStats.total === 1 ? 'Review' : 'Reviews' }})
+                                           </a>
+                                       </span>
+                                       <span class="reviewHD fw-normal text-muted" v-else>(No reviews yet)</span>
+                                   </div>
                                    <h3 class="HPrice fw-normal mb-4">{{ currencyStore.formatPrice(displayPrice) }}</h3>
                                     <!-- Variant Selector -->
                                     <div v-if="product.variants && product.variants.length > 0" class="variant-section mb-4">
@@ -128,12 +134,15 @@
                                             <small v-if="variantSelectionError" class="d-block mt-2 text-danger">{{ variantSelectionError }}</small>
                                         </div>
 
-                                        <!-- Single variant: show name label -->
+                                        <!-- Single variant: show as selected button (same visual as multi-select) -->
                                         <div v-if="product.variants.length === 1" class="mb-2">
-                                            <span class="badge bg-dark text-white px-3 py-2" style=" letter-spacing: 0.5px;">
+                                            <strong class="d-block mb-2 fw-normal text-uppercase small text-muted">Variant</strong>
+                                            <button type="button" class="btn btn-dark px-3 py-2 variant-btn disabled" style="opacity: 1; cursor: default;">
                                                 {{ product.variants[0].variantName }}
-                                                <span v-if="product.variants[0].additionalPrice > 0"> (+{{ currencyStore.formatPrice(product.variants[0].additionalPrice) }})</span>
-                                            </span>
+                                                <span v-if="product.variants[0].additionalPrice > 0" class="ms-1">
+                                                    (+{{ currencyStore.formatPrice(product.variants[0].additionalPrice) }})
+                                                </span>
+                                            </button>
                                         </div>
 
                                         <!-- Variant Specifications Table (always shown when attributes exist) -->
@@ -307,6 +316,23 @@
           </div>
       </div>
 
+      <!-- Product Reviews Section -->
+      <div class="container py-6">
+        <ProductReviews :product-id="productId" />
+      </div>
+
+      <!-- Related Products from same category -->
+      <section v-if="relatedProducts.length > 0" class="related-products py-8 bg-light">
+        <div class="container">
+          <h3 class="fw-medium mb-5 text-center">You May Also Like</h3>
+          <div class="row g-4">
+            <div class="col-6 col-md-4 col-lg-3" v-for="rp in relatedProducts" :key="rp.id">
+              <ProductCard :product="formatProduct(rp)" />
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Newsletter / Discount Section matching shop-right-sidebar.html -->
       <aside class="discountAsideBlock text-center w-100 position-relative py-6 py-lg-9 py-xl-15">
           <div class="container">
@@ -387,6 +413,8 @@ import { getActiveGiftBoxes, getActiveGiftCards } from '../services/giftService'
 import { subscribeToNewsletter, buildSubscribePayload } from '../services/newsletterService'
 import { getActiveSizeGuidesByCategory } from '../services/sizeGuideService'
 import SizeGuideModal from '../components/SizeGuideModal.vue'
+import ProductReviews from '../components/ProductReviews.vue'
+import ProductCard from '../components/ProductCard.vue'
 import axios from 'axios'
 
 const route = useRoute()
@@ -421,6 +449,28 @@ const variantSelectionError = ref('')
 const sizeGuides = ref([])
 const sizeGuideVisible = ref(false)
 const selectedSizeGuide = ref(null)
+
+// Review stats for product info header
+const productReviewStats = ref({ total: 0, average: 0 })
+
+// Related products
+const relatedProducts = ref([])
+
+function formatProduct(product) {
+  const mediaList = product.media || []
+  const firstImage = mediaList.length > 0 ? mediaList[0].url || mediaList[0].imageUrl || '' : ''
+  const thumbnail = product.thumbnailUrl || firstImage || ''
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.sku || String(product.id),
+    category: product.categoryName || 'Jewelry',
+    price: product.basePriceUsd || 0,
+    thumbnail: thumbnail,
+    image: thumbnail || 'https://placehold.co/305x305',
+    sku: product.sku
+  }
+}
 
 // Newsletter subscription
 const newsletterEmail = ref('')
@@ -744,11 +794,53 @@ async function loadGiftOptions() {
   }
 }
 
+async function fetchProductReviewStats() {
+  const id = productId.value
+  if (!id) {
+    productReviewStats.value = { total: 0, average: 0 }
+    return
+  }
+  try {
+    const res = await axios.get(`${API_BASE}/api/v1/products/${id}/reviews`)
+    const data = Array.isArray(res.data) ? res.data : (res.data?.content || [])
+    const published = data.filter(r => r.isPublished !== false)
+    const total = published.length
+    const average = total > 0 ? published.reduce((s, r) => s + (r.rating || 0), 0) / total : 0
+    productReviewStats.value = { total, average }
+  } catch {
+    productReviewStats.value = { total: 0, average: 0 }
+  }
+}
+
+function scrollToReviews() {
+  const el = document.getElementById('reviews-section') || document.querySelector('.product-reviews')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
+async function loadRelatedProducts() {
+  const catId = product.value.categoryId
+  if (!catId) return
+  try {
+    const res = await axios.get(`${API_BASE}/api/v1/products/category/${catId}`, {
+      params: { page: 0, size: 5 }
+    })
+    const data = Array.isArray(res.data) ? res.data : (res.data?.content || [])
+    relatedProducts.value = data.filter(p => p.id !== Number(productId.value)).slice(0, 4)
+  } catch {
+    relatedProducts.value = []
+  }
+}
+
+
 onMounted(async () => {
   categoryStore.loadCategories()
   await fetchProduct()
   loadGiftOptions()
   loadSizeGuides()
+  fetchProductReviewStats()
+  loadRelatedProducts()
   initCarouselListener()
 })
 
@@ -768,6 +860,7 @@ watch(() => route.params.id, async () => {
   removeCarouselListener()
   await fetchProduct()
   loadSizeGuides()
+  fetchProductReviewStats()
 })
 
 async function onNewsletterSubmit() {

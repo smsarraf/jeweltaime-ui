@@ -41,11 +41,30 @@
                   </li>
                 </ul>
               </div>
+              <!-- Price Range Filter -->
+              <div class="widget mt-5">
+                <h3 class="widgetHeading fw-normal mb-3">Price Range</h3>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="number" class="form-control form-control-sm rounded-0" v-model="priceMin" placeholder="Min" min="0" @change="onFilterChange">
+                  <span class="text-muted">–</span>
+                  <input type="number" class="form-control form-control-sm rounded-0" v-model="priceMax" placeholder="Max" min="0" @change="onFilterChange">
+                </div>
+                <div v-if="priceMin || priceMax" class="mt-2">
+                  <small class="text-muted cursor-pointer" style="cursor: pointer;" @click="clearPriceFilter">Clear</small>
+                </div>
+              </div>
+              <!-- In Stock Filter -->
+              <div class="widget mt-4">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="inStockOnly" v-model="inStockOnly" @change="onFilterChange">
+                  <label class="form-check-label fw-normal" for="inStockOnly">In Stock Only</label>
+                </div>
+              </div>
             </aside>
           </div>
           <div class="col-12 col-lg-9">
             <header class="showhead d-flex flex-wrap justify-content-between mb-7">
-              <p class="mb-0">Showing {{ products.length }} of {{ totalProducts }} results</p>
+              <p class="mb-0">Showing {{ filteredProducts.length }} of {{ allProducts.length }} results</p>
               <select class="form-select w-auto" v-model="sortBy" @change="fetchProducts">
                 <option value="name,asc">Name: A to Z</option>
                 <option value="name,desc">Name: Z to A</option>
@@ -71,7 +90,7 @@
             </div>
 
             <div v-else class="row row-gap-5">
-              <div class="col-12 col-sm-6 col-xl-4" v-for="product in products" :key="product.id">
+              <div class="col-12 col-sm-6 col-xl-4" v-for="product in filteredProducts" :key="product.id">
                 <ProductCard :product="formatProduct(product)" />
               </div>
             </div>
@@ -115,6 +134,46 @@ const pageSize = 12
 const sortBy = ref('name,asc')
 const isLoading = ref(false)
 const error = ref('')
+
+// --- Client-side Filters ---
+const priceMin = ref(null)
+const priceMax = ref(null)
+const inStockOnly = ref(false)
+
+const allProducts = computed(() => products.value)
+
+const filteredProducts = computed(() => {
+  let result = allProducts.value
+
+  // Price range filter
+  const min = Number(priceMin.value)
+  const max = Number(priceMax.value)
+  if (!isNaN(min)) {
+    result = result.filter(p => (p.basePriceUsd || 0) >= min)
+  }
+  if (!isNaN(max)) {
+    result = result.filter(p => (p.basePriceUsd || 0) <= max)
+  }
+
+  // In-stock only filter
+  if (inStockOnly.value) {
+    result = result.filter(p => {
+      const qty = p.stockQuantity ?? p.inventoryQuantity ?? p.availableStock
+      return qty === undefined || qty === null || qty > 0
+    })
+  }
+
+  return result
+})
+
+function onFilterChange() {
+  // Filters are reactive via computed — trigger re-render
+}
+
+function clearPriceFilter() {
+  priceMin.value = null
+  priceMax.value = null
+}
 
 const slug = computed(() => route.params.slug || 'all')
 
