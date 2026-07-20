@@ -237,7 +237,7 @@ async function fetchProducts() {
         params: {
           page: currentPage.value,
           size: pageSize,
-          sort: [sortBy.value]
+          sort: sortBy.value
         }
       })
     }
