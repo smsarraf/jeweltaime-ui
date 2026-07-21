@@ -56,10 +56,20 @@ export const b2bQuoteService = {
 
   /**
    * Accept quote and convert to order
+   * @param {number} quoteId
+   * @param {Object} [shippingAddress] - Optional shipping address. If omitted/empty, uses company address.
+   * @param {string} [shippingAddress.street]
+   * @param {string} [shippingAddress.city]
+   * @param {string} [shippingAddress.state]
+   * @param {string} [shippingAddress.zipCode]
+   * @param {string} [shippingAddress.country]
    */
-  async acceptQuote(quoteId) {
+  async acceptQuote(quoteId, shippingAddress = null) {
     try {
-      const response = await axios.post(`${API_BASE}/api/v1/b2b/quotes/${quoteId}/accept`)
+      const body = shippingAddress && Object.values(shippingAddress).some(v => v && String(v).trim())
+        ? shippingAddress
+        : {}
+      const response = await axios.post(`${API_BASE}/api/v1/b2b/quotes/${quoteId}/accept`, body)
       return response.data
     } catch (error) {
       throw this.handleError(error)

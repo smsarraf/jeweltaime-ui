@@ -8,7 +8,17 @@ export const useQuoteStore = defineStore('quote', {
     billingAddressText: '',
     currencyId: 1,
     loading: false,
-    error: null
+    error: null,
+    // Structured shipping address
+    shippingAddressMode: 'freeText', // 'company' | 'manual' | 'freeText'
+    companyAddress: null, // { companyName, addressLine1, countryId, stateId, cityId }
+    manualShippingAddress: {
+      street: '',
+      cityId: '',
+      stateId: '',
+      countryId: '',
+      zipCode: ''
+    }
   }),
   getters: {
     totalItems: (state) => state.items.reduce((sum, item) => sum + (item.quantity || 1), 0),
@@ -68,6 +78,28 @@ export const useQuoteStore = defineStore('quote', {
         item.notes = notes
       }
     },
+    setShippingAddressMode(mode) {
+      this.shippingAddressMode = mode
+    },
+    setManualShippingAddress(address) {
+      this.manualShippingAddress = { ...this.manualShippingAddress, ...address }
+    },
+    setCompanyAddress(address) {
+      this.companyAddress = address
+    },
+    buildShippingAddressText() {
+      if (this.shippingAddressMode === 'company' && this.companyAddress) {
+        const { addressLine1, countryId, stateId, cityId } = this.companyAddress
+        const parts = [addressLine1, cityId, stateId, countryId].filter(Boolean)
+        return parts.join(', ')
+      }
+      if (this.shippingAddressMode === 'manual') {
+        const { street, cityId, stateId, countryId, zipCode } = this.manualShippingAddress
+        const parts = [street, cityId, stateId, countryId, zipCode].filter(Boolean)
+        return parts.join(', ')
+      }
+      return this.shippingAddressText
+    },
     clearQuote() {
       this.items = []
       this.notes = ''
@@ -75,6 +107,15 @@ export const useQuoteStore = defineStore('quote', {
       this.billingAddressText = ''
       this.currencyId = 1
       this.error = null
+      this.shippingAddressMode = 'freeText'
+      this.companyAddress = null
+      this.manualShippingAddress = {
+        street: '',
+        cityId: '',
+        stateId: '',
+        countryId: '',
+        zipCode: ''
+      }
     },
     setLoading(value) {
       this.loading = value

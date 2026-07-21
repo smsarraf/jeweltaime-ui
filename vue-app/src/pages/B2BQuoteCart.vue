@@ -131,12 +131,86 @@
             <!-- Shipping Address -->
             <div class="shipping-section">
               <h4>Shipping Address</h4>
-              <textarea
-                v-model="store.shippingAddressText"
-                class="form-control"
-                rows="3"
-                placeholder="Enter your shipping address"
-              ></textarea>
+              <!-- Address Mode Selector -->
+              <div class="address-mode-selector mb-3">
+                <label class="form-check form-check-inline d-flex align-items-center gap-1">
+                  <input class="form-check-input" type="radio" value="company" v-model="store.shippingAddressMode" :disabled="!hasCompanyAddress">
+                  <span class="form-check-label" :class="{ 'text-muted': !hasCompanyAddress }">Company Address</span>
+                </label>
+                <label class="form-check form-check-inline d-flex align-items-center gap-1">
+                  <input class="form-check-input" type="radio" value="manual" v-model="store.shippingAddressMode">
+                  <span class="form-check-label">Manual Entry</span>
+                </label>
+                <label class="form-check form-check-inline d-flex align-items-center gap-1">
+                  <input class="form-check-input" type="radio" value="freeText" v-model="store.shippingAddressMode">
+                  <span class="form-check-label">Free Text</span>
+                </label>
+              </div>
+
+              <!-- Company Address (read-only) -->
+              <div v-if="store.shippingAddressMode === 'company'" class="company-address-display border rounded p-3 bg-light">
+                <template v-if="companyAddressLoading">
+                  <div class="placeholder-glow">
+                    <span class="placeholder col-10"></span>
+                    <span class="placeholder col-8 mt-1"></span>
+                  </div>
+                </template>
+                <template v-else-if="store.companyAddress">
+                  <p class="mb-0 fw-medium">{{ store.companyAddress.companyName }}</p>
+                  <p class="mb-0 text-muted small">{{ store.companyAddress.addressLine1 }}</p>
+                  <p class="mb-0 text-muted small">
+                    <span v-if="store.companyAddress.cityName">{{ store.companyAddress.cityName }}, </span>
+                    <span v-if="store.companyAddress.stateName">{{ store.companyAddress.stateName }}, </span>
+                    <span v-if="store.companyAddress.countryName">{{ store.companyAddress.countryName }}</span>
+                  </p>
+                </template>
+                <template v-else>
+                  <p class="mb-0 text-muted small">No company address on file. Please use manual entry.</p>
+                </template>
+              </div>
+
+              <!-- Manual Address Entry -->
+              <div v-if="store.shippingAddressMode === 'manual'" class="row g-2">
+                <div class="col-12 col-md-6">
+                  <label class="form-label small mb-1">Country *</label>
+                  <select class="form-select form-select-sm rounded-0" v-model="store.manualShippingAddress.countryId" @change="onManualCountryChange">
+                    <option value="">Select Country</option>
+                    <option v-for="c in locationStore.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label small mb-1">State</label>
+                  <select class="form-select form-select-sm rounded-0" v-model="store.manualShippingAddress.stateId" @change="onManualStateChange" :disabled="!store.manualShippingAddress.countryId">
+                    <option value="">Select State</option>
+                    <option v-for="s in manualStates" :key="s.id" :value="s.id">{{ s.name }}</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label small mb-1">City</label>
+                  <select class="form-select form-select-sm rounded-0" v-model="store.manualShippingAddress.cityId" :disabled="!store.manualShippingAddress.stateId">
+                    <option value="">Select City</option>
+                    <option v-for="ct in manualCities" :key="ct.id" :value="ct.id">{{ ct.name }}</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label small mb-1">Postcode / ZIP *</label>
+                  <input type="text" class="form-control form-control-sm rounded-0" v-model="store.manualShippingAddress.zipCode" placeholder="Postcode">
+                </div>
+                <div class="col-12">
+                  <label class="form-label small mb-1">Street Address *</label>
+                  <input type="text" class="form-control form-control-sm rounded-0" v-model="store.manualShippingAddress.street" placeholder="Street address">
+                </div>
+              </div>
+
+              <!-- Free Text (legacy) -->
+              <div v-if="store.shippingAddressMode === 'freeText'">
+                <textarea
+                  v-model="store.shippingAddressText"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Enter your shipping address"
+                ></textarea>
+              </div>
             </div>
 
             <!-- Action Buttons -->
@@ -161,24 +235,129 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuoteStore } from '../stores/quoteStore'
 import { b2bQuoteService } from '../services/b2bQuoteService'
 import { useModal } from '../composables/useModal'
+import { useLocationStore } from '../stores/locationStore'
+import axios from 'axios'
 
 const router = useRouter()
 const store = useQuoteStore()
+const locationStore = useLocationStore()
 const isSubmitting = ref(false)
+const companyAddressLoading = ref(false)
+const hasCompanyAddress = ref(false)
 const { showModal } = useModal()
-
-// Load user profile for shipping address
-onMounted(() => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  if (!store.shippingAddressText && user.address) {
-    store.shippingAddressText = user.address
+  
+  // Load user profile for shipping address
+  onMounted(async () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    if (!store.shippingAddressText && user.address) {
+      store.shippingAddressText = user.address
+    }
+    // Load company address for B2B users
+    await loadCompanyAddress()
+    if (!locationStore.loaded) locationStore.loadAllLocations()
+  })
+  
+  const manualStates = computed(() => {
+    const countryId = Number(store.manualShippingAddress.countryId || 0)
+    return countryId > 0 ? locationStore.getStates(countryId) : []
+  })
+  
+  const manualCities = computed(() => {
+    const stateId = Number(store.manualShippingAddress.stateId || 0)
+    return stateId > 0 ? locationStore.getCities(stateId) : []
+  })
+  
+  function onManualCountryChange() {
+    store.setManualShippingAddress({ stateId: '', cityId: '' })
+    const countryId = Number(store.manualShippingAddress.countryId || 0)
+    if (countryId > 0) locationStore.loadStates(countryId)
   }
-})
+  
+  function onManualStateChange() {
+    store.setManualShippingAddress({ cityId: '' })
+    const stateId = Number(store.manualShippingAddress.stateId || 0)
+    if (stateId > 0) locationStore.loadCities(stateId)
+  }
+  
+  async function loadCompanyAddress() {
+    companyAddressLoading.value = true
+    try {
+      const userId = JSON.parse(localStorage.getItem('user') || '{}')?.id
+      if (!userId) {
+        hasCompanyAddress.value = false
+        return
+      }
+      const token = localStorage.getItem('authToken')
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      const response = await axios.get(`${API_BASE}/api/v1/users/${userId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      const userData = response.data
+      if (userData && userData.b2bCompany) {
+        const bc = userData.b2bCompany
+        store.setCompanyAddress({
+          companyName: bc.companyName || '',
+          addressLine1: bc.addressLine1 || '',
+          countryId: String(bc.countryId || bc.country_id || ''),
+          stateId: String(bc.stateId || bc.state_id || ''),
+          cityId: String(bc.cityId || bc.city_id || ''),
+          countryName: bc.countryName || storageLookup('country', bc.countryId || bc.country_id),
+          stateName: bc.stateName || storageLookup('state', bc.stateId || bc.state_id),
+          cityName: bc.cityName || storageLookup('city', bc.cityId || bc.city_id)
+        })
+        hasCompanyAddress.value = true
+        // Default to company address if available
+        if (!store.shippingAddressText && !store.manualShippingAddress.street) {
+          store.shippingAddressMode = 'company'
+        }
+      } else {
+        hasCompanyAddress.value = false
+        if (store.shippingAddressMode === 'company') {
+          store.shippingAddressMode = 'manual'
+        }
+      }
+    } catch {
+      hasCompanyAddress.value = false
+    } finally {
+      companyAddressLoading.value = false
+    }
+  }
+  
+  function storageLookup(type, id) {
+    if (!id) return ''
+    const numId = Number(id)
+    if (!Number.isFinite(numId) || numId <= 0) return ''
+    // Use locationStore for name lookups
+    if (type === 'country') {
+      const found = locationStore.countries.find(c => Number(c.id) === numId)
+      return found ? found.name : ''
+    }
+    if (type === 'state') {
+      const found = locationStore.getStates(0).find(s => Number(s.id) === numId)
+      if (found) return found.name
+      // search across all loaded states
+      for (const c of locationStore.countries) {
+        const s = locationStore.getStates(c.id).find(s => Number(s.id) === numId)
+        if (s) return s.name
+      }
+      return ''
+    }
+    if (type === 'city') {
+      for (const c of locationStore.countries) {
+        for (const s of locationStore.getStates(c.id)) {
+          const ct = locationStore.getCities(s.id).find(ct => Number(ct.id) === numId)
+          if (ct) return ct.name
+        }
+      }
+      return ''
+    }
+    return ''
+  }
 
 // Increase quantity
 function increaseQuantity(item) {
@@ -225,7 +404,8 @@ async function submitQuoteRequest() {
     return
   }
 
-  if (!store.shippingAddressText.trim()) {
+  const addressText = store.buildShippingAddressText()
+  if (!addressText.trim()) {
     showModal({
       title: 'Shipping Address Required',
       message: 'Please enter a shipping address.',
@@ -241,7 +421,7 @@ async function submitQuoteRequest() {
   try {
     const payload = {
       notes: store.notes,
-      shippingAddressText: store.shippingAddressText,
+      shippingAddressText: store.buildShippingAddressText(),
       billingAddressText: store.billingAddressText || store.shippingAddressText,
       currencyId: store.currencyId || 1,
       items: store.items.map(item => ({
