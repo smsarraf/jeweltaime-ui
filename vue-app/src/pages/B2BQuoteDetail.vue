@@ -197,13 +197,73 @@
                 <span>NET 30</span>
               </div>
             </div>
+
+            <!-- Shipping Address Selection -->
+            <div class="shipping-selector mt-3">
+              <h6 class="fw-medium mb-2">Shipping Address</h6>
+
+              <!-- Company Address option -->
+              <label class="shipping-option d-block border rounded p-3 mb-2" :class="{ 'border-primary bg-light': addressMode === 'company' }">
+                <input class="form-check-input me-2" type="radio" value="company" v-model="addressMode">
+                <span class="fw-medium">Use Company Address</span>
+                <div v-if="addressMode === 'company' && companyAddress" class="company-addr-display mt-2 ms-4 text-muted small">
+                  <p class="mb-0 fw-medium text-dark">{{ companyAddress.companyName }}</p>
+                  <p class="mb-0">{{ companyAddress.addressLine1 }}</p>
+                  <p class="mb-0">
+                    <span v-if="companyAddress.cityName">{{ companyAddress.cityName }}, </span>
+                    <span v-if="companyAddress.stateName">{{ companyAddress.stateName }}, </span>
+                    <span v-if="companyAddress.countryName">{{ companyAddress.countryName }}</span>
+                  </p>
+                </div>
+                <div v-else-if="addressMode === 'company' && companyAddressLoading" class="mt-2 ms-4">
+                  <div class="placeholder-glow">
+                    <span class="placeholder col-8"></span>
+                    <span class="placeholder col-6 mt-1"></span>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Custom Address option -->
+              <label class="shipping-option d-block border rounded p-3 mb-2" :class="{ 'border-primary bg-light': addressMode === 'custom' }">
+                <input class="form-check-input me-2" type="radio" value="custom" v-model="addressMode">
+                <span class="fw-medium">Enter Custom Address</span>
+                <div v-if="addressMode === 'custom'" class="custom-addr-form mt-2 ms-4">
+                  <div class="row g-2">
+                    <div class="col-12">
+                      <label class="form-label small mb-1">Street / Address Line 1</label>
+                      <input type="text" class="form-control form-control-sm rounded-0" v-model="customAddress.street" placeholder="Street address">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label small mb-1">City</label>
+                      <input type="text" class="form-control form-control-sm rounded-0" v-model="customAddress.city" placeholder="City">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label small mb-1">State / Province</label>
+                      <input type="text" class="form-control form-control-sm rounded-0" v-model="customAddress.state" placeholder="State">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label small mb-1">ZIP / Postal Code</label>
+                      <input type="text" class="form-control form-control-sm rounded-0" v-model="customAddress.zipCode" placeholder="ZIP">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label small mb-1">Country <span class="text-danger">*</span></label>
+                      <select class="form-select form-select-sm rounded-0" v-model="customAddress.country">
+                        <option value="">Select Country...</option>
+                        <option v-for="c in countries" :key="c.id" :value="c.name">{{ c.name }}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </label>
+            </div>
+
             <p class="mt-3 text-muted small">
               By accepting, you agree to the quoted prices and terms. An order will be created and you will receive an invoice.
             </p>
           </div>
           <div class="modal-footer">
             <button class="btn btn-secondary" @click="showAcceptModal = false" :disabled="accepting">Cancel</button>
-            <button class="btn btn-success" @click="handleAccept" :disabled="accepting">
+            <button class="btn btn-success" @click="handleAccept" :disabled="accepting || !canAccept">
               <span v-if="accepting" class="spinner-border spinner-border-sm me-1"></span>
               {{ accepting ? 'Processing...' : 'Confirm & Create Order' }}
             </button>
@@ -215,20 +275,43 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { b2bQuoteService } from '../services/b2bQuoteService'
 import { useModal } from '../composables/useModal'
+import { useLocationStore } from '../stores/locationStore'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
 const { showModal } = useModal()
+const locationStore = useLocationStore()
 
 const quote = ref(null)
 const loading = ref(false)
 const error = ref(null)
 const showAcceptModal = ref(false)
 const accepting = ref(false)
+
+// Shipping address state
+const addressMode = ref('company') // 'company' | 'custom'
+const companyAddress = ref(null)
+const companyAddressLoading = ref(false)
+const countries = ref([])
+const customAddress = ref({
+  street: '',
+  city: '',
+  state: '',
+  zipCode: '',
+  country: ''
+})
+
+const canAccept = computed(() => {
+  if (addressMode.value === 'custom') {
+    return !!customAddress.value.country.trim()
+  }
+  return true
+})
 
 const showQuotedPrices = computed(() => {
   return quote.value && ['QUOTED', 'ACCEPTED', 'CONVERTED'].includes(quote.value.status)
@@ -244,9 +327,65 @@ const statusWithIcon = computed(() => {
   return map[quote.value?.status] || quote.value?.status
 })
 
-onMounted(() => {
-  fetchQuote()
+onMounted(async () => {
+  await fetchCountries()
+  await fetchQuote()
 })
+
+// Watch for modal open to pre-load company address
+watch(showAcceptModal, async (isOpen) => {
+  if (isOpen && !companyAddress.value && !companyAddressLoading.value) {
+    await loadCompanyAddress()
+  }
+})
+
+async function fetchCountries() {
+  if (!locationStore.loaded) await locationStore.loadAllLocations()
+  countries.value = locationStore.countries
+}
+
+async function loadCompanyAddress() {
+  companyAddressLoading.value = true
+  try {
+    const userId = JSON.parse(localStorage.getItem('user') || '{}')?.id
+    if (!userId) {
+      companyAddress.value = null
+      return
+    }
+    const token = localStorage.getItem('authToken')
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+    const response = await axios.get(`${API_BASE}/api/v1/users/${userId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+    const userData = response.data
+    if (userData && userData.b2bCompany) {
+      const bc = userData.b2bCompany
+      companyAddress.value = {
+        companyName: bc.companyName || '',
+        addressLine1: bc.addressLine1 || '',
+        cityName: bc.cityName || '',
+        stateName: bc.stateName || '',
+        countryName: bc.countryName || ''
+      }
+      // Pre-populate custom address form with company address as suggestions
+      if (!customAddress.value.street) {
+        customAddress.value = {
+          street: bc.addressLine1 || '',
+          city: bc.cityName || '',
+          state: bc.stateName || '',
+          zipCode: '',
+          country: bc.countryName || ''
+        }
+      }
+    } else {
+      companyAddress.value = null
+    }
+  } catch {
+    companyAddress.value = null
+  } finally {
+    companyAddressLoading.value = false
+  }
+}
 
 async function fetchQuote() {
   const id = route.params.id
@@ -272,14 +411,34 @@ async function handleAccept() {
 
   accepting.value = true
   try {
-    const response = await b2bQuoteService.acceptQuote(quote.value.id)
+    let shippingAddress = null
+    if (addressMode.value === 'custom') {
+      shippingAddress = {
+        street: customAddress.value.street.trim(),
+        city: customAddress.value.city.trim(),
+        state: customAddress.value.state.trim(),
+        zipCode: customAddress.value.zipCode.trim(),
+        country: customAddress.value.country.trim()
+      }
+    }
+    const response = await b2bQuoteService.acceptQuote(quote.value.id, shippingAddress)
     quote.value = response
     showAcceptModal.value = false
-    showModal({
-      title: 'Success',
-      message: 'Quote accepted! Order is being created.',
-      variant: 'success'
-    })
+
+    if (response.convertedOrderId) {
+      showModal({
+        title: 'Success',
+        message: `Quote accepted! Order #ORD-${response.convertedOrderId} has been created.`,
+        variant: 'success'
+      })
+      router.push(`/orders/${response.convertedOrderId}`)
+    } else {
+      showModal({
+        title: 'Success',
+        message: 'Quote accepted! Order is being created.',
+        variant: 'success'
+      })
+    }
   } catch (err) {
     showModal({
       title: 'Error',
