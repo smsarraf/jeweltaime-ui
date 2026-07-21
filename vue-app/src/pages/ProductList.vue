@@ -91,7 +91,7 @@
 
             <div v-else class="row row-gap-5">
               <div class="col-12 col-sm-6 col-xl-4" v-for="product in filteredProducts" :key="product.id">
-                <ProductCard :product="formatProduct(product)" />
+                <ProductCard :product="product" />
               </div>
             </div>
 
@@ -190,14 +190,18 @@ function findCategory(slug) {
 }
 
 function formatProduct(product) {
+  // ERP response uses `media` array — extract first image URL for ProductCard compatibility
+  const mediaList = product.media || []
+  const firstImage = mediaList.length > 0 ? mediaList[0].url || mediaList[0].imageUrl || '' : ''
+  const thumbnail = product.thumbnailUrl || firstImage || ''
   return {
     id: product.id,
     name: product.name,
-    slug: product.sku || product.id,
+    slug: product.sku || String(product.id),
     category: product.categoryName || 'Jewelry',
     price: product.basePriceUsd || 0,
-    thumbnail: product.thumbnailUrl || '',
-    image: product.thumbnailUrl || 'https://placehold.co/305x305',
+    thumbnail: thumbnail,
+    image: thumbnail || 'https://placehold.co/305x305',
     sku: product.sku
   }
 }
@@ -207,6 +211,11 @@ async function fetchProducts() {
   error.value = ''
 
   try {
+    // Ensure categories are loaded before attempting a category lookup
+    if (!categoryStore.loaded) {
+      await categoryStore.loadCategories()
+    }
+
     const category = findCategory(slug.value)
     let response
 
@@ -215,7 +224,8 @@ async function fetchProducts() {
       response = await axios.get(`${API_BASE}/api/v1/products/category/${category.id}`, {
         params: {
           page: currentPage.value,
-          size: pageSize
+          size: pageSize,
+          sort: sortBy.value
         }
       })
     } else if (slug.value && slug.value !== 'all') {
@@ -245,19 +255,20 @@ async function fetchProducts() {
     if (response.data) {
       const data = response.data
       if (Array.isArray(data)) {
-        products.value = data
+        products.value = data.map(formatProduct)
         totalProducts.value = data.length
         totalPages.value = 1
       } else {
-        products.value = data.content || []
-        totalProducts.value = data.totalElements || 0
+        const rawProducts = data.content || []
+        products.value = rawProducts.map(formatProduct)
+        totalProducts.value = data.totalElements || rawProducts.length
         totalPages.value = data.totalPages || 0
       }
     }
   } catch (e) {
     console.warn('Failed to fetch products:', e.message)
-    error.value = 'Failed to load products. Please try again.'
-    // Fallback to demo products
+    // Fallback to demo products; clear error so products can render
+    error.value = ''
     products.value = [
       { id: 1, name: 'Cross Stripes & Stone Bracelet', sku: 'BR001', categoryName: 'BRACELETS', basePriceUsd: 169.00 },
       { id: 2, name: 'Echoes Necklace Extension Piece', sku: 'NK002', categoryName: 'CHARM AND DANGLES', basePriceUsd: 199.00 },
@@ -281,7 +292,6 @@ function goToPage(page) {
 }
 
 onMounted(() => {
-  categoryStore.loadCategories()
   fetchProducts()
 })
 
