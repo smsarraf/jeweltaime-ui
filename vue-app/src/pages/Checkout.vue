@@ -257,7 +257,7 @@ import { useLocationStore } from '../stores/locationStore'
 import axios from 'axios'
 import { API_BASE, getCurrentUserId, isAuthenticated } from '../services/apiConfig'
 import { getUserAddresses } from '../services/addressService'
-import { calculateShippingRates, getActiveShippers, getShipperMethods, previewShippingCost, getCountryTaxRate } from '../services/shippingService'
+import { calculateShippingRates, getActiveShippers, getShipperMethods, previewShippingCost } from '../services/shippingService'
 
 const router = useRouter()
 const route = useRoute()
@@ -512,8 +512,7 @@ async function syncSelectedCountryTaxRate() {
   }
   countryTaxSyncing.value = true
   try {
-    const taxResponse = await getCountryTaxRate(countryId)
-    const rawRate = Number(taxResponse?.taxRate ?? 0)
+    const rawRate = Number(locationStore.getCountryTaxRate(countryId) ?? 0)
     const nextTaxPercentage = rawRate > 0 && rawRate <= 1 ? rawRate * 100 : rawRate
     countryTaxRatePercentage.value = Number.isFinite(nextTaxPercentage) ? Math.max(0, nextTaxPercentage) : 0
     const baseForTax = Number(itemsSubtotal.value + addonsSubtotal.value + shippingCost.value - discountAmount.value)

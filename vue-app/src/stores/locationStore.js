@@ -15,7 +15,26 @@ export const useLocationStore = defineStore('location', {
   getters: {
     getCountries: (state) => state.countries,
     getStates: (state) => (countryId) => state.statesByCountry[countryId] || [],
-    getCities: (state) => (stateId) => state.citiesByState[stateId] || []
+    getCities: (state) => (stateId) => state.citiesByState[stateId] || [],
+    getCountryTaxRate: (state) => (countryId) => {
+      const country = state.countries.find(c => c.id === Number(countryId))
+      return country?.taxRate ?? null
+    },
+    getCountryById: (state) => (countryId) => state.countries.find(c => c.id === Number(countryId)) || null,
+    getStateById: (state) => (stateId) => {
+      for (const states of Object.values(state.statesByCountry)) {
+        const found = states.find(s => s.id === Number(stateId))
+        if (found) return found
+      }
+      return null
+    },
+    getCityById: (state) => (cityId) => {
+      for (const cities of Object.values(state.citiesByState)) {
+        const found = cities.find(c => c.id === Number(cityId))
+        if (found) return found
+      }
+      return null
+    }
   },
   actions: {
     async loadAllLocations() {
@@ -73,7 +92,7 @@ export const useLocationStore = defineStore('location', {
       try {
         const response = await axios.get(`${API_BASE}/api/v1/locations/countries/${countryId}/states`, { timeout: 5000 })
         if (response.data) {
-          const states = (Array.isArray(response.data) ? response.data : []).map(s => ({ id: s.id, name: s.name, stateCode: s.stateCode }))
+          const states = (Array.isArray(response.data) ? response.data : []).map(s => ({ id: s.id, name: s.name, stateCode: s.stateCode, taxRateOverride: s.taxRateOverride }))
           this.statesByCountry[countryId] = states
           // Update cache
           this._updateCache()
@@ -90,7 +109,7 @@ export const useLocationStore = defineStore('location', {
       try {
         const response = await axios.get(`${API_BASE}/api/v1/locations/states/${stateId}/cities`, { timeout: 5000 })
         if (response.data) {
-          const cities = (Array.isArray(response.data) ? response.data : []).map(c => ({ id: c.id, name: c.name, postalCodeRegex: c.postalCodeRegex }))
+          const cities = (Array.isArray(response.data) ? response.data : []).map(c => ({ id: c.id, name: c.name, postalCodeRegex: c.postalCodeRegex, isMajorHub: c.isMajorHub }))
           this.citiesByState[stateId] = cities
           this._updateCache()
         }
@@ -103,14 +122,14 @@ export const useLocationStore = defineStore('location', {
       try {
         const data = { countries: [] }
         this.countries.forEach(c => {
-          const country = { id: c.id, name: c.name, taxRate: Number(c.taxRate ?? 0) }
+          const country = { id: c.id, name: c.name, isoCode: c.isoCode, taxRate: Number(c.taxRate ?? 0) }
           const states = this.statesByCountry[c.id]
           if (states && states.length > 0) {
             country.states = states.map(s => {
-              const state = { id: s.id, name: s.name }
+              const state = { id: s.id, name: s.name, stateCode: s.stateCode, taxRateOverride: s.taxRateOverride }
               const cities = this.citiesByState[s.id]
               if (cities && cities.length > 0) {
-                state.cities = cities.map(ct => ({ id: ct.id, name: ct.name }))
+                state.cities = cities.map(ct => ({ id: ct.id, name: ct.name, postalCodeRegex: ct.postalCodeRegex, isMajorHub: ct.isMajorHub }))
               }
               return state
             })
@@ -139,14 +158,14 @@ export const useLocationStore = defineStore('location', {
     },
 
     _setData(countries) {
-      this.countries = countries.map(c => ({ id: c.id, name: c.name, taxRate: Number(c.taxRate ?? 0) }))
+      this.countries = countries.map(c => ({ id: c.id, name: c.name, isoCode: c.isoCode, taxRate: Number(c.taxRate ?? 0) }))
       // If API returned full tree data, use it; otherwise lazy load will fill in
       countries.forEach(country => {
         if (country.states && Array.isArray(country.states) && country.states.length > 0) {
-          this.statesByCountry[country.id] = country.states.map(s => ({ id: s.id, name: s.name, stateCode: s.stateCode }))
+          this.statesByCountry[country.id] = country.states.map(s => ({ id: s.id, name: s.name, stateCode: s.stateCode, taxRateOverride: s.taxRateOverride }))
           country.states.forEach(state => {
             if (state.cities && Array.isArray(state.cities) && state.cities.length > 0) {
-              this.citiesByState[state.id] = state.cities.map(c => ({ id: c.id, name: c.name }))
+              this.citiesByState[state.id] = state.cities.map(c => ({ id: c.id, name: c.name, postalCodeRegex: c.postalCodeRegex, isMajorHub: c.isMajorHub }))
             }
           })
         }
