@@ -44,12 +44,3 @@ export async function previewShippingCost(payload) {
   return res.data || {}
 }
 
-/**
- * Read country tax rate metadata by destination country.
- * @param {number} countryId
- */
-export async function getCountryTaxRate(countryId) {
-  if (!countryId) return {}
-  const res = await axios.get(`${API_BASE}/api/v1/locations/countries/tax-rate/${countryId}`)
-  return res.data || {}
-}
