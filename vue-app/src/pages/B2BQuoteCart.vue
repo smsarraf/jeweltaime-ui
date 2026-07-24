@@ -44,8 +44,58 @@
         </router-link>
       </div>
 
+      <!-- Volume Pricing Tiers (shown when total items > 5) -->
+      <div v-if="store.pricingTiers" class="pricing-tiers-panel">
+        <div class="tiers-header">
+          <i class="bi bi-graph-up-arrow"></i>
+          <h4>Volume Discount Pricing Tiers</h4>
+          <span class="tiers-badge" v-if="store.effectiveDiscountPercent > 0">
+            {{ store.effectiveDiscountPercent }}% Discount Applied
+          </span>
+        </div>
+        <div class="tiers-table-wrapper">
+          <table class="tiers-table">
+            <thead>
+              <tr>
+                <th>Quantity Range</th>
+                <th>Discount</th>
+                <th>Est. Unit Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="tier in (store.pricingTiers.tiers || [])"
+                :key="tier.minQty"
+                :class="{ 'active-tier': tier.discountPercent === store.effectiveDiscountPercent }"
+              >
+                <td>{{ tier.label }}</td>
+                <td>
+                  <span v-if="tier.discountPercent > 0" class="discount-value">{{ tier.discountPercent }}% off</span>
+                  <span v-else class="no-discount">Retail price</span>
+                </td>
+                <td>
+                  <span v-if="tier.discountPercent > 0" class="tier-unit-price">
+                    {{ formatPrice(store.subtotal / store.totalItems * (1 - tier.discountPercent / 100)) }}
+                  </span>
+                  <span v-else class="tier-unit-price">
+                    {{ formatPrice(store.subtotal / store.totalItems) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tiers-footer">
+          <i class="bi bi-info-circle"></i>
+          <span>
+            Your current total of <strong>{{ store.totalItems }} units</strong> qualifies for
+            <strong>{{ store.effectiveDiscountPercent }}% off</strong> retail pricing.
+          </span>
+        </div>
+      </div>
+
       <!-- Cart Items -->
-      <div v-else class="cart-content">
+      <div class="cart-content">
         <div class="row">
           <div class="col-lg-8">
             <!-- Quote Items -->
@@ -56,9 +106,20 @@
                 <p v-if="item.variantName" class="item-variant">Variant: {{ item.variantName }}</p>
                 
                 <div class="item-pricing">
-                  <span class="retail-label">Est. Retail:</span>
-                  <span class="retail-price">{{ formatPrice(item.retailUnitPrice) }}/unit</span>
-                  <span class="line-total">Line Total (Retail): {{ formatPrice(item.retailUnitPrice * item.quantity) }}</span>
+                  <div class="price-row retail">
+                    <span class="price-label">Retail Price:</span>
+                    <span class="price-value">{{ formatPrice(item.retailUnitPrice) }}/unit</span>
+                  </div>
+                  <div v-if="store.pricingTiers && store.effectiveDiscountPercent > 0" class="price-row b2b">
+                    <span class="price-label">B2B Price ({{ store.effectiveDiscountPercent }}% off):</span>
+                    <span class="price-value b2b-price">{{ formatPrice(item.retailUnitPrice * (1 - store.effectiveDiscountPercent / 100)) }}/unit</span>
+                  </div>
+                  <div class="line-totals">
+                    <span class="line-total-retail">Retail: {{ formatPrice(item.retailUnitPrice * item.quantity) }}</span>
+                    <span v-if="store.pricingTiers && store.effectiveDiscountPercent > 0" class="line-total-b2b">
+                      B2B: {{ formatPrice(item.retailUnitPrice * item.quantity * (1 - store.effectiveDiscountPercent / 100)) }}
+                    </span>
+                  </div>
                 </div>
 
                 <div class="item-notes">
@@ -235,7 +296,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuoteStore } from '../stores/quoteStore'
 import { b2bQuoteService } from '../services/b2bQuoteService'
@@ -250,6 +311,53 @@ const isSubmitting = ref(false)
 const companyAddressLoading = ref(false)
 const hasCompanyAddress = ref(false)
 const { showModal } = useModal()
+
+// B2B company ID for company-specific pricing tiers
+const b2bCompanyId = ref(null)
+
+// Watch total items and fetch pricing tiers when > 5
+const totalQuoteQuantity = computed(() => store.totalItems)
+
+watch(totalQuoteQuantity, (newQty) => {
+  if (newQty > 5) {
+    loadPricingTiers(newQty)
+  } else {
+    store.setPricingTiers(null)
+  }
+}, { immediate: true })
+
+async function loadPricingTiers(totalQty) {
+  store.setPricingTiersLoading(true)
+  try {
+    // Pass company ID for company-specific negotiated rates
+    // Pass items array for product-specific tier calculation
+    const tierOptions = {
+      companyId: b2bCompanyId.value || undefined,
+      items: store.items.map(item => ({
+        productId: item.productId,
+        variantId: item.variantId || null,
+        quantity: item.quantity
+      }))
+    }
+    const data = await b2bQuoteService.getPricingTiers(totalQty, tierOptions)
+    store.setPricingTiers(data)
+  } catch (err) {
+    console.error('Failed to load pricing tiers:', err)
+    // Fallback already handled in service
+    const tierOptions = {
+      companyId: b2bCompanyId.value || undefined,
+      items: store.items.map(item => ({
+        productId: item.productId,
+        variantId: item.variantId || null,
+        quantity: item.quantity
+      }))
+    }
+    const fallback = b2bQuoteService.getFallbackPricingTiers(totalQty, tierOptions)
+    store.setPricingTiers(fallback)
+  } finally {
+    store.setPricingTiersLoading(false)
+  }
+}
   
   // Load user profile for shipping address
   onMounted(async () => {
@@ -310,12 +418,15 @@ const { showModal } = useModal()
           stateName: bc.stateName || storageLookup('state', bc.stateId || bc.state_id),
           cityName: bc.cityName || storageLookup('city', bc.cityId || bc.city_id)
         })
+        // Set company ID for company-specific pricing tiers
+        b2bCompanyId.value = bc.id || null
         hasCompanyAddress.value = true
         // Default to company address if available
         if (!store.shippingAddressText && !store.manualShippingAddress.street) {
           store.shippingAddressMode = 'company'
         }
       } else {
+        b2bCompanyId.value = null
         hasCompanyAddress.value = false
         if (store.shippingAddressMode === 'company') {
           store.shippingAddressMode = 'manual'
@@ -564,27 +675,56 @@ function formatPrice(price) {
 .item-pricing {
   margin: 0.75rem 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.retail-label {
-  font-size: 0.875rem;
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.price-row.retail .price-label {
+  font-size: 0.85rem;
   color: #666;
 }
 
-.retail-price {
+.price-row.retail .price-value {
   font-weight: 600;
   color: #333;
 }
 
-.line-total {
-  display: block;
-  width: 100%;
-  font-size: 0.875rem;
-  color: #666;
+.price-row.b2b .price-label {
+  font-size: 0.85rem;
+  color: #155724;
+}
+
+.price-row.b2b .price-value {
+  font-weight: 700;
+  color: #28a745;
+}
+
+.line-totals {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed #eee;
   margin-top: 0.25rem;
+}
+
+.line-total-retail {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.line-total-b2b {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #28a745;
 }
 
 .item-notes {
@@ -669,6 +809,107 @@ function formatPrice(price) {
 
 .action-buttons {
   margin-top: 1.5rem;
+}
+
+/* Pricing Tiers Panel */
+.pricing-tiers-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid #e8f4fd;
+}
+
+.tiers-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.tiers-header i {
+  font-size: 1.5rem;
+  color: #667eea;
+}
+
+.tiers-header h4 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  flex: 1;
+}
+
+.tiers-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tiers-table-wrapper {
+  overflow-x: auto;
+}
+
+.tiers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tiers-table th {
+  background: #f8f9fa;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #666;
+  text-align: left;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.tiers-table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #eee;
+}
+
+.tiers-table tr.active-tier {
+  background: #e8fde7;
+  font-weight: 600;
+}
+
+.tiers-table tr.active-tier td {
+  color: #155724;
+}
+
+.discount-value {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.no-discount {
+  color: #999;
+}
+
+.tier-unit-price {
+  font-weight: 500;
+}
+
+.tiers-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eee;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.tiers-footer i {
+  color: #667eea;
 }
 
 .btn-success:disabled {

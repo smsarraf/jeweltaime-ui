@@ -18,7 +18,10 @@ export const useQuoteStore = defineStore('quote', {
       stateId: '',
       countryId: '',
       zipCode: ''
-    }
+    },
+    // Pricing tiers for volume discounts
+    pricingTiers: null, // { tiers: [], applicableTier: {}, totalQuantity: number }
+    pricingTiersLoading: false
   }),
   getters: {
     totalItems: (state) => state.items.reduce((sum, item) => sum + (item.quantity || 1), 0),
@@ -26,7 +29,33 @@ export const useQuoteStore = defineStore('quote', {
       const quantity = item.quantity || 1
       const price = Number(item.retailUnitPrice || 0)
       return sum + (price * quantity)
-    }, 0)
+    }, 0),
+    /**
+     * Get the effective discount percentage based on pricing tiers
+     */
+    effectiveDiscountPercent: (state) => {
+      if (state.pricingTiers && state.pricingTiers.applicableTier) {
+        return state.pricingTiers.applicableTier.discountPercent || 0
+      }
+      return 0
+    },
+    /**
+     * Get estimated B2B subtotal after volume discount
+     */
+    estimatedB2BSubtotal: (state) => {
+      const retailSubtotal = state.items.reduce((sum, item) => {
+        const quantity = item.quantity || 1
+        const price = Number(item.retailUnitPrice || 0)
+        return sum + (price * quantity)
+      }, 0)
+      
+      let discountPercent = 0
+      if (state.pricingTiers && state.pricingTiers.applicableTier) {
+        discountPercent = state.pricingTiers.applicableTier.discountPercent || 0
+      }
+      
+      return retailSubtotal * (1 - discountPercent / 100)
+    }
   },
   actions: {
     getItemKey(product) {
@@ -116,6 +145,12 @@ export const useQuoteStore = defineStore('quote', {
         countryId: '',
         zipCode: ''
       }
+    },
+    setPricingTiers(tiers) {
+      this.pricingTiers = tiers
+    },
+    setPricingTiersLoading(value) {
+      this.pricingTiersLoading = value
     },
     setLoading(value) {
       this.loading = value
