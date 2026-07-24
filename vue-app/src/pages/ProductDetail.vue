@@ -14,6 +14,12 @@
                               <li class="breadcrumb-item">
                                   <router-link to="/products" class="text-decoration-none">Shop</router-link>
                               </li>
+                              <template v-if="breadcrumbCategories.length > 0">
+                                <li v-for="(cat, idx) in breadcrumbCategories" :key="cat.id" class="breadcrumb-item" :class="{ active: idx === breadcrumbCategories.length - 1 }" :aria-current="idx === breadcrumbCategories.length - 1 ? 'page' : undefined">
+                                  <router-link v-if="idx < breadcrumbCategories.length - 1" :to="`/category/${cat.slug}`" class="text-decoration-none">{{ cat.name }}</router-link>
+                                  <span v-else>{{ cat.name }}</span>
+                                </li>
+                              </template>
                               <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
                           </ol>
                       </nav>
@@ -256,6 +262,19 @@
                                   <li class="mb-2">
                                       <span class="productInformation">Category:</span>
                                       <span class="productInformationDetails">{{ product.category }}</span>
+                                  </li>
+                                  <li v-if="productCategories.length > 0" class="mb-2">
+                                      <span class="productInformation">Collections:</span>
+                                      <span class="productInformationDetails">
+                                        <span v-for="(cat, idx) in productCategories" :key="cat.id || cat.slug">
+                                          <router-link v-if="cat.slug" :to="`/category/${cat.slug}`"
+                                            class="text-decoration-none badge rounded-pill me-1"
+                                            :class="cat.isPrimary ? 'bg-dark' : 'bg-secondary bg-opacity-25 text-dark'">
+                                            {{ cat.name }}
+                                          </router-link>
+                                          <span v-else-if="idx < productCategories.length - 1">, </span>
+                                        </span>
+                                      </span>
                                   </li>
                               </ul>
                               <div class="d-flex socialNetworksIcons">
@@ -513,6 +532,62 @@ const shareTitle = computed(() => encodeURIComponent(product.value.name))
 const facebookShareUrl = computed(() => `https://www.facebook.com/sharer/sharer.php?u=${shareUrl.value}`)
 const twitterShareUrl = computed(() => `https://twitter.com/intent/tweet?url=${shareUrl.value}&text=${shareTitle.value}`)
 const pinterestShareUrl = computed(() => `https://pinterest.com/pin/create/button/?url=${shareUrl.value}&description=${shareTitle.value}`)
+
+// Breadcrumb hierarchy: resolves the primary category path (root -> sub -> leaf)
+const breadcrumbCategories = computed(() => {
+  const catId = product.value.categoryId
+  if (!catId) return []
+
+  const cat = categoryStore.getCategoryById(catId)
+  if (!cat) return []
+
+  // Build the path from the category tree by walking from root categories
+  function findPath(categories, targetSlug, path) {
+    for (const c of categories) {
+      const current = [...path, { id: c.id, name: c.name, slug: c.slug }]
+      if (c.slug === targetSlug) return current
+      if (c.children && c.children.length > 0) {
+        const found = findPath(c.children, targetSlug, current)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  const rootCats = categoryStore.getRootCategories
+  const path = findPath(rootCats, cat.slug, [])
+  return path || [{ id: cat.id, name: cat.name, slug: cat.slug }]
+})
+
+// All assigned categories (primary + any secondary from tags/categories)
+const productCategories = computed(() => {
+  // Primary category from the product's categoryId
+  const primary = categoryStore.getCategoryById(product.value.categoryId)
+  const cats = []
+  if (primary) {
+    cats.push({ ...primary, isPrimary: true })
+  } else if (product.value.category) {
+    cats.push({ id: null, name: product.value.category, slug: product.value.category.toLowerCase().replace(/\s+/g, '-'), isPrimary: true })
+  }
+  // Secondary categories from the 'tags' array: look for any tag that matches a category slug
+  if (Array.isArray(product.value.tags)) {
+    product.value.tags.forEach(tag => {
+      const tagSlug = tag.toLowerCase().replace(/\s+/g, '-')
+      // Avoid duplicating the primary category
+      if (primary && primary.slug === tagSlug) return
+      if (cats.some(c => c.slug === tagSlug)) return
+      // Check if this tag matches a known category
+      const catFromStore = categoryStore.getCategoryBySlug(tagSlug)
+      if (catFromStore) {
+        cats.push({ ...catFromStore, isPrimary: false })
+      } else {
+        // Also add as a tag-based category
+        cats.push({ id: null, name: tag, slug: tagSlug, isPrimary: false })
+      }
+    })
+  }
+  return cats
+})
 
 // Category banner for header background (1920x300) — uses category store for real banner images
 const categoryBanner = computed(() => {

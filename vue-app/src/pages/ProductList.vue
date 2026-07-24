@@ -145,6 +145,15 @@ const allProducts = computed(() => products.value)
 const filteredProducts = computed(() => {
   let result = allProducts.value
 
+  // Deduplication: ensure unique product IDs (handles multi-category products appearing multiple times)
+  const seenIds = new Set()
+  result = result.filter(p => {
+    const id = p.id
+    if (seenIds.has(id)) return false
+    seenIds.add(id)
+    return true
+  })
+
   // Price range filter
   const min = Number(priceMin.value)
   const max = Number(priceMax.value)
