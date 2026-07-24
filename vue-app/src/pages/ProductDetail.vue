@@ -502,6 +502,9 @@ const product = ref({
   name: '',
   category: '',
   categoryId: null,
+  categoryName: '',
+  primaryCategory: null,
+  secondaryCategories: [],
   price: 0,
   thumbnailUrl: '',
   sku: '',
@@ -559,33 +562,46 @@ const breadcrumbCategories = computed(() => {
   return path || [{ id: cat.id, name: cat.name, slug: cat.slug }]
 })
 
-// All assigned categories (primary + any secondary from tags/categories)
+// All assigned categories (primary + secondary from API + tags)
 const productCategories = computed(() => {
-  // Primary category from the product's categoryId
-  const primary = categoryStore.getCategoryById(product.value.categoryId)
   const cats = []
-  if (primary) {
-    cats.push({ ...primary, isPrimary: true })
-  } else if (product.value.category) {
-    cats.push({ id: null, name: product.value.category, slug: product.value.category.toLowerCase().replace(/\s+/g, '-'), isPrimary: true })
+
+  // 1. Primary category from the API's primaryCategory object or categoryId
+  const primaryFromApi = product.value.primaryCategory
+  if (primaryFromApi && primaryFromApi.id) {
+    cats.push({ id: primaryFromApi.id, name: primaryFromApi.name, slug: primaryFromApi.slug, isPrimary: true })
+  } else {
+    const primary = categoryStore.getCategoryById(product.value.categoryId)
+    if (primary) {
+      cats.push({ ...primary, isPrimary: true })
+    } else if (product.value.category) {
+      cats.push({ id: null, name: product.value.category, slug: product.value.category.toLowerCase().replace(/\s+/g, '-'), isPrimary: true })
+    }
   }
-  // Secondary categories from the 'tags' array: look for any tag that matches a category slug
+
+  // 2. Secondary categories from the API's secondaryCategories array
+  if (Array.isArray(product.value.secondaryCategories)) {
+    product.value.secondaryCategories.forEach(sc => {
+      if (sc && sc.id && !cats.some(c => c.id === sc.id)) {
+        cats.push({ id: sc.id, name: sc.name, slug: sc.slug, isPrimary: false })
+      }
+    })
+  }
+
+  // 3. Secondary categories from the 'tags' array: look for any tag that matches a category slug
   if (Array.isArray(product.value.tags)) {
     product.value.tags.forEach(tag => {
       const tagSlug = tag.toLowerCase().replace(/\s+/g, '-')
-      // Avoid duplicating the primary category
-      if (primary && primary.slug === tagSlug) return
       if (cats.some(c => c.slug === tagSlug)) return
-      // Check if this tag matches a known category
       const catFromStore = categoryStore.getCategoryBySlug(tagSlug)
       if (catFromStore) {
         cats.push({ ...catFromStore, isPrimary: false })
       } else {
-        // Also add as a tag-based category
         cats.push({ id: null, name: tag, slug: tagSlug, isPrimary: false })
       }
     })
   }
+
   return cats
 })
 
@@ -771,11 +787,19 @@ async function fetchProduct() {
     const response = await axios.get(`${API_BASE}/api/v1/products/${id}`)
     if (response.data) {
       const p = response.data
+      // Map primaryCategory from API (CategoryResponse object with id/name/slug)
+      const primaryCat = p.primaryCategory || null
+      // Map secondaryCategories from API (array of CategoryResponse objects)
+      const secondaryCats = Array.isArray(p.secondaryCategories) ? p.secondaryCategories : []
+
       product.value = {
         id: p.id,
         name: p.name,
-        category: p.categoryName || 'Jewelry',
-        categoryId: p.categoryId || null,
+        category: p.categoryName || (primaryCat ? primaryCat.name : 'Jewelry'),
+        categoryId: p.categoryId || (primaryCat ? primaryCat.id : null),
+        categoryName: p.categoryName || (primaryCat ? primaryCat.name : ''),
+        primaryCategory: primaryCat ? { id: primaryCat.id, name: primaryCat.name, slug: primaryCat.slug, thumbnailUrl: primaryCat.thumbnailUrl || '', bannerUrl: primaryCat.bannerUrl || '' } : null,
+        secondaryCategories: secondaryCats.map(sc => ({ id: sc.id, name: sc.name, slug: sc.slug, thumbnailUrl: sc.thumbnailUrl || '', bannerUrl: sc.bannerUrl || '' })),
         price: Number(p.basePriceUsd) || 0,
         thumbnailUrl: p.thumbnailUrl || '',
         sku: p.sku || '',
