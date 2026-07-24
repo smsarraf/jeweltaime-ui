@@ -54,6 +54,7 @@
                   <th>Qty</th>
                   <th>Retail Price</th>
                   <th v-if="showQuotedPrices">Quoted Price</th>
+                  <th v-if="showQuotedPrices">Discount %</th>
                   <th>Line Total</th>
                 </tr>
               </thead>
@@ -70,14 +71,23 @@
                   <td v-if="showQuotedPrices">
                     <div class="quoted-price-cell">
                       <span>{{ formatPrice(item.quotedUnitPrice) }}</span>
+                    </div>
+                  </td>
+                  <td v-if="showQuotedPrices">
+                    <div class="discount-percent-cell">
                       <span v-if="item.discountPercentage" class="discount-badge-inline">
                         {{ item.discountPercentage }}% off
                       </span>
+                      <span v-else class="text-muted">—</span>
+                      <div v-if="item.retailUnitPrice && item.quotedUnitPrice" class="saved-amount">
+                        Save {{ formatPrice(item.retailUnitPrice - item.quotedUnitPrice) }}/unit
+                      </div>
                     </div>
                   </td>
                   <td>
-                    <span v-if="showQuotedPrices && item.quotedUnitPrice">
+                    <span v-if="showQuotedPrices && item.quotedUnitPrice" class="line-total-quoted">
                       {{ formatPrice(item.quotedUnitPrice * item.requestedQuantity) }}
+                      <small class="text-muted text-through">({{ formatPrice(item.retailUnitPrice * item.requestedQuantity) }})</small>
                     </span>
                     <span v-else>
                       {{ formatPrice(item.retailUnitPrice * item.requestedQuantity) }}
@@ -513,9 +523,29 @@ function formatDate(dateStr) {
 .discount-badge-inline {
   background: #28a745;
   color: white;
-  padding: 0.15rem 0.4rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-block;
+}
+.discount-percent-cell {
+  text-align: center;
+}
+.saved-amount {
   font-size: 0.75rem;
+  color: #28a745;
+  font-weight: 600;
+  margin-top: 0.2rem;
+}
+.line-total-quoted {
+  font-weight: 600;
+  color: #28a745;
+}
+.text-through {
+  text-decoration: line-through;
+  font-weight: 400;
+  font-size: 0.8rem;
 }
 .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
 .summary-row.discount { color: #28a745; }

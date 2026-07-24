@@ -145,6 +145,15 @@ const allProducts = computed(() => products.value)
 const filteredProducts = computed(() => {
   let result = allProducts.value
 
+  // Deduplication: ensure unique product IDs (handles multi-category products appearing multiple times)
+  const seenIds = new Set()
+  result = result.filter(p => {
+    const id = p.id
+    if (seenIds.has(id)) return false
+    seenIds.add(id)
+    return true
+  })
+
   // Price range filter
   const min = Number(priceMin.value)
   const max = Number(priceMax.value)
@@ -220,10 +229,10 @@ async function fetchProducts() {
     let response
 
     if (category && category.id) {
-      // Fetch products by category
+      // Fetch products by category (API uses 1-indexed pages)
       response = await axios.get(`${API_BASE}/api/v1/products/category/${category.id}`, {
         params: {
-          page: currentPage.value,
+          page: currentPage.value + 1,
           size: pageSize,
           sort: sortBy.value
         }

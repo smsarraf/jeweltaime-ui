@@ -14,6 +14,12 @@
                               <li class="breadcrumb-item">
                                   <router-link to="/products" class="text-decoration-none">Shop</router-link>
                               </li>
+                              <template v-if="breadcrumbCategories.length > 0">
+                                <li v-for="(cat, idx) in breadcrumbCategories" :key="cat.id" class="breadcrumb-item" :class="{ active: idx === breadcrumbCategories.length - 1 }" :aria-current="idx === breadcrumbCategories.length - 1 ? 'page' : undefined">
+                                  <router-link v-if="idx < breadcrumbCategories.length - 1" :to="`/category/${cat.slug}`" class="text-decoration-none">{{ cat.name }}</router-link>
+                                  <span v-else>{{ cat.name }}</span>
+                                </li>
+                              </template>
                               <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
                           </ol>
                       </nav>
@@ -257,6 +263,19 @@
                                       <span class="productInformation">Category:</span>
                                       <span class="productInformationDetails">{{ product.category }}</span>
                                   </li>
+                                  <li v-if="productCategories.length > 0" class="mb-2">
+                                      <span class="productInformation">Collections:</span>
+                                      <span class="productInformationDetails">
+                                        <span v-for="(cat, idx) in productCategories" :key="cat.id || cat.slug">
+                                          <router-link v-if="cat.slug" :to="`/category/${cat.slug}`"
+                                            class="text-decoration-none badge rounded-pill me-1"
+                                            :class="cat.isPrimary ? 'bg-dark' : 'bg-secondary bg-opacity-25 text-dark'">
+                                            {{ cat.name }}
+                                          </router-link>
+                                          <span v-else-if="idx < productCategories.length - 1">, </span>
+                                        </span>
+                                      </span>
+                                  </li>
                               </ul>
                               <div class="d-flex socialNetworksIcons">
                                   <span class="socialHD fw-normal me-3">Share:</span>
@@ -483,6 +502,9 @@ const product = ref({
   name: '',
   category: '',
   categoryId: null,
+  categoryName: '',
+  primaryCategory: null,
+  secondaryCategories: [],
   price: 0,
   thumbnailUrl: '',
   sku: '',
@@ -513,6 +535,75 @@ const shareTitle = computed(() => encodeURIComponent(product.value.name))
 const facebookShareUrl = computed(() => `https://www.facebook.com/sharer/sharer.php?u=${shareUrl.value}`)
 const twitterShareUrl = computed(() => `https://twitter.com/intent/tweet?url=${shareUrl.value}&text=${shareTitle.value}`)
 const pinterestShareUrl = computed(() => `https://pinterest.com/pin/create/button/?url=${shareUrl.value}&description=${shareTitle.value}`)
+
+// Breadcrumb hierarchy: resolves the primary category path (root -> sub -> leaf)
+const breadcrumbCategories = computed(() => {
+  const catId = product.value.categoryId
+  if (!catId) return []
+
+  const cat = categoryStore.getCategoryById(catId)
+  if (!cat) return []
+
+  // Build the path from the category tree by walking from root categories
+  function findPath(categories, targetSlug, path) {
+    for (const c of categories) {
+      const current = [...path, { id: c.id, name: c.name, slug: c.slug }]
+      if (c.slug === targetSlug) return current
+      if (c.children && c.children.length > 0) {
+        const found = findPath(c.children, targetSlug, current)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  const rootCats = categoryStore.getRootCategories
+  const path = findPath(rootCats, cat.slug, [])
+  return path || [{ id: cat.id, name: cat.name, slug: cat.slug }]
+})
+
+// All assigned categories (primary + secondary from API + tags)
+const productCategories = computed(() => {
+  const cats = []
+
+  // 1. Primary category from the API's primaryCategory object or categoryId
+  const primaryFromApi = product.value.primaryCategory
+  if (primaryFromApi && primaryFromApi.id) {
+    cats.push({ id: primaryFromApi.id, name: primaryFromApi.name, slug: primaryFromApi.slug, isPrimary: true })
+  } else {
+    const primary = categoryStore.getCategoryById(product.value.categoryId)
+    if (primary) {
+      cats.push({ ...primary, isPrimary: true })
+    } else if (product.value.category) {
+      cats.push({ id: null, name: product.value.category, slug: product.value.category.toLowerCase().replace(/\s+/g, '-'), isPrimary: true })
+    }
+  }
+
+  // 2. Secondary categories from the API's secondaryCategories array
+  if (Array.isArray(product.value.secondaryCategories)) {
+    product.value.secondaryCategories.forEach(sc => {
+      if (sc && sc.id && !cats.some(c => c.id === sc.id)) {
+        cats.push({ id: sc.id, name: sc.name, slug: sc.slug, isPrimary: false })
+      }
+    })
+  }
+
+  // 3. Secondary categories from the 'tags' array: look for any tag that matches a category slug
+  if (Array.isArray(product.value.tags)) {
+    product.value.tags.forEach(tag => {
+      const tagSlug = tag.toLowerCase().replace(/\s+/g, '-')
+      if (cats.some(c => c.slug === tagSlug)) return
+      const catFromStore = categoryStore.getCategoryBySlug(tagSlug)
+      if (catFromStore) {
+        cats.push({ ...catFromStore, isPrimary: false })
+      } else {
+        cats.push({ id: null, name: tag, slug: tagSlug, isPrimary: false })
+      }
+    })
+  }
+
+  return cats
+})
 
 // Category banner for header background (1920x300) — uses category store for real banner images
 const categoryBanner = computed(() => {
@@ -696,11 +787,19 @@ async function fetchProduct() {
     const response = await axios.get(`${API_BASE}/api/v1/products/${id}`)
     if (response.data) {
       const p = response.data
+      // Map primaryCategory from API (CategoryResponse object with id/name/slug)
+      const primaryCat = p.primaryCategory || null
+      // Map secondaryCategories from API (array of CategoryResponse objects)
+      const secondaryCats = Array.isArray(p.secondaryCategories) ? p.secondaryCategories : []
+
       product.value = {
         id: p.id,
         name: p.name,
-        category: p.categoryName || 'Jewelry',
-        categoryId: p.categoryId || null,
+        category: p.categoryName || (primaryCat ? primaryCat.name : 'Jewelry'),
+        categoryId: p.categoryId || (primaryCat ? primaryCat.id : null),
+        categoryName: p.categoryName || (primaryCat ? primaryCat.name : ''),
+        primaryCategory: primaryCat ? { id: primaryCat.id, name: primaryCat.name, slug: primaryCat.slug, thumbnailUrl: primaryCat.thumbnailUrl || '', bannerUrl: primaryCat.bannerUrl || '' } : null,
+        secondaryCategories: secondaryCats.map(sc => ({ id: sc.id, name: sc.name, slug: sc.slug, thumbnailUrl: sc.thumbnailUrl || '', bannerUrl: sc.bannerUrl || '' })),
         price: Number(p.basePriceUsd) || 0,
         thumbnailUrl: p.thumbnailUrl || '',
         sku: p.sku || '',
